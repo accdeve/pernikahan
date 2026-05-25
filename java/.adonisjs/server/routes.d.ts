@@ -4,8 +4,14 @@ type ParamValue = string | number | bigint | boolean
 
 export type ScannedRoutes = {
   ALL: {
-    'invitation.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
-    'invitation.rsvp': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'java.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'java.rsvp': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'modern.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'modern.rsvp': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'undangan.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'undangan.rsvp': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'legacy.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'legacy.rsvp': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
     'admin_auth.show_login': { paramsTuple?: []; params?: {} }
     'admin_auth.login': { paramsTuple?: []; params?: {} }
     'admin_auth.logout': { paramsTuple?: []; params?: {} }
@@ -22,7 +28,10 @@ export type ScannedRoutes = {
     'admin.delete_guest': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   GET: {
-    'invitation.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'java.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'modern.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'undangan.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'legacy.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
     'admin_auth.show_login': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
     'admin.edit': { paramsTuple?: []; params?: {} }
@@ -31,7 +40,10 @@ export type ScannedRoutes = {
     'admin.guests': { paramsTuple?: []; params?: {} }
   }
   HEAD: {
-    'invitation.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'java.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'modern.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'undangan.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'legacy.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
     'admin_auth.show_login': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
     'admin.edit': { paramsTuple?: []; params?: {} }
@@ -40,7 +52,10 @@ export type ScannedRoutes = {
     'admin.guests': { paramsTuple?: []; params?: {} }
   }
   POST: {
-    'invitation.rsvp': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'java.rsvp': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'modern.rsvp': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'undangan.rsvp': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'legacy.rsvp': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
     'admin_auth.login': { paramsTuple?: []; params?: {} }
     'admin_auth.logout': { paramsTuple?: []; params?: {} }
     'admin.update': { paramsTuple?: []; params?: {} }

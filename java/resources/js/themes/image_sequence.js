@@ -4,16 +4,23 @@
  * GSAP pinned image sequence, scroll reveal, nav highlight, clipboard, RSVP
  */
 
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
 import { initAudio, initClipboard, initRsvpForm } from '../shared.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
-document.addEventListener('DOMContentLoaded', () => {
+const initImageSequence = () => {
+  console.log('[image_sequence.js] Running initImageSequence()...')
   const btnOpen = document.getElementById('btn-open-invitation')
   const cover = document.getElementById('cover')
   const mainContent = document.getElementById('invitation-main-content')
+
+  console.log('[image_sequence.js] Elements found:', {
+    btnOpen: !!btnOpen,
+    cover: !!cover,
+    mainContent: !!mainContent
+  })
 
   // ─── 0. COVER ENTRANCE ANIMATIONS ───────────────────────────────────────
   const coverTitle = document.querySelector('.cover-title')
@@ -29,9 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ─── 1. OPEN INVITATION ──────────────────────────────────────────────────
   const audio = initAudio()
+  console.log('[image_sequence.js] Audio element returned:', !!audio)
 
   if (btnOpen && cover && mainContent) {
-    btnOpen.addEventListener('click', () => {
+    console.log('[image_sequence.js] Registering click event on btnOpen.')
+    btnOpen.addEventListener('click', (e) => {
+      console.log('[image_sequence.js] Buka Undangan clicked!', e)
       // Slide cover up and out (cover is position:fixed — acts as a true overlay)
       gsap.to(cover, {
         yPercent: -100,
@@ -43,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Reveal content (already at scroll position 0 since cover was fixed)
       mainContent.classList.remove('hidden')
-      window.scrollTo({ top: 0, behavior: 'instant' })
+      window.scrollTo(0, 0)
       gsap.fromTo(mainContent, { opacity: 0 }, { opacity: 1, duration: 1.2, ease: 'power2.out', delay: 0.3 })
 
       // Start editorial animations after content is visible
@@ -136,4 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── 5. CLIPBOARD & RSVP ────────────────────────────────────────────────
   initClipboard()
   initRsvpForm('comment-card-editorial', false)
-})
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initImageSequence)
+} else {
+  initImageSequence()
+}

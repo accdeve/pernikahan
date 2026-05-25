@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Gunungan Outer Shape -->
+  <path d="M50 10 L85 100 C90 115 80 130 50 130 C20 130 10 115 15 100 Z" fill="#D4AF37" fill-opacity="0.1" stroke="#D4AF37" stroke-width="1.5"/>
+  <!-- Center Trunk (Tree of Life) -->
+  <line x1="50" y1="130" x2="50" y2="40" stroke="#D4AF37" stroke-width="2"/>
+  <!-- Branch 1 (Left and Right) -->
+  <path d="M50 100 Q40 90 30 95" stroke="#D4AF37" stroke-width="1.5"/>
+  <path d="M50 100 Q60 90 70 95" stroke="#D4AF37" stroke-width="1.5"/>
+  <!-- Branch 2 -->
+  <path d="M50 80 Q35 70 25 78" stroke="#D4AF37" stroke-width="1.5"/>
+  <path d="M50 80 Q65 70 75 78" stroke="#D4AF37" stroke-width="1.5"/>
+  <!-- Branch 3 -->
+  <path d="M50 60 Q38 52 32 58" stroke="#D4AF37" stroke-width="1.2"/>
+  <path d="M50 60 Q62 52 68 58" stroke="#D4AF37" stroke-width="1.2"/>
+  <!-- Wings / Gate Base -->
+  <rect x="35" y="110" width="30" height="20" rx="2" fill="#D4AF37" fill-opacity="0.2" stroke="#D4AF37" stroke-width="1"/>
+  <path d="M40 130 L40 115 L45 110 L50 115 L55 110 L60 115 L60 130" stroke="#D4AF37" stroke-width="1.2"/>
+  <!-- Inner Details (Leaves/Symmetry) -->
+  <circle cx="50" cy="30" r="3" fill="#D4AF37"/>
+  <circle cx="35" cy="85" r="2" fill="#D4AF37" fill-opacity="0.5"/>
+  <circle cx="65" cy="85" r="2" fill="#D4AF37" fill-opacity="0.5"/>
+  <circle cx="28" cy="105" r="2.5" fill="#D4AF37" fill-opacity="0.5"/>
+  <circle cx="72" cy="105" r="2.5" fill="#D4AF37" fill-opacity="0.5"/>
+</svg>

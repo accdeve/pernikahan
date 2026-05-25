@@ -109,6 +109,7 @@
       const copyToast = document.getElementById('copy-toast');
       
       const slug = "{{ invitation.slug }}";
+      const style = "{{ invitation.style }}";
 
       if (btnGenerate && inviteeName && container && linkInput) {
         btnGenerate.addEventListener('click', () => {
@@ -119,7 +120,8 @@
           }
           
           const origin = window.location.origin;
-          const url = `${origin}/${slug}?to=${encodeURIComponent(val)}`;
+          const prefix = style === 'image_sequence' ? 'modern' : 'java';
+          const url = `${origin}/${prefix}/${slug}?to=${encodeURIComponent(val)}`;
           linkInput.value = url;
           container.style.display = 'block';
         });

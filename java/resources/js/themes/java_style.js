@@ -4,10 +4,10 @@
  * scroll reveal, countdown timer, photo lightbox, bottom nav
  */
 
-import { gsap } from 'gsap'
+import gsap from 'gsap'
 import { initAudio, initClipboard, initRsvpForm } from '../shared.js'
 
-document.addEventListener('DOMContentLoaded', () => {
+const initJavaStyle = () => {
   const btnOpen = document.getElementById('btn-open-invitation')
   const cover = document.getElementById('cover')
   const mainContent = document.getElementById('invitation-main-content')
@@ -179,4 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── 7. CLIPBOARD & RSVP ────────────────────────────────────────────────
   initClipboard()
   initRsvpForm('comment-card-heritage', true)
-})
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initJavaStyle)
+} else {
+  initJavaStyle()
+}

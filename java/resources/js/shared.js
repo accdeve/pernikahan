@@ -113,9 +113,9 @@ export function initRsvpForm(commentCardClass, showGunungan = false) {
 
         if (showGunungan) {
           commentsList.innerHTML += `
-            <div class="py-8 flex-center opacity-20">
-              <img class="w-32 grayscale contrast-125 brightness-75"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB138E4bWlGtQ0Mb367WwcwTe1O99mJ5BxPgw8xUk4sqQHbU3O7Uf7ejTN8O_4uKL53IW4y__C190Wjp_jk45ftLMsaU5Ecdi7ic0ycUvppdRb3A9WK6eQIAvOr5r0ZtvQvprPKl-91xyIxwS3UccufaUZxPjGDIANJGFEPTepXXMVYb4BeYoUA1LrwSnob3uRICmWLHBKMXXewCSAtAcw5H4QDQWZJsCI1TBhBF_zMdG_SxQ4XCy1k29SOkg0oZaqfvG78WPySXRs"
+            <div class="py-8 flex-center opacity-80">
+              <img class="w-32"
+                src="/images/gunungan.svg"
                 style="width:128px;max-width:100%;height:auto;" />
             </div>
           `

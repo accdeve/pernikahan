@@ -5,7 +5,7 @@
     
     <!-- Form Box -->
     <div class="rsvp-card-editorial mb-16">
-      <form class="space-y-12" id="form-rsvp" action="/{{ invitation.slug }}/rsvp" method="POST">
+      <form class="space-y-12" id="form-rsvp" action="/{{ routePrefix || 'modern' }}/{{ invitation.slug }}/rsvp" method="POST">
         {{ csrfField() }}
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">

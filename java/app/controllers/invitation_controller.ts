@@ -30,12 +30,21 @@ export default class InvitationController {
 
     const guestName = request.input('to', '')
 
-    // Allow ?theme= query param to override the DB style at runtime.
-    // Useful for previewing a different template without changing the database.
-    const themeOverride = request.input('theme', '') as string
-    const activeStyle: ThemeKey = VALID_THEMES.includes(themeOverride as ThemeKey)
-      ? (themeOverride as ThemeKey)
-      : ((invitation.style as ThemeKey) ?? 'java_style')
+    // Force style based on URL prefix (/java vs /modern) or fallback to DB style/query override
+    const urlPath = request.url()
+    let activeStyle: ThemeKey = 'java_style'
+    if (urlPath.startsWith('/modern')) {
+      activeStyle = 'image_sequence'
+    } else if (urlPath.startsWith('/java')) {
+      activeStyle = 'java_style'
+    } else {
+      const themeOverride = request.input('theme', '') as string
+      activeStyle = VALID_THEMES.includes(themeOverride as ThemeKey)
+        ? (themeOverride as ThemeKey)
+        : ((invitation.style as ThemeKey) ?? 'java_style')
+    }
+
+    const routePrefix = activeStyle === 'image_sequence' ? 'modern' : 'java'
 
     return view.render('pages/home', {
       invitation,
@@ -44,6 +53,7 @@ export default class InvitationController {
       guests: invitation.guests,
       guestName,
       activeStyle,
+      routePrefix,
     })
   }
 

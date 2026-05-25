@@ -19,14 +19,24 @@ const InvitationController = () => import('#controllers/invitation_controller')
 const AdminAuthController = () => import('#controllers/admin_auth_controller')
 const AdminController = () => import('#controllers/admin_controller')
 
-// 1. Root redirect to seeded default wedding slug
+// 1. Root redirect to default Javanese wedding slug
 router.get('/', ({ response }) => {
-  return response.redirect().toPath('/juliana-muhammad')
+  return response.redirect().toPath('/java/juliana-muhammad')
 })
 
-// 2. Public Wedding Invitation Routes
-router.get('/:slug', [InvitationController, 'show'])
-router.post('/:slug/rsvp', [InvitationController, 'rsvp'])
+// 2. Public Wedding Invitation Routes (/java and /modern prefixes)
+router.get('/java/:slug', [InvitationController, 'show']).as('java.show')
+router.post('/java/:slug/rsvp', [InvitationController, 'rsvp']).as('java.rsvp')
+
+router.get('/modern/:slug', [InvitationController, 'show']).as('modern.show')
+router.post('/modern/:slug/rsvp', [InvitationController, 'rsvp']).as('modern.rsvp')
+
+// Backwards compatibility / Legacy routes
+router.get('/undangan/:slug', [InvitationController, 'show']).as('undangan.show')
+router.post('/undangan/:slug/rsvp', [InvitationController, 'rsvp']).as('undangan.rsvp')
+
+router.get('/:slug', [InvitationController, 'show']).as('legacy.show')
+router.post('/:slug/rsvp', [InvitationController, 'rsvp']).as('legacy.rsvp')
 
 // 3. Admin Guest/Login Routes
 router.group(() => {
