@@ -1,7 +1,0 @@
-@layouts.main({ title: `${invitation.groomNickname} & ${invitation.brideNickname} - Undangan Pernikahan`, bgMusicUrl: invitation.bgMusicUrl, style: activeStyle })
-  @if(activeStyle === 'image_sequence')
-    @!invitation.imageSequence({ invitation, stories, galleries, guests, guestName, routePrefix })
-  @else
-    @!invitation.javaStyle({ invitation, stories, galleries, guests, guestName, routePrefix })
-  @endif
-@end
