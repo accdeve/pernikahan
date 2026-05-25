@@ -1,0 +1,108 @@
+@layouts.admin({ title: 'Dashboard Admin - Undangan Pernikahan', activeTab: 'dashboard' })
+  <!-- Header -->
+  <div class="admin-header">
+    <div class="admin-header-title">
+      <h1>Ringkasan Informasi</h1>
+      <p>Ikhtisar RSVP dan Pengaturan Undangan Anda</p>
+    </div>
+    
+    <div>
+      <a href="/{{ invitation.slug }}" target="_blank" class="btn-primary-gold display-inline-flex" style="padding: 0.6rem 1.2rem; font-size: 0.75rem;">
+        <span class="material-symbols-outlined" style="font-size: 1.15rem;">visibility</span>
+        Lihat Undangan
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="admin-stats-grid">
+    <!-- Stat 1 -->
+    <div class="admin-stat-card glass-card">
+      <div class="admin-stat-icon">
+        <span class="material-symbols-outlined">group</span>
+      </div>
+      <div>
+        <p class="admin-stat-value">{{ totalGuests }}</p>
+        <p class="admin-stat-label">Total Respon RSVP</p>
+      </div>
+    </div>
+
+    <!-- Stat 2 -->
+    <div class="admin-stat-card glass-card">
+      <div class="admin-stat-icon" style="color: var(--success); background-color: rgba(129, 199, 132, 0.08); border-color: rgba(129, 199, 132, 0.2)">
+        <span class="material-symbols-outlined">check_circle</span>
+      </div>
+      <div>
+        <p class="admin-stat-value">{{ attendingCount }}</p>
+        <p class="admin-stat-label">Hadir</p>
+      </div>
+    </div>
+
+    <!-- Stat 3 -->
+    <div class="admin-stat-card glass-card">
+      <div class="admin-stat-icon" style="color: var(--danger); background-color: rgba(229, 115, 115, 0.08); border-color: rgba(229, 115, 115, 0.2)">
+        <span class="material-symbols-outlined">cancel</span>
+      </div>
+      <div>
+        <p class="admin-stat-value">{{ decliningCount }}</p>
+        <p class="admin-stat-label">Tidak Hadir</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rows Grid -->
+  <div class="admin-row-grid">
+    <!-- Wedding Copy Summary -->
+    <div class="glass-card font-sans">
+      <h3 class="font-serif text-gold mb-6" style="font-size: 1.25rem;">Detail Mempelai & Acara</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem;">
+        <div>
+          <strong class="text-gold">Mempelai Pria:</strong> {{ invitation.groomName }} ({{ invitation.groomNickname }})
+        </div>
+        <div>
+          <strong class="text-gold">Mempelai Wanita:</strong> {{ invitation.brideName }} ({{ invitation.brideNickname }})
+        </div>
+        <div>
+          <strong class="text-gold">Akad Nikah:</strong> {{ invitation.akadDatetime.setLocale('id').toFormat('dd MMMM yyyy, HH:mm') }} WIB
+        </div>
+        <div>
+          <strong class="text-gold">Resepsi:</strong> {{ invitation.resepsiDatetime.setLocale('id').toFormat('dd MMMM yyyy, HH:mm') }} WIB
+        </div>
+        <div>
+          <strong class="text-gold">Lokasi:</strong> {{ invitation.eventLocation }} - {{ invitation.eventAddress }}
+        </div>
+        <div>
+          <strong class="text-gold">Gamelan Audio:</strong> <code>{{ invitation.bgMusicUrl || 'Default' }}</code>
+        </div>
+      </div>
+      <div class="mt-6">
+        <a href="/admin/edit" class="btn-primary-gold w-100" style="padding: 0.6rem; font-size: 0.8rem; border-radius: 6px;">
+          <span class="material-symbols-outlined">edit</span>
+          Edit Detail Undangan
+        </a>
+      </div>
+    </div>
+
+    <!-- Recent Wishes -->
+    <div class="glass-card font-sans">
+      <h3 class="font-serif text-gold mb-6" style="font-size: 1.25rem;">Ucapan Terbaru</h3>
+      <div class="comments-list" style="max-height: 280px;">
+        @if(recentGuests && recentGuests.length > 0)
+          @each(guest in recentGuests)
+            <div class="comment-item">
+              <div class="comment-header">
+                <span class="comment-author font-serif text-gold">{{ guest.name }}</span>
+                <span class="comment-badge {{ guest.attendance === 'hadir' ? 'badge-hadir' : 'badge-tidak' }}">
+                  {{ guest.attendance === 'hadir' ? 'Hadir' : 'Tidak Hadir' }}
+                </span>
+              </div>
+              <p class="comment-text" style="font-size: 0.8rem;">{{ guest.comment }}</p>
+            </div>
+          @endeach
+        @else
+          <p class="text-muted text-center" style="font-size: 0.85rem; padding: 2rem 0;">Belum ada respon RSVP.</p>
+        @endif
+      </div>
+    </div>
+  </div>
+@end

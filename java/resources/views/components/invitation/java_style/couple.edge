@@ -1,0 +1,54 @@
+<section id="couple" class="section-padding bg-surface-variant fade-up">
+  <!-- Top Ornament -->
+  <div class="ornament-divider">
+    <div class="gunungan-divider"></div>
+  </div>
+
+  <!-- Marriage Quote / Quran Verse -->
+  <div class="marriage-quote text-center">
+    <p class="quote-text font-serif">
+      "Dan di antara tanda-tanda (kebesaran-Nya) ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang."
+    </p>
+    <p class="quote-source font-sans text-gold">QS. Ar-Rum: 21</p>
+  </div>
+
+  <!-- Mempelai Details -->
+  <div class="mempelai-container">
+    <!-- Groom Card -->
+    <div class="mempelai-card">
+      <div class="profile-frame">
+        <div class="profile-placeholder">
+          <span class="material-symbols-outlined">person</span>
+        </div>
+      </div>
+      <h2 class="mempelai-name font-cursive text-gold">{{ invitation.groomName }}</h2>
+      <p class="mempelai-nickname font-sans text-gold">({{ invitation.groomNickname }})</p>
+      <div class="parent-info">
+        <p class="parent-label">Putra dari:</p>
+        <p class="parent-names font-serif">{{ invitation.groomParentFather }}</p>
+        <p class="parent-and">dan</p>
+        <p class="parent-names font-serif">{{ invitation.groomParentMother }}</p>
+      </div>
+    </div>
+
+    <!-- Amperstand Divider -->
+    <div class="couple-ampersand font-cursive text-gold">&</div>
+
+    <!-- Bride Card -->
+    <div class="mempelai-card">
+      <div class="profile-frame">
+        <div class="profile-placeholder">
+          <span class="material-symbols-outlined">person_pin</span>
+        </div>
+      </div>
+      <h2 class="mempelai-name font-cursive text-gold">{{ invitation.brideName }}</h2>
+      <p class="mempelai-nickname font-sans text-gold">({{ invitation.brideNickname }})</p>
+      <div class="parent-info">
+        <p class="parent-label">Putri dari:</p>
+        <p class="parent-names font-serif">{{ invitation.brideParentFather }}</p>
+        <p class="parent-and">dan</p>
+        <p class="parent-names font-serif">{{ invitation.brideParentMother }}</p>
+      </div>
+    </div>
+  </div>
+</section>

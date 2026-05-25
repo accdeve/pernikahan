@@ -1,0 +1,38 @@
+@if(galleries && galleries.length > 0)
+  <section id="gallery" class="section-padding bg-surface fade-up">
+    <!-- Section Title -->
+    <div class="section-title text-center">
+      <h2 class="font-cursive text-gold">Galeri Pre-Wedding</h2>
+      <p class="section-subtitle">Retnaning Katresnan ing Gambar</p>
+      <div class="title-divider-gold"></div>
+    </div>
+
+    <!-- Masonry Grid -->
+    <div class="gallery-grid">
+      @each(photo in galleries)
+        <div class="gallery-item glass-card" data-src="{{ photo.imageUrl }}" data-caption="{{ photo.caption || '' }}">
+          <div class="gallery-image-wrapper">
+            <img src="{{ photo.imageUrl }}" alt="{{ photo.caption || 'Pre-wedding Photo' }}" loading="lazy" class="gallery-image" />
+            <div class="gallery-overlay">
+              <span class="material-symbols-outlined text-gold">visibility</span>
+              @if(photo.caption)
+                <p class="gallery-caption font-serif">{{ photo.caption }}</p>
+              @endif
+            </div>
+          </div>
+        </div>
+      @endeach
+    </div>
+
+    <!-- Lightbox Overlay Container -->
+    <div id="gallery-lightbox" class="lightbox-overlay">
+      <span class="lightbox-close material-symbols-outlined">close</span>
+      <span class="lightbox-prev material-symbols-outlined">chevron_left</span>
+      <span class="lightbox-next material-symbols-outlined">chevron_right</span>
+      <div class="lightbox-content">
+        <img id="lightbox-img" src="" alt="Preview" />
+        <p id="lightbox-caption" class="font-serif text-gold"></p>
+      </div>
+    </div>
+  </section>
+@endif

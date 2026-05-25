@@ -1,0 +1,35 @@
+<nav class="bottom-nav">
+  <a href="#couple" class="nav-btn active" data-section="couple">
+    <span class="material-symbols-outlined">favorite</span>
+    <span class="nav-label">Mempelai</span>
+  </a>
+  
+  <a href="#event" class="nav-btn" data-section="event">
+    <span class="material-symbols-outlined">calendar_today</span>
+    <span class="nav-label">Acara</span>
+  </a>
+
+  @if(hasStories)
+    <a href="#story" class="nav-btn" data-section="story">
+      <span class="material-symbols-outlined">auto_stories</span>
+      <span class="nav-label">Kisah</span>
+    </a>
+  @endif
+
+  @if(hasGalleries)
+    <a href="#gallery" class="nav-btn" data-section="gallery">
+      <span class="material-symbols-outlined">image</span>
+      <span class="nav-label">Galeri</span>
+    </a>
+  @endif
+  
+  <a href="#rsvp" class="nav-btn" data-section="rsvp">
+    <span class="material-symbols-outlined">chat</span>
+    <span class="nav-label">RSVP</span>
+  </a>
+</nav>
+
+<!-- Floating Audio Control Button -->
+<button id="floating-audio-control" class="floating-audio-btn rotating">
+  <span class="material-symbols-outlined btn-icon">music_note</span>
+</button>

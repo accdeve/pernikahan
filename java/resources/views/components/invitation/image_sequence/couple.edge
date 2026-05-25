@@ -1,0 +1,59 @@
+<section id="editorial-sequence-container" class="editorial-sequence-container">
+  <!-- Pinned Image Viewer -->
+  <div class="sequence-images">
+    <!-- Slide 1 (Bride Photo) -->
+    <div class="sequence-slide active">
+      @if(invitation.galleries && invitation.galleries.length > 0)
+        <img src="{{ invitation.galleries[0].imageUrl }}" class="sequence-img" alt="The Bride" />
+      @else
+        <img src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&amp;w=2070" class="sequence-img" alt="The Bride" />
+      @endif
+    </div>
+
+    <!-- Slide 2 (Groom Photo) -->
+    <div class="sequence-slide">
+      @if(invitation.galleries && invitation.galleries.length > 1)
+        <img src="{{ invitation.galleries[1].imageUrl }}" class="sequence-img" alt="The Groom" />
+      @else
+        <img src="https://images.unsplash.com/photo-1519225495810-7517c5a7d754?q=80&amp;w=2070" class="sequence-img" alt="The Groom" />
+      @endif
+    </div>
+
+    <!-- Slide 3+ (Story Photos) -->
+    @each((story, index) in stories)
+      <div class="sequence-slide">
+        @if(story.imageUrl)
+          <img src="{{ story.imageUrl }}" class="sequence-img" alt="{{ story.title }}" />
+        @else
+          <img src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&amp;w=2070" class="sequence-img" alt="{{ story.title }}" />
+        @endif
+      </div>
+    @end
+  </div>
+
+  <!-- Pinned Content Overlays -->
+  <div class="sequence-texts">
+    <!-- Text 1 (Bride Introduction) -->
+    <div class="sequence-text active">
+      <span class="text-subtitle">THE BRIDE</span>
+      <h2 class="text-title">{{ invitation.brideName }}</h2>
+      <p class="text-parent">Putri dari {{ invitation.brideParentFather || '-' }} &amp; {{ invitation.brideParentMother || '-' }}</p>
+    </div>
+
+    <!-- Text 2 (Groom Introduction) -->
+    <div class="sequence-text">
+      <span class="text-subtitle">THE GROOM</span>
+      <h2 class="text-title">{{ invitation.groomName }}</h2>
+      <p class="text-parent">Putra dari {{ invitation.groomParentFather || '-' }} &amp; {{ invitation.groomParentMother || '-' }}</p>
+    </div>
+
+    <!-- Text 3+ (Stories Milestones) -->
+    @each((story, index) in stories)
+      <div class="sequence-text">
+        <span class="text-subtitle">{{ story.milestoneDate }}</span>
+        <h2 class="text-title">{{ story.title }}</h2>
+        <p class="text-description">{{ story.description }}</p>
+      </div>
+    @end
+  </div>
+</section>

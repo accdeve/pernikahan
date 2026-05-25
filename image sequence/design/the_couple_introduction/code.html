@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>A &amp; J | The Couple</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            overflow-x: hidden;
+        }
+        .parallax-container {
+            clip-path: inset(0 0 0 0);
+        }
+        .parallax-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-position: center;
+            background-size: cover;
+            transition: transform 0.1s linear;
+        }
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .reveal-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .scroll-indicator {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-container": "#93000a",
+                    "secondary-container": "#464747",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-tertiary": "#313030",
+                    "on-error": "#690005",
+                    "surface-dim": "#131313",
+                    "tertiary": "#ffffff",
+                    "surface-container-high": "#2a2a2a",
+                    "surface-container-low": "#1c1b1b",
+                    "surface-bright": "#3a3939",
+                    "surface-container": "#201f1f",
+                    "on-tertiary-fixed-variant": "#474746",
+                    "surface-tint": "#c6c6c7",
+                    "on-tertiary-fixed": "#1c1b1b",
+                    "secondary-fixed-dim": "#c7c6c6",
+                    "primary": "#ffffff",
+                    "primary-container": "#e2e2e2",
+                    "on-background": "#e5e2e1",
+                    "on-error-container": "#ffdad6",
+                    "primary-fixed": "#e2e2e2",
+                    "on-primary-container": "#636565",
+                    "inverse-primary": "#5d5f5f",
+                    "outline": "#8e9192",
+                    "on-primary": "#2f3131",
+                    "on-primary-fixed-variant": "#454747",
+                    "on-primary-fixed": "#1a1c1c",
+                    "surface-variant": "#353534",
+                    "surface": "#131313",
+                    "on-secondary-fixed-variant": "#464747",
+                    "inverse-surface": "#e5e2e1",
+                    "background": "#131313",
+                    "outline-variant": "#444748",
+                    "error": "#ffb4ab",
+                    "tertiary-fixed": "#e5e2e1",
+                    "secondary-fixed": "#e3e2e2",
+                    "on-surface": "#e5e2e1",
+                    "on-tertiary-container": "#656464",
+                    "on-secondary": "#2f3031",
+                    "on-secondary-fixed": "#1b1c1c",
+                    "inverse-on-surface": "#313030",
+                    "primary-fixed-dim": "#c6c6c7",
+                    "secondary": "#c7c6c6",
+                    "on-surface-variant": "#c4c7c8",
+                    "tertiary-container": "#e5e2e1",
+                    "surface-container-highest": "#353534",
+                    "tertiary-fixed-dim": "#c8c6c5",
+                    "on-secondary-container": "#b5b5b5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "section-gap": "160px",
+                    "element-gap": "32px",
+                    "max-width": "1200px",
+                    "margin-mobile": "24px",
+                    "margin-desktop": "80px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Cinzel"],
+                    "label-caps": ["Inter"],
+                    "display-lg": ["Cinzel"],
+                    "display-lg-mobile": ["Cinzel"],
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Cinzel"],
+                    "body-md": ["Inter"],
+                    "quote": ["Cinzel"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "0.15em", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.2em", "fontWeight": "600"}],
+                    "display-lg": ["80px", {"lineHeight": "90px", "letterSpacing": "0.05em", "fontWeight": "400"}],
+                    "display-lg-mobile": ["48px", {"lineHeight": "56px", "letterSpacing": "0.05em", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "32px", "letterSpacing": "0.02em", "fontWeight": "300"}],
+                    "headline-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "0.1em", "fontWeight": "400"}],
+                    "body-md": ["15px", {"lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                    "quote": ["32px", {"lineHeight": "44px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-desktop py-6 w-full bg-gradient-to-b from-background/40 to-transparent transition-all duration-500 ease-in-out">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity cursor-pointer">menu</span>
+</div>
+<h1 class="font-headline-md text-headline-md text-primary tracking-widest">A &amp; J</h1>
+<div class="hidden md:flex gap-8">
+<a class="font-label-caps text-label-caps text-primary hover:opacity-70 transition-opacity" href="#">STORY</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:opacity-70 transition-opacity" href="#">EVENTS</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:opacity-70 transition-opacity" href="#">RSVP</a>
+</div>
+<div class="md:hidden">
+<!-- Space for balance -->
+<div class="w-6"></div>
+</div>
+</header>
+<main>
+<!-- Hero Section: The Bride -->
+<section class="relative h-screen w-full flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img alt="" class="w-full h-full object-cover grayscale brightness-50" data-alt="A cinematic, high-fashion editorial portrait of a bride in a minimalist silk gown. She stands against a textured charcoal wall in a dimly lit studio, illuminated by a single soft light source from the side. The aesthetic is monochromatic and luxurious, emphasizing the clean lines of her silhouette and the deep shadows of the room. The atmosphere is quiet, sophisticated, and deeply evocative of minimalist luxury." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRhC6eYw2LZIIWxGyESn34ENd_0QmmepvRFTGwk9VwFAvGaUD-_nKUp1tzYxLjkoFR3EoXzQUzNgcv1WerpxxSev5qGLhkkioLRlonjQkyGecdwxAETu5vt8tCOMN7oQ4pGyjOIkVvVPIUNq0STxsPJQo2mNdCgl-V-73WOFmtaCDcvdDFs8LpK5V-0vmPVQKa9dFDCWHhJ_lStB-7xreDO-RpZCPcXwGlk1fptkSrPp368CEzhxn61tgwtOiNVbi_F0TyVfscSEA"/>
+</div>
+<div class="relative z-10 text-center px-margin-mobile">
+<p class="font-label-caps text-label-caps text-primary tracking-[0.4em] mb-4 reveal-text" id="bride-title">THE BRIDE</p>
+<h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-6 reveal-text">ADRIAN VALENTINE</h2>
+<div class="h-[1px] w-24 bg-primary/40 mx-auto mb-6 reveal-text"></div>
+<p class="font-body-md text-body-md text-on-surface-variant reveal-text">Daughter of Mr. &amp; Mrs. Julian Valentine</p>
+</div>
+<div class="absolute bottom-10 left-1/2 -translate-x-1/2 scroll-indicator flex flex-col items-center">
+<span class="font-label-caps text-[10px] tracking-widest text-primary/60 mb-2">SCROLL</span>
+<div class="w-[1px] h-12 bg-gradient-to-b from-primary/60 to-transparent"></div>
+</div>
+</section>
+<!-- Transition / Quote Section -->
+<section class="bg-background py-section-gap px-margin-mobile md:px-margin-desktop text-center">
+<div class="max-w-3xl mx-auto">
+<p class="font-quote text-quote text-primary italic mb-8">
+                    "In the stillness of the morning, I found a love that felt like home."
+                </p>
+<div class="w-12 h-[1px] bg-outline/30 mx-auto"></div>
+</div>
+</section>
+<!-- Hero Section: The Groom -->
+<section class="relative h-screen w-full flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img alt="" class="w-full h-full object-cover grayscale contrast-125 brightness-50" data-alt="An editorial close-up shot of a groom in a bespoke black tuxedo with a crisp white shirt. The lighting is high-contrast, casting sharp shadows and highlighting the texture of the fine wool fabric. He is posed in a modern, minimalist architectural space with clean concrete lines. The image captures a mood of quiet strength and timeless elegance, perfectly aligned with a high-end fashion magazine aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJg3R9sVV9vyVhh3iyPAm7rvkEwByJs0ojiafuNbQJGArH2SQhBovJDcoKxrBTzdWIIf3siOUQHmkMg86dVHbbdxLfxJrOiik4vpdyPaaJme3ZJi_Gj7Yhy6wXJRicHZkBXN_D1OwpKhZZxB6KCi-XnEaQOEaIVGXQ-Qp0M1j2xrBUhrInSlRx2M62qfpkCizinQBDAcF82FAnZqYdEhE25OpNYvnog1lyYlJHBoRXQtQx21qIZlz3FLGEpoM4OIwwa_yQtjw1eoA"/>
+</div>
+<div class="relative z-10 text-center px-margin-mobile">
+<p class="font-label-caps text-label-caps text-primary tracking-[0.4em] mb-4 reveal-text">THE GROOM</p>
+<h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-6 reveal-text">JULIA HAWTHORNE</h2>
+<div class="h-[1px] w-24 bg-primary/40 mx-auto mb-6 reveal-text"></div>
+<p class="font-body-md text-body-md text-on-surface-variant reveal-text">Son of Dr. &amp; Mrs. Edward Hawthorne</p>
+</div>
+</section>
+<!-- Editorial Spread: Together -->
+<section class="py-section-gap px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter items-center">
+<div class="md:col-span-5 mb-12 md:mb-0">
+<p class="font-label-caps text-label-caps text-primary mb-6">EST. 2024</p>
+<h3 class="font-headline-lg text-headline-lg text-primary mb-8 leading-tight">A Union of Two <br/>Modern Legacies</h3>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-10 leading-relaxed max-w-md">
+                        Adrian and Julia invite you to witness a celebration of love defined by simplicity and soul. Together with their families, they embark on a new chapter of shared history.
+                    </p>
+<button class="px-10 py-4 border border-white/20 font-label-caps text-label-caps text-primary hover:bg-primary hover:text-background transition-all duration-500 uppercase">
+                        Our Story
+                    </button>
+</div>
+<div class="md:col-span-7 flex flex-col gap-element-gap">
+<div class="w-full aspect-[4/5] overflow-hidden border border-white/10 p-2">
+<img alt="" class="w-full h-full object-cover grayscale" data-alt="A stunning black and white editorial photograph of a couple standing back-to-back in an avant-garde minimalist pose. They are dressed in high-end, tailored evening wear. The background is a vast, empty white studio, creating an intense focus on their connection and the sleek lines of their fashion. The lighting is soft and ethereal, capturing a sense of modern romance and editorial exclusivity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmZVATJGI0si2hnwG-GHPYm4-5yNz3ILGY1D4uKtAT1Pme8viiPQmR4YyuvjkRMfoFXqIsDlyd3ClF381CVhcLcMwejY5VI3KvRXYx5L_nZnITJ3kNE4OFRRf92rPZuYEyDPW0a3sI5I9EreXXTo6r8OMN1TPRe04_ZtEiuwmqcNTnTs5_v0rE3K7O9OCqHCkoZZdC4sbmDs9LeM_mdcB1qK-TAWKN8lNBL8Q8kDylTIjNlKuvrycEXuGpvbWa9VsabXCDkqkIkPU"/>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile only) -->
+<nav class="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex gap-element-gap items-center bg-surface/80 backdrop-blur-md rounded-full px-6 py-3 border border-white/20">
+<span class="material-symbols-outlined text-primary scale-110 cursor-pointer">home</span>
+<span class="material-symbols-outlined text-on-surface-variant/60 hover:text-primary transition-colors cursor-pointer">calendar_today</span>
+<span class="material-symbols-outlined text-on-surface-variant/60 hover:text-primary transition-colors cursor-pointer">location_on</span>
+<span class="material-symbols-outlined text-on-surface-variant/60 hover:text-primary transition-colors cursor-pointer">rsvp</span>
+</nav>
+<!-- Footer -->
+<footer class="flex flex-col items-center gap-8 px-margin-mobile w-full py-section-gap border-t border-white/10 bg-background">
+<h2 class="font-headline-md text-headline-md text-primary tracking-widest">A &amp; J</h2>
+<div class="flex gap-8">
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-all duration-300" href="#">OUR STORY</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-all duration-300" href="#">REGISTRY</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-all duration-300" href="#">PRIVACY</a>
+</div>
+<p class="font-label-caps text-[10px] text-on-surface-variant opacity-50 tracking-widest">© 2024 ADRIAN &amp; JULIA</p>
+</footer>
+<script>
+        // Reveal text on scroll logic
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal-text').forEach(text => {
+            observer.observe(text);
+        });
+
+        // Simple parallax effect for hero backgrounds
+        window.addEventListener('scroll', () => {
+            const scroll = window.pageYOffset;
+            document.querySelectorAll('section img').forEach((img, index) => {
+                const speed = 0.2;
+                img.style.transform = `translateY(${scroll * speed}px)`;
+            });
+        });
+
+        // Auto-activate the first section elements
+        window.onload = () => {
+            setTimeout(() => {
+                document.querySelectorAll('section:first-of-type .reveal-text').forEach(el => el.classList.add('active'));
+            }, 500);
+        };
+    </script>
+</body></html>

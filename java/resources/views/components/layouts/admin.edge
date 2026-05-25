@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {{ title || 'Admin Dashboard - Undangan Pernikahan' }}
+    </title>
+    
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Bodoni+Moda:ital,opsz,wght@0,11..72,400..900;1,11..72,400..900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+
+    @vite(['resources/css/app.css'])
+  </head>
+  <body class="admin-body">
+    <div class="admin-layout">
+      <!-- Admin Sidebar -->
+      <aside class="admin-sidebar">
+        <div class="admin-brand text-center">
+          <h2 class="font-cursive text-gold" style="font-size: 2rem;">Admin Panel</h2>
+          <p class="section-subtitle">Heritage Wedding</p>
+        </div>
+        
+        <nav class="admin-menu">
+          <a href="/admin" class="admin-menu-link {{ activeTab === 'dashboard' ? 'active' : '' }}">
+            <span class="material-symbols-outlined">dashboard</span>
+            Dashboard
+          </a>
+          
+          <a href="/admin/edit" class="admin-menu-link {{ activeTab === 'edit' ? 'active' : '' }}">
+            <span class="material-symbols-outlined">edit_note</span>
+            Edit Undangan
+          </a>
+          
+          <a href="/admin/stories" class="admin-menu-link {{ activeTab === 'stories' ? 'active' : '' }}">
+            <span class="material-symbols-outlined">auto_stories</span>
+            Kisah Kasih
+          </a>
+          
+          <a href="/admin/gallery" class="admin-menu-link {{ activeTab === 'gallery' ? 'active' : '' }}">
+            <span class="material-symbols-outlined">image</span>
+            Galeri Pre-Wed
+          </a>
+          
+          <a href="/admin/guests" class="admin-menu-link {{ activeTab === 'guests' ? 'active' : '' }}">
+            <span class="material-symbols-outlined">chat</span>
+            Moderasi RSVP
+          </a>
+        </nav>
+        
+        <!-- Sidebar Footer / Logout -->
+        <div class="admin-menu-footer">
+          <form action="/admin/logout" method="POST">
+            {{ csrfField() }}
+            <button type="submit" class="btn-primary-gold w-100" style="background-color: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 0.6rem;">
+              <span class="material-symbols-outlined" style="font-size: 1.15rem;">logout</span>
+              Log Out
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="admin-main" style="max-width: 100%; margin: 0; min-height: 100vh; border: none; background: transparent;">
+        {{{ await $slots.main() }}}
+      </main>
+    </div>
+  </body>
+</html>

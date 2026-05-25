@@ -1,0 +1,105 @@
+@layouts.admin({ title: 'Kelola Kisah Kasih - Admin Panel', activeTab: 'stories' })
+  <!-- Header -->
+  <div class="admin-header">
+    <div class="admin-header-title">
+      <h1>Kelola Kisah Perjalanan Kasih</h1>
+      <p>Tambahkan, perbarui, atau hapus tonggak sejarah cinta mempelai</p>
+    </div>
+  </div>
+
+  @if(flashMessages.has('success'))
+    <div class="alert alert-success text-center font-sans mb-6" style="padding: 12px; font-size: 0.9rem; min-width: auto; width: 100%;">
+      {{ flashMessages.get('success') }}
+    </div>
+  @endif
+
+  <!-- Add Story Milestone Form -->
+  <div class="glass-card font-sans mb-8">
+    <h3 class="font-serif text-gold mb-6" style="font-size: 1.25rem;">Tambah Tonggak Kisah (Milestone)</h3>
+    <form action="/admin/stories" method="POST">
+      {{ csrfField() }}
+      
+      <div class="admin-row-grid">
+        <div class="form-group">
+          <label for="milestone_date" class="form-label text-gold">Waktu / Tanggal</label>
+          <input type="text" id="milestone_date" name="milestoneDate" class="form-control" placeholder="Contoh: SEPTEMBER 2021" required />
+        </div>
+        <div class="form-group">
+          <label for="title" class="form-label text-gold">Judul Milestone</label>
+          <input type="text" id="title" name="title" class="form-control" placeholder="Contoh: Awal Berjumpa" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="image_url" class="form-label text-gold">URL Foto (Mempelai)</label>
+        <input type="url" id="image_url" name="imageUrl" class="form-control" placeholder="https://lh3.googleusercontent.com/..." />
+      </div>
+
+      <div class="form-group">
+        <label for="description" class="form-label text-gold">Deskripsi Kisah</label>
+        <textarea id="description" name="description" rows="3" class="form-control" placeholder="Tuliskan kisah indah di balik momen ini..." required></textarea>
+      </div>
+
+      <div class="form-group" style="max-width: 250px;">
+        <label for="sort_order" class="form-label text-gold">Urutan Tampil (Sort Order)</label>
+        <input type="number" id="sort_order" name="sortOrder" class="form-control" value="0" required />
+      </div>
+
+      <button type="submit" class="btn-primary-gold display-inline-flex" style="margin: 0; width: auto;">
+        <span class="material-symbols-outlined">add</span>
+        Tambah Milestone
+      </button>
+    </form>
+  </div>
+
+  <!-- Milestones List -->
+  <div class="glass-card font-sans">
+    <h3 class="font-serif text-gold mb-6" style="font-size: 1.25rem;">Daftar Kisah Saat Ini</h3>
+    
+    <div class="admin-table-container">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">Urutan</th>
+            <th style="width: 150px;">Momen</th>
+            <th style="width: 150px;">Judul</th>
+            <th>Kisah</th>
+            <th style="width: 80px;">Foto</th>
+            <th style="width: 80px; text-align: center;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if(stories && stories.length > 0)
+            @each(story in stories)
+              <tr>
+                <td>{{ story.sortOrder }}</td>
+                <td><strong class="text-gold">{{ story.milestoneDate }}</strong></td>
+                <td>{{ story.title }}</td>
+                <td style="font-size: 0.8rem; color: var(--on-surface-variant);">{{ story.description }}</td>
+                <td>
+                  @if(story.imageUrl)
+                    <a href="{{ story.imageUrl }}" target="_blank" class="text-gold" style="font-size: 0.8rem; text-decoration: underline;">Lihat</a>
+                  @else
+                    <span class="text-muted" style="font-size: 0.8rem;">Tidak ada</span>
+                  @endif
+                </td>
+                <td style="text-align: center;">
+                  <form action="/admin/stories/delete/{{ story.id }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kisah ini?');">
+                    {{ csrfField() }}
+                    <button type="submit" class="btn-copy-gold" style="border-color: var(--danger); color: var(--danger); padding: 4px 8px;">
+                      <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            @endeach
+          @else
+            <tr>
+              <td colspan="6" class="text-center text-muted" style="padding: 2rem;">Belum ada kisah terdaftar.</td>
+            </tr>
+          @endif
+        </tbody>
+      </table>
+    </div>
+  </div>
+@end

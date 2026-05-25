@@ -1,0 +1,22 @@
+<div class="editorial-invitation">
+  <!-- Folio Navigation Header -->
+  @!invitation.imageSequence.nav({ invitation })
+  
+  <!-- Cover Section -->
+  @!invitation.imageSequence.cover({ invitation, guestName })
+  
+  <!-- Main Scrollable Invitation Content -->
+  <div id="invitation-main-content" class="hidden">
+    <!-- Pinned Couple Introductions & Story Sequence -->
+    @!invitation.imageSequence.couple({ invitation, stories })
+    
+    <!-- Events Information -->
+    @!invitation.imageSequence.event({ invitation })
+    
+    <!-- RSVP & Gift Registry -->
+    @!invitation.imageSequence.rsvp({ invitation, guests, guestName })
+    
+    <!-- Closing Moment -->
+    @!invitation.imageSequence.closing({ invitation })
+  </div>
+</div>
