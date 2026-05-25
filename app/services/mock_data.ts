@@ -24,7 +24,7 @@ export interface MockGuest {
   name: string
   attendance: string
   comment: string
-  createdAt?: string
+  createdAt?: DateTime
 }
 
 export interface MockInvitation {
@@ -138,6 +138,7 @@ const mockGuests = (invitationId: number): MockGuest[] => [
     name: 'Andi & Sara',
     attendance: 'hadir',
     comment: 'Selamat menempuh hidup baru J & M! Semoga cinta kalian selalu mekar seperti bunga di taman surga. Kami sangat senang bisa hadir!',
+    createdAt: DateTime.now().minus({ hours: 2 }),
   },
   {
     id: 2,
@@ -145,6 +146,7 @@ const mockGuests = (invitationId: number): MockGuest[] => [
     name: 'Ibu Ratna',
     attendance: 'tidak',
     comment: 'Doa terbaik untuk kalian berdua. Maaf Ibu tidak bisa hadir secara langsung, namun doa Ibu menyertai langkah kalian berdua.',
+    createdAt: DateTime.now().minus({ days: 1 }),
   },
   {
     id: 3,
@@ -152,6 +154,7 @@ const mockGuests = (invitationId: number): MockGuest[] => [
     name: 'Keluarga Sudarsono',
     attendance: 'hadir',
     comment: 'Barakallah, semoga menjadi keluarga yang sakinah, mawaddah, dan warahmah. Sangat terharu melihat perjalanan kalian.',
+    createdAt: DateTime.now().minus({ days: 2 }),
   },
 ]
 

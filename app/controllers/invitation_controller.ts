@@ -1,4 +1,5 @@
 import { HttpContext } from '@adonisjs/core/http'
+import { DateTime } from 'luxon'
 
 // Valid theme keys — add new themes here as they are created
 const VALID_THEMES = ['java_style', 'image_sequence'] as const
@@ -57,7 +58,7 @@ export default class InvitationController {
         name,
         attendance,
         comment,
-        createdAt: new Date().toISOString()
+        createdAt: DateTime.now()
       }
       
       if (!volatileRSVPs[mockInv.id]) {
