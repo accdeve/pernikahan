@@ -13,15 +13,17 @@
 
 import { middleware } from '#start/kernel'
 import router from '@adonisjs/core/services/router'
+import Invitation from '#models/invitation'
 
 // Controllers lazy imports
 const InvitationController = () => import('#controllers/invitation_controller')
 const AdminAuthController = () => import('#controllers/admin_auth_controller')
 const AdminController = () => import('#controllers/admin_controller')
 
-// 1. Root redirect to default Javanese wedding slug
-router.get('/', ({ response }) => {
-  return response.redirect().toPath('/java/juliana-muhammad')
+// 1. Root landing showcase page
+router.get('/', async ({ view }) => {
+  const invitations = await Invitation.query().orderBy('id', 'asc')
+  return view.render('pages/landing', { invitations })
 })
 
 // 2. Public Wedding Invitation Routes (/java and /modern prefixes)
