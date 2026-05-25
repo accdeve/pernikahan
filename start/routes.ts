@@ -22,8 +22,18 @@ const AdminController = () => import('#controllers/admin_controller')
 
 // 1. Root landing showcase page
 router.get('/', async ({ view }) => {
-  const invitations = await Invitation.query().orderBy('id', 'asc')
-  return view.render('pages/landing', { invitations })
+  try {
+    const invitations = await Invitation.query().orderBy('id', 'asc')
+    if (invitations.length === 0) {
+      const { getMockInvitations } = await import('#services/mock_data')
+      return view.render('pages/landing', { invitations: getMockInvitations() })
+    }
+    return view.render('pages/landing', { invitations })
+  } catch (error) {
+    // Fail-safe fallback to hardcoded mock data if database is empty or connection fails (e.g. on serverless Vercel)
+    const { getMockInvitations } = await import('#services/mock_data')
+    return view.render('pages/landing', { invitations: getMockInvitations() })
+  }
 })
 
 // 2. Public Wedding Invitation Routes (/java and /modern prefixes)
