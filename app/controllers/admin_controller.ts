@@ -1,25 +1,17 @@
 import { HttpContext } from '@adonisjs/core/http'
-import Invitation from '#models/invitation'
-import Story from '#models/story'
-import Gallery from '#models/gallery'
-import Guest from '#models/guest'
-import { DateTime } from 'luxon'
 
 export default class AdminController {
   // 1. DASHBOARD OVERVIEW
   async dashboard({ view }: HttpContext) {
-    const invitation = await Invitation.firstOrFail()
+    const { getMockInvitations } = await import('#services/mock_data')
+    const invitation = getMockInvitations()[0]
 
     // Fetch and filter guests
-    const guestsList = await Guest.query().where('invitationId', invitation.id)
+    const guestsList = invitation.guests
     const totalGuests = guestsList.length
     const attendingCount = guestsList.filter(g => g.attendance === 'hadir').length
     const decliningCount = guestsList.filter(g => g.attendance === 'tidak').length
-
-    const recentGuests = await Guest.query()
-      .where('invitationId', invitation.id)
-      .orderBy('createdAt', 'desc')
-      .limit(5)
+    const recentGuests = guestsList.slice(0, 5)
 
     return view.render('pages/admin/dashboard', {
       invitation,
@@ -32,123 +24,65 @@ export default class AdminController {
 
   // 2. EDIT INVITATION DETAIL
   async edit({ view }: HttpContext) {
-    const invitation = await Invitation.firstOrFail()
+    const { getMockInvitations } = await import('#services/mock_data')
+    const invitation = getMockInvitations()[0]
     return view.render('pages/admin/edit_invitation', { invitation })
   }
 
-  async update({ request, response, session }: HttpContext) {
-    const invitation = await Invitation.firstOrFail()
-
-    // Bind all inputs
-    invitation.groomName = request.input('groomName')
-    invitation.groomNickname = request.input('groomNickname')
-    invitation.groomParentFather = request.input('groomParentFather')
-    invitation.groomParentMother = request.input('groomParentMother')
-
-    invitation.brideName = request.input('brideName')
-    invitation.brideNickname = request.input('brideNickname')
-    invitation.brideParentFather = request.input('brideParentFather')
-    invitation.brideParentMother = request.input('brideParentMother')
-
-    invitation.akadDatetime = DateTime.fromISO(request.input('akadDatetime'))
-    invitation.resepsiDatetime = DateTime.fromISO(request.input('resepsiDatetime'))
-
-    invitation.eventLocation = request.input('eventLocation')
-    invitation.eventAddress = request.input('eventAddress')
-    invitation.googleMapsUrl = request.input('googleMapsUrl')
-
-    invitation.bankName = request.input('bankName')
-    invitation.bankAccountNumber = request.input('bankAccountNumber')
-    invitation.bankAccountHolder = request.input('bankAccountHolder')
-
-    invitation.walletName = request.input('walletName')
-    invitation.walletNumber = request.input('walletNumber')
-    invitation.walletHolder = request.input('walletHolder')
-
-    invitation.slug = request.input('slug')
-    invitation.bgMusicUrl = request.input('bgMusicUrl')
-
-    await invitation.save()
-
-    session.flash('success', 'Informasi undangan pernikahan berhasil diperbarui!')
+  async update({ response, session }: HttpContext) {
+    session.flash('success', 'Informasi undangan pernikahan berhasil diperbarui! (Demo Mode: Berhasil disimulasikan)')
     return response.redirect().back()
   }
 
   // 3. MANAGE LOVE STORIES
   async stories({ view }: HttpContext) {
-    const invitation = await Invitation.firstOrFail()
-    const stories = await Story.query().where('invitationId', invitation.id).orderBy('sortOrder', 'asc')
+    const { getMockInvitations } = await import('#services/mock_data')
+    const invitation = getMockInvitations()[0]
+    const stories = invitation.stories
 
     return view.render('pages/admin/manage_stories', { stories })
   }
 
-  async createStory({ request, response, session }: HttpContext) {
-    const invitation = await Invitation.firstOrFail()
-
-    await Story.create({
-      invitationId: invitation.id,
-      milestoneDate: request.input('milestoneDate'),
-      title: request.input('title'),
-      imageUrl: request.input('imageUrl'),
-      description: request.input('description'),
-      sortOrder: Number(request.input('sortOrder', 0)),
-    })
-
-    session.flash('success', 'Momen kisah berhasil ditambahkan!')
+  async createStory({ response, session }: HttpContext) {
+    session.flash('success', 'Momen kisah berhasil ditambahkan! (Demo Mode: Berhasil disimulasikan)')
     return response.redirect().back()
   }
 
-  async deleteStory({ params, response, session }: HttpContext) {
-    const story = await Story.findOrFail(params.id)
-    await story.delete()
-
-    session.flash('success', 'Momen kisah berhasil dihapus!')
+  async deleteStory({ response, session }: HttpContext) {
+    session.flash('success', 'Momen kisah berhasil dihapus! (Demo Mode: Berhasil disimulasikan)')
     return response.redirect().back()
   }
 
   // 4. MANAGE GALLERY PHOTOS
   async gallery({ view }: HttpContext) {
-    const invitation = await Invitation.firstOrFail()
-    const galleries = await Gallery.query().where('invitationId', invitation.id).orderBy('sortOrder', 'asc')
+    const { getMockInvitations } = await import('#services/mock_data')
+    const invitation = getMockInvitations()[0]
+    const galleries = invitation.galleries
 
     return view.render('pages/admin/manage_gallery', { galleries })
   }
 
-  async createGallery({ request, response, session }: HttpContext) {
-    const invitation = await Invitation.firstOrFail()
-
-    await Gallery.create({
-      invitationId: invitation.id,
-      imageUrl: request.input('imageUrl'),
-      caption: request.input('caption'),
-      sortOrder: Number(request.input('sortOrder', 0)),
-    })
-
-    session.flash('success', 'Foto galeri berhasil ditambahkan!')
+  async createGallery({ response, session }: HttpContext) {
+    session.flash('success', 'Foto galeri berhasil ditambahkan! (Demo Mode: Berhasil disimulasikan)')
     return response.redirect().back()
   }
 
-  async deleteGallery({ params, response, session }: HttpContext) {
-    const photo = await Gallery.findOrFail(params.id)
-    await photo.delete()
-
-    session.flash('success', 'Foto galeri berhasil dihapus!')
+  async deleteGallery({ response, session }: HttpContext) {
+    session.flash('success', 'Foto galeri berhasil dihapus! (Demo Mode: Berhasil disimulasikan)')
     return response.redirect().back()
   }
 
   // 5. MANAGE GUESTS & RSVPS
   async guests({ view }: HttpContext) {
-    const invitation = await Invitation.firstOrFail()
-    const guests = await Guest.query().where('invitationId', invitation.id).orderBy('createdAt', 'desc')
+    const { getMockInvitations } = await import('#services/mock_data')
+    const invitation = getMockInvitations()[0]
+    const guests = invitation.guests
 
     return view.render('pages/admin/manage_guests', { guests, invitation })
   }
 
-  async deleteGuest({ params, response, session }: HttpContext) {
-    const guest = await Guest.findOrFail(params.id)
-    await guest.delete()
-
-    session.flash('success', 'Data tamu / ucapan berhasil dihapus!')
+  async deleteGuest({ response, session }: HttpContext) {
+    session.flash('success', 'Data tamu / ucapan berhasil dihapus! (Demo Mode: Berhasil disimulasikan)')
     return response.redirect().back()
   }
 }

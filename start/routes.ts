@@ -13,7 +13,6 @@
 
 import { middleware } from '#start/kernel'
 import router from '@adonisjs/core/services/router'
-import Invitation from '#models/invitation'
 
 // Controllers lazy imports
 const InvitationController = () => import('#controllers/invitation_controller')
@@ -22,18 +21,8 @@ const AdminController = () => import('#controllers/admin_controller')
 
 // 1. Root landing showcase page
 router.get('/', async ({ view }) => {
-  try {
-    const invitations = await Invitation.query().orderBy('id', 'asc')
-    if (invitations.length === 0) {
-      const { getMockInvitations } = await import('#services/mock_data')
-      return view.render('pages/landing', { invitations: getMockInvitations() })
-    }
-    return view.render('pages/landing', { invitations })
-  } catch (error) {
-    // Fail-safe fallback to hardcoded mock data if database is empty or connection fails (e.g. on serverless Vercel)
-    const { getMockInvitations } = await import('#services/mock_data')
-    return view.render('pages/landing', { invitations: getMockInvitations() })
-  }
+  const { getMockInvitations } = await import('#services/mock_data')
+  return view.render('pages/landing', { invitations: getMockInvitations() })
 })
 
 // 2. Public Wedding Invitation Routes (/java and /modern prefixes)
