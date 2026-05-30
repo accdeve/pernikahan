@@ -3,9 +3,11 @@
 **Parent:** [AGENTS.md](../AGENTS.md)
 
 ## OVERVIEW
+
 All Edge.js templates for the wedding invitation app. Two invitation themes + admin panel UI.
 
 ## STRUCTURE
+
 ```
 resources/views/
 ├── pages/
@@ -24,17 +26,19 @@ resources/views/
 ```
 
 ## WHERE TO LOOK
-| Task | Location | Notes |
-|------|----------|-------|
-| Switch theme | `pages/home.edge` | Dispatches based on `activeStyle` variable |
-| Add new theme | `components/invitation/{name}/` + `pages/home.edge` | Copy structure from existing theme |
-| Modify wedding sections | `components/invitation/{theme}/` | Each section is a separate .edge file |
-| Modify admin pages | `pages/admin/` | Dashboard, manage stories/gallery/guests |
-| Change layout wrapper | `components/layouts/main.edge` | HTML shell, bg music, GSAP init |
-| Error pages | `pages/errors/` | Custom 404, 500 |
-| Form components | `components/form/`, `components/input/`, etc. | Reusable across admin pages |
+
+| Task                    | Location                                            | Notes                                      |
+| ----------------------- | --------------------------------------------------- | ------------------------------------------ |
+| Switch theme            | `pages/home.edge`                                   | Dispatches based on `activeStyle` variable |
+| Add new theme           | `components/invitation/{name}/` + `pages/home.edge` | Copy structure from existing theme         |
+| Modify wedding sections | `components/invitation/{theme}/`                    | Each section is a separate .edge file      |
+| Modify admin pages      | `pages/admin/`                                      | Dashboard, manage stories/gallery/guests   |
+| Change layout wrapper   | `components/layouts/main.edge`                      | HTML shell, bg music, GSAP init            |
+| Error pages             | `pages/errors/`                                     | Custom 404, 500                            |
+| Form components         | `components/form/`, `components/input/`, etc.       | Reusable across admin pages                |
 
 ## CONVENTIONS
+
 - **Dispatch pattern**: `home.edge` is the single entry; it `@if` checks `activeStyle` to include the correct `@!invitation.{theme}()` component
 - **Theme components**: Each theme is a directory under `components/invitation/{name}/` with an `index.edge` entry
 - **Index.edge in themes**: Wraps all sections in order; individual sections are separate .edge files
@@ -43,19 +47,21 @@ resources/views/
 - **Form components**: Use `{{ field }}`, `{{ label }}` props pattern; admin forms are not client-side rendered
 
 ## ANTI-PATTERNS
+
 - **Do NOT add new .edge files without `.edge` extension**
 - **Do NOT use `@/` or relative paths** — Edge.js `@!` components resolve to `components/` directory automatically
 - **Never hardcode theme names** in new code; always reference `activeStyle` or `VALID_THEMES`
 
 ## THEME FILES COMPARISON
-| Section | java_style | image_sequence |
-|---------|-----------|----------------|
-| Cover | ✓ | ✓ |
-| Couple | ✓ | ✓ |
-| Event | ✓ | ✓ |
-| Story | ✓ | — |
-| Gallery | ✓ | — |
-| Nav | ✓ | ✓ |
-| RSVP | ✓ | ✓ |
-| Closing | ✓ | ✓ |
-| **Total** | 9 files | 7 files |
+
+| Section   | java_style | image_sequence |
+| --------- | ---------- | -------------- |
+| Cover     | ✓          | ✓              |
+| Couple    | ✓          | ✓              |
+| Event     | ✓          | ✓              |
+| Story     | ✓          | —              |
+| Gallery   | ✓          | —              |
+| Nav       | ✓          | ✓              |
+| RSVP      | ✓          | ✓              |
+| Closing   | ✓          | ✓              |
+| **Total** | 9 files    | 7 files        |

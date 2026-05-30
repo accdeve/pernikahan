@@ -1,4 +1,4 @@
-# Dependencies and AdonisJS build
+# Dependencies and build
 node_modules
 build
 tmp/*
@@ -14,13 +14,43 @@ tmp/*
 public/assets
 
 # Build tools specific
-npm-debug.log
-yarn-error.log
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.log
+
+# AdonisJS auto-generated (DO NOT COMMIT)
+ace.js
+server/
+database/schema.ts
+
+# SQLite database files
+*.sqlite3
+*.sqlite
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Cache directories
+.cache/
 
 # Editors specific
 .fleet
 .idea
 .vscode
+*.swp
+*.swo
+*~
 
 # Platform specific
 .DS_Store
+Thumbs.db
+.Directory
+
+# Tooling artifacts
+.playwright-mcp/

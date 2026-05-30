@@ -1,0 +1,20 @@
+<!-- resources/views/components/b2b/attendance_qr.edge -->
+<div class="info-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 2.5rem 2rem; margin-bottom: 2rem; text-align: center;">
+  <div style="font-size: 2rem; color: var(--accent, #D4AF37); margin-bottom: 1rem;">
+    <i class="fa-solid fa-qrcode"></i>
+  </div>
+  <h3>Kartu Kehadiran Digital</h3>
+  <p style="color: var(--text-muted, #A69F95); font-size: 0.9rem; margin-bottom: 1.5rem;">
+    Tunjukkan QR Code di bawah ini kepada penerima tamu saat memasuki area gedung pernikahan untuk proses check-in on-site.
+  </p>
+  
+  <div style="background: white; padding: 1.5rem; display: inline-block; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 2px solid var(--accent, #D4AF37);">
+    <!-- Standard local generator or placeholder QR code using global qr API -->
+    <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + (customer?.id || 'guest')" 
+         alt="QR Code Check-in" style="width: 150px; height: 150px; display: block;" />
+  </div>
+  
+  <div style="margin-top: 1.25rem; font-size: 0.85rem; font-weight: bold; color: var(--accent, #D4AF37);" x-text="guestName || 'Tamu Undangan'">
+    Nama Tamu
+  </div>
+</div>

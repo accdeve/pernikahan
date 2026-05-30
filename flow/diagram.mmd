@@ -1,0 +1,201 @@
+%% ============================================================================
+%% Database Flow - Undangan Digital B2B
+%% Model Bisnis:
+%%   Wedding    -> Beli putus, bayar 1x per customer, aktif 13 hari
+%%   Anniversary -> Memory book (bukan undangan), monthly subscription,
+%%                  link permanen, Add Moment tiap tahun,
+%%                  foto wedding + photobooth otomatis termuat
+%% ============================================================================
+
+%% 1. Main Flow: Wedding Invitation (Beli Putus)
+
+graph TD
+
+    classDef wo fill:#3b82f620,stroke:#3b82f6,stroke-width:2px,color:#93c5fd
+    classDef customer fill:#22c55e20,stroke:#22c55e,stroke-width:2px,color:#86efac
+    classDef guest fill:#a855f720,stroke:#a855f7,stroke-width:2px,color:#d8b4fe
+    classDef billing fill:#ef444420,stroke:#ef4444,stroke-width:2px,color:#fca5a5
+    classDef decision fill:#f59e0b20,stroke:#f59e0b,stroke-width:2px,color:#fcd34d
+    classDef note fill:#64748b20,stroke:#64748b,stroke-width:1px,color:#94a3b8
+
+    subgraph Onboard["Onboarding WO"]
+        A1["WO Daftar"]:::wo
+        A2["Buat Staff Admin"]:::wo
+    end
+
+    subgraph Charge["Charge & Bayar"]
+        B1["WO buat data customer (pasangan pengantin)"]:::wo
+        B2["WO di-charge INSERT invoice (pending)"]:::billing
+        B3["WO bayar"]:::wo
+        B4["Invoice lunas"]:::billing
+    end
+
+    subgraph Pick["Pilih Plan & Template"]
+        C1["WO pilih Plan (Basic/Premium) unlock templates"]:::wo
+        C2{"Cek: plan sudah dibayar?"}:::decision
+        C3["WO pilih Template"]:::wo
+        C4["Set tanggal aktif (1 minggu 6 hari)"]:::wo
+        C5["INSERT customer_template + cust_metadata"]:::wo
+    end
+
+    subgraph Live["Undangan Live (13 Hari)"]
+        D1["Undangan aktif"]:::customer
+        D2["Tamu RSVP"]:::guest
+        D3["Tamu komen"]:::guest
+        D4["Hari H: check-in"]:::guest
+        D5["Photobooth tamu"]:::guest
+    end
+
+    subgraph End["Setelah 13 Hari"]
+        E1["Masa aktif habis"]:::note
+        E2["Data tetap tersimpan"]:::note
+    end
+
+    A1 --> A2
+    A2 --> B1 --> B2 --> B3 --> B4
+    B4 --> C1 --> C2
+    C2 -->|"Sudah"| C3 --> C4 --> C5
+    C2 -->|"Belum"| B2
+    C5 --> D1
+    D1 --> D2
+    D1 --> D3
+    D1 --> D4
+    D1 --> D5
+    D2 --> E1
+    D3 --> E1
+    D4 --> E1
+    D5 --> E1
+    E1 --> E2
+
+%% 2. Anniversary Flow - Memory Book (Monthly Subscription)
+
+graph TD
+
+    classDef wo fill:#3b82f620,stroke:#3b82f6,stroke-width:2px,color:#93c5fd
+    classDef customer fill:#22c55e20,stroke:#22c55e,stroke-width:2px,color:#86efac
+    classDef billing fill:#ef444420,stroke:#ef4444,stroke-width:2px,color:#fca5a5
+    classDef memory fill:#a855f720,stroke:#a855f7,stroke-width:2px,color:#d8b4fe
+
+    subgraph Init["Aktivasi Awal"]
+        A1["WO aktivasi Anniversary Memory Book untuk customer"]:::wo
+        A2["Dapat link permanen"]:::customer
+        A3["Data wedding otomatis termuat: foto undangan, photobooth tamu, detail pasangan"]:::memory
+    end
+
+    subgraph Ongoing["Setiap Tahun - Add Moment"]
+        B1["Pasangan buka link"]:::customer
+        B2["Klik Add Moment"]:::customer
+        B3["Upload foto momen anniversary"]:::memory
+        B4["Isi detail momen: tanggal, cerita, lokasi dll"]:::memory
+        B5["Momen tersimpan"]:::memory
+    end
+
+    subgraph Bill["Billing"]
+        C1["Monthly subscription berkelanjutan"]:::billing
+        C2["WO bisa berhenti kapan"]:::wo
+    end
+
+    A1 --> A2 --> A3
+    A3 --> B1
+    B1 --> B2 --> B3 --> B4 --> B5
+    B5 -.->|"tahun depan"| B1
+    A2 --> C1
+    C1 --> C2
+
+%% 3. Entity Relationship Diagram
+
+erDiagram
+
+    wedding_organization ||--o{ wo_staff : memiliki
+    wedding_organization ||--o{ customers : menangani
+    wedding_organization ||--o{ wo_plan : berlangganan
+    wedding_organization ||--o{ customer_template : mengaktifkan
+    wedding_organization ||--o{ guests : menerima
+    wedding_organization ||--o{ cust_metadata : menyiapkan
+    wedding_organization ||--o{ cust_comment : menerima
+    wedding_organization ||--o{ attendance : mencatat
+    wedding_organization ||--o{ photobooth : mengumpulkan
+    wedding_organization ||--o{ payment_method : memiliki
+    wedding_organization ||--o{ invoice : ditagihkan
+
+    plan ||--o{ plan_template : mencakup
+    templates ||--o{ plan_template : termasuk
+    plan ||--o{ wo_plan : dibeli
+
+    customers ||--o{ customer_template : mengaktivasi
+    templates ||--o{ customer_template : digunakan
+    customer_template ||--o{ cust_metadata : dikonfigurasi
+    customer_template ||--o{ invoice : ditagih
+
+    guests ||--o{ cust_comment : menulis
+    guests ||--o{ attendance : checkin
+
+    invoice ||--o{ payment : dibayar
+    payment_method ||--o{ payment : menggunakan
+
+    gallery ||--o{ cust_metadata : referensi_foto
+
+%% 4. Invoice State Machine
+
+stateDiagram-v2
+
+    [*] --> pending : WO di-charge
+    pending --> paid : WO bayar
+    pending --> overdue : Lewat due_date
+    pending --> cancelled : WO batalkan
+    paid --> refunded : WO minta refund
+
+    state paid {
+        [*] --> template_aktif
+    }
+    state refunded {
+        [*] --> template_dinonaktifkan
+    }
+    state overdue {
+        [*] --> tidak_bisa_lanjut_pembayaran
+    }
+
+%% 5. Multi-Tenant Architecture
+
+graph TB
+
+    classDef platform fill:#f59e0b20,stroke:#f59e0b,stroke-width:2px,color:#fcd34d
+    classDef wo fill:#3b82f620,stroke:#3b82f6,stroke-width:2px,color:#93c5fd
+
+    subgraph Plat["Platform Layer (Global)"]
+        T[(templates)]:::platform
+        P[(plan)]:::platform
+        PT[(plan_template)]:::platform
+        G[(gallery)]:::platform
+    end
+
+    subgraph WO1["Tenant WO A"]
+        O1[wedding_organization]:::wo
+        S1[wo_staff]:::wo
+        W1[wo_plan]:::wo
+        C1[customers]:::wo
+        T1[customer_template]:::wo
+    end
+
+    subgraph WO2["Tenant WO B"]
+        O2[wedding_organization]:::wo
+        S2[wo_staff]:::wo
+        W2[wo_plan]:::wo
+        C2[customers]:::wo
+        T2[customer_template]:::wo
+    end
+
+    P --> PT
+    T --> PT
+    P --> W1
+    P --> W2
+    O1 --> S1
+    O1 --> W1
+    O1 --> C1
+    C1 --> T1
+    T --> T1
+    O2 --> S2
+    O2 --> W2
+    O2 --> C2
+    C2 --> T2
+    T --> T2

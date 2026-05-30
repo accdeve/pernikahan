@@ -3,45 +3,27 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login Admin - Undangan Pernikahan</title>
-    <!-- Google Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Newsreader&family=Bodoni+Moda&family=Material+Symbols+Outlined&display=swap" rel="stylesheet" />
-    @vite(['resources/css/app.css'])
+    <title>Login Staff - {{ slugWo }}</title>
+    
+    <!-- Google Fonts (Outfit & Playfair Display) & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+
+    @viteReactRefresh()
+    @vite(['resources/css/tailwind.css', 'resources/js/admin/login.tsx'])
   </head>
-  <body class="admin-body">
-    <div class="admin-login-wrapper">
-      <div class="admin-login-card glass-card">
-        <div class="text-center mb-6">
-          <div class="gunungan-mini-ornament"></div>
-          <h2 class="font-serif text-gold mt-4" style="font-size: 1.75rem;">Login Administrator</h2>
-          <p class="text-muted font-sans mt-2" style="font-size: 0.85rem;">Heritage Wedding Management</p>
-        </div>
+  <body class="bg-[#FAF9F6] text-[#111111] antialiased min-h-screen flex items-center justify-center p-4">
+    <!-- Server Configurations for Client-Side React Hydration -->
+    <script id="server-config" type="application/json">
+      {
+        "slugWo": "{{ slugWo }}",
+        "csrfToken": "{{ csrfToken }}",
+        "flashError": "{{ flashMessages.get('errors.login') || '' }}",
+        "flashEmail": "{{ flashMessages.get('email') || '' }}"
+      }
+    </script>
 
-        @if(flashMessages.has('errors.login'))
-          <div class="alert alert-destructive text-center font-sans mb-4" style="padding: 10px; font-size: 0.85rem; min-width: auto; width: 100%;">
-            {{ flashMessages.get('errors.login') }}
-          </div>
-        @endif
-
-        <form action="/admin/login" method="POST" class="font-sans">
-          {{ csrfField() }}
-          
-          <div class="form-group">
-            <label for="email" class="form-label text-gold">Email Address</label>
-            <input type="email" id="email" name="email" class="form-control" placeholder="admin@example.com" value="{{ flashMessages.get('email') || '' }}" required />
-          </div>
-
-          <div class="form-group">
-            <label for="password" class="form-label text-gold">Password</label>
-            <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required />
-          </div>
-
-          <button type="submit" class="btn-primary-gold w-100 mt-4">
-            <span class="material-symbols-outlined">login</span>
-            Masuk Ke Dashboard
-          </button>
-        </form>
-      </div>
-    </div>
+    <div id="login-root" class="w-full max-w-sm"></div>
   </body>
 </html>

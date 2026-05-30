@@ -25,7 +25,8 @@ export default await Env.create(new URL('../', import.meta.url), {
   // Session
   SESSION_DRIVER: Env.schema.enum(['cookie', 'memory', 'database'] as const),
 
-  // Admin Credentials
-  ADMIN_EMAIL: Env.schema.string({ format: 'email' }),
-  ADMIN_PASSWORD: Env.schema.string(),
+  // Supabase Server-Side
+  SUPABASE_URL: Env.schema.string({ format: 'url', tld: false }),
+  SUPABASE_ANON_KEY: Env.schema.string(),
+  SUPABASE_SERVICE_ROLE_KEY: Env.schema.string(),
 })

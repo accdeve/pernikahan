@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Database Flow — Undangan Digital B2B</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, 'Inter', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 2rem;
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+    h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; color: #f8fafc; }
+    .subtitle { color: #94a3b8; margin-bottom: 2.5rem; font-size: 0.95rem; }
+    .subtitle a { color: #60a5fa; text-decoration: none; }
+    .subtitle a:hover { text-decoration: underline; }
+    .panel {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+      padding: 1.75rem; margin-bottom: 2rem; overflow: hidden;
+    }
+    .panel-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid #334155;
+    }
+    .panel-number {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 6px; background: #3b82f6;
+      color: #fff; font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+    }
+    .panel-title { font-size: 1.1rem; font-weight: 600; color: #f1f5f9; }
+    .panel-desc { font-size: 0.85rem; color: #94a3b8; margin-top: 0.15rem; }
+    .panel .mermaid { display: flex; justify-content: center; margin: 1rem 0; }
+    .highlight-box {
+      background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+      padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+    }
+    .highlight-box .label {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #64748b; margin-bottom: 0.35rem;
+    }
+    .highlight-box .value { font-size: 0.95rem; color: #f1f5f9; line-height: 1.6; }
+    .highlight-box .value strong { color: #fcd34d; }
+    .flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 1024px) { .flow-grid { grid-template-columns: 1fr; } }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 1.25rem;
+      margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #334155;
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #94a3b8; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 4px; }
+    .legend-dot.platform { background: #f59e0b; }
+    .legend-dot.wo { background: #3b82f6; }
+    .legend-dot.customer { background: #22c55e; }
+    .legend-dot.guest { background: #a855f7; }
+    .legend-dot.billing { background: #ef4444; }
+    .footer { text-align: center; padding: 2rem 0 0.5rem; color: #475569; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Database Flow</h1>
+  <p class="subtitle">
+    Platform B2B Undangan Digital — Berdasarkan
+    <a href="https://github.com/nine/pernikahan/blob/main/database/README.md" target="_blank">database/README.md</a>
+  </p>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-number">!</span>
+      <div>
+        <div class="panel-title">Model Bisnis</div>
+        <div class="panel-desc">Dua produk berbeda: undangan wedding (beli putus) vs album memori anniversary (subscription)</div>
+      </div>
+    </div>
+    <div class="highlight-box">
+      <div class="label">Wedding Invitation</div>
+      <div class="value">
+        Undangan pernikahan digital.<br/>
+        <strong>Beli Putus</strong> — WO bayar 1x per customer. Aktif <strong>13 hari</strong> (1 minggu 6 hari).
+        Setelah itu tidak aktif. Foto, data, photobooth tetap tersimpan di database.
+      </div>
+    </div>
+    <div class="highlight-box">
+      <div class="label">Anniversary Memory Book</div>
+      <div class="value">
+        <strong>Bukan undangan.</strong> Dokumentasi tahunan pasangan untuk mengabadikan momen dari tahun ke tahun.<br/>
+        Satu link permanen — isinya:<br/>
+        - Foto & data dari undangan pernikahan (termasuk photobooth tamu)<br/>
+        - Fitur <strong>"Add Moment"</strong> untuk tambah gambar & detail momen anniversary setiap tahun<br/>
+        - <strong>Monthly subscription</strong> — terus aktif selama WO/langganan berjalan
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-number">i</span>
+      <div>
+        <div class="panel-title">Legenda Warna</div>
+        <div class="panel-desc">Pembagian layer dalam arsitektur multi-tenant</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot platform"></span> Platform (global)</span>
+      <span class="legend-item"><span class="legend-dot wo"></span> WO / Tenant</span>
+      <span class="legend-item"><span class="legend-dot customer"></span> Customer</span>
+      <span class="legend-item"><span class="legend-dot guest"></span> Guest / Tamu</span>
+      <span class="legend-item"><span class="legend-dot billing"></span> Billing & Payment</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-number">1</span>
+      <div>
+        <div class="panel-title">Entity Relationship Diagram</div>
+        <div class="panel-desc">Relasi antar 16 tabel dalam sistem</div>
+      </div>
+    </div>
+    <div class="mermaid">
+      erDiagram
+        wedding_organization ||--o{ wo_staff : memiliki
+        wedding_organization ||--o{ customers : menangani
+        wedding_organization ||--o{ wo_plan : berlangganan
+        wedding_organization ||--o{ customer_template : mengaktifkan
+        wedding_organization ||--o{ guests : menerima
+        wedding_organization ||--o{ cust_metadata : menyiapkan
+        wedding_organization ||--o{ cust_comment : menerima
+        wedding_organization ||--o{ attendance : mencatat
+        wedding_organization ||--o{ photobooth : mengumpulkan
+        wedding_organization ||--o{ payment_method : memiliki
+        wedding_organization ||--o{ invoice : ditagihkan
+        plan ||--o{ plan_template : mencakup
+        templates ||--o{ plan_template : termasuk
+        plan ||--o{ wo_plan : dibeli
+        customers ||--o{ customer_template : mengaktivasi
+        templates ||--o{ customer_template : digunakan
+        customer_template ||--o{ cust_metadata : dikonfigurasi
+        customer_template ||--o{ invoice : ditagih
+        guests ||--o{ cust_comment : menulis
+        guests ||--o{ attendance : checkin
+        invoice ||--o{ payment : dibayar
+        payment_method ||--o{ payment : menggunakan
+        gallery ||--o{ cust_metadata : referensi_foto
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-number">2</span>
+      <div>
+        <div class="panel-title">Flow Utama — Wedding Invitation (Beli Putus)</div>
+        <div class="panel-desc">WO bayar per customer, pilih plan & template, aktif 13 hari, selesai</div>
+      </div>
+    </div>
+    <div class="mermaid">
+      graph TD
+          classDef wo fill:#3b82f620,stroke:#3b82f6,stroke-width:2px,color:#93c5fd
+          classDef customer fill:#22c55e20,stroke:#22c55e,stroke-width:2px,color:#86efac
+          classDef guest fill:#a855f720,stroke:#a855f7,stroke-width:2px,color:#d8b4fe
+          classDef billing fill:#ef444420,stroke:#ef4444,stroke-width:2px,color:#fca5a5
+          classDef decision fill:#f59e0b20,stroke:#f59e0b,stroke-width:2px,color:#fcd34d
+          classDef note fill:#64748b20,stroke:#64748b,stroke-width:1px,color:#94a3b8
+
+          subgraph Onboard["Onboarding WO"]
+              A1["WO Daftar"]:::wo
+              A2["Buat Staff Admin"]:::wo
+          end
+
+          subgraph Charge["Charge & Bayar"]
+              B1["WO buat data customer<br/>(pasangan pengantin)"]:::wo
+              B2["WO di-charge<br/>INSERT invoice (pending)"]:::billing
+              B3["WO bayar"]:::wo
+              B4["Invoice lunas"]:::billing
+          end
+
+          subgraph Pick["Pilih Plan & Template"]
+              C1["WO pilih Plan (Basic/Premium)<br/>unlock templates"]:::wo
+              C2{"Cek: plan sudah dibayar?"}:::decision
+              C3["WO pilih Template"]:::wo
+              C4["Set tanggal aktif<br/>(1 minggu 6 hari)"]:::wo
+              C5["INSERT customer_template<br/>+ cust_metadata"]:::wo
+          end
+
+          subgraph Live["Undangan Live (13 Hari)"]
+              D1["Undangan aktif"]:::customer
+              D2["Tamu RSVP"]:::guest
+              D3["Tamu komen"]:::guest
+              D4["Hari H: check-in"]:::guest
+              D5["Photobooth tamu"]:::guest
+          end
+
+          subgraph End["Setelah 13 Hari"]
+              E1["Masa aktif habis"]:::note
+              E2["Data tetap tersimpan"]:::note
+          end
+
+          A1 --> A2
+          A2 --> B1 --> B2 --> B3 --> B4
+          B4 --> C1 --> C2
+          C2 -->|"Sudah"| C3 --> C4 --> C5
+          C2 -->|"Belum"| B2
+          C5 --> D1
+          D1 --> D2 & D3 & D4 & D5
+          D2 & D3 & D4 & D5 --> E1
+          E1 --> E2
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-number">3</span>
+      <div>
+        <div class="panel-title">Anniversary — Memory Book (Monthly Subscription)</div>
+        <div class="panel-desc">Bukan undangan. Dokumentasi tahunan pasangan dengan Add Moment, link permanen, termasuk semua data wedding + photobooth</div>
+      </div>
+    </div>
+    <div class="mermaid">
+      graph TD
+          classDef wo fill:#3b82f620,stroke:#3b82f6,stroke-width:2px,color:#93c5fd
+          classDef customer fill:#22c55e20,stroke:#22c55e,stroke-width:2px,color:#86efac
+          classDef billing fill:#ef444420,stroke:#ef4444,stroke-width:2px,color:#fca5a5
+          classDef memory fill:#a855f720,stroke:#a855f7,stroke-width:2px,color:#d8b4fe
+
+          subgraph Init["Aktivasi Awal"]
+              A1["WO aktivasi Anniversary Memory Book<br/>untuk customer (pasangan)"]:::wo
+              A2["Dapat link permanen"]:::customer
+              A3["Data wedding otomatis termuat:<br/>- Foto undangan<br/>- Photobooth tamu<br/>- Detail pasangan"]:::memory
+          end
+
+          subgraph Ongoing["Setiap Tahun — Add Moment"]
+              B1["Pasangan buka link"]:::customer
+              B2["Klik Add Moment"]:::customer
+              B3["Upload foto momen anniversary"]:::memory
+              B4["Isi detail momen:<br/>- Tanggal<br/>- Cerita/keterangan<br/>- Lokasi dll"]:::memory
+              B5["Momen tersimpan"]:::memory
+          end
+
+          subgraph Billing["Billing"]
+              C1["Monthly subscription<br/>berkelanjutan"]:::billing
+              C2["WO bisa berhenti kapan"]:::wo
+          end
+
+          A1 --> A2 --> A3
+          A3 --> B1
+          B1 --> B2 --> B3 --> B4 --> B5
+          B5 -.->|"tahun depan"| B1
+          A2 --> C1
+          C1 --> C2
+    </div>
+  </div>
+
+  <div class="flow-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-number">4</span>
+        <div>
+          <div class="panel-title">Invoice State Machine</div>
+          <div class="panel-desc">Status transisi invoice dan dampak ke customer_template</div>
+        </div>
+      </div>
+      <div class="mermaid">
+        stateDiagram-v2
+            [*] --> pending : WO di-charge
+            pending --> paid : WO bayar
+            pending --> overdue : Lewat due_date
+            pending --> cancelled : WO batalkan
+            paid --> refunded : WO minta refund
+            state paid {
+                [*] --> template_aktif
+            }
+            state refunded {
+                [*] --> template_dinonaktifkan
+            }
+            state overdue {
+                [*] --> tidak_bisa_lanjut_pembayaran
+            }
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-number">5</span>
+        <div>
+          <div class="panel-title">Perbandingan Produk</div>
+          <div class="panel-desc">Wedding (beli putus 13 hari) vs Anniversary (subscription monthly + Add Moment)</div>
+        </div>
+      </div>
+      <div class="mermaid">
+        graph TB
+            classDef wedding fill:#3b82f620,stroke:#3b82f6,stroke-width:2px,color:#93c5fd
+            classDef anniversary fill:#a855f720,stroke:#a855f7,stroke-width:2px,color:#d8b4fe
+            classDef billing fill:#ef444420,stroke:#ef4444,stroke-width:2px,color:#fca5a5
+            classDef note fill:#64748b20,stroke:#64748b,stroke-width:1px,color:#94a3b8
+
+            subgraph Wedding["Wedding Invitation"]
+                W1["Beli putus"]:::billing
+                W2["Aktif 13 hari"]:::wedding
+                W3["Setelah 13 hari tidak aktif"]:::note
+                W4["Data tetap tersimpan"]:::note
+                W1 --> W2 --> W3
+                W2 -.-> W4
+            end
+
+            subgraph Anniv["Anniversary Memory Book"]
+                A1["Monthly subscription"]:::billing
+                A2["Link permanen"]:::anniversary
+                A3["Add Moment tiap tahun"]:::anniversary
+                A4["Foto wedding + photobooth<br/>otomatis termuat"]:::note
+                A1 --> A2
+                A2 --> A3
+                A2 --> A4
+            end
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-number">6</span>
+      <div>
+        <div class="panel-title">Multi-Tenant Architecture</div>
+        <div class="panel-desc">Isolasi data antar WO (tenant) menggunakan kolom wo_id di setiap tabel</div>
+      </div>
+    </div>
+    <div class="mermaid">
+      graph TB
+          classDef platform fill:#f59e0b20,stroke:#f59e0b,stroke-width:2px,color:#fcd34d
+          classDef wo fill:#3b82f620,stroke:#3b82f6,stroke-width:2px,color:#93c5fd
+
+          subgraph Plat["Platform Layer (Global)"]
+              T[templates]:::platform
+              P[plan]:::platform
+              PT[plan_template]:::platform
+              G[gallery]:::platform
+          end
+
+          subgraph WO1["Tenant WO A"]
+              ORG1[wedding_organization]:::wo
+              STF1[wo_staff]:::wo
+              WP1[wo_plan]:::wo
+              C1[customers]:::wo
+              CT1[customer_template]:::wo
+          end
+
+          subgraph WO2["Tenant WO B"]
+              ORG2[wedding_organization]:::wo
+              STF2[wo_staff]:::wo
+              WP2[wo_plan]:::wo
+              C2[customers]:::wo
+              CT2[customer_template]:::wo
+          end
+
+          P --> PT
+          T --> PT
+          P --> WP1 & WP2
+          ORG1 --> STF1 & WP1 & C1
+          C1 --> CT1
+          T --> CT1
+          ORG2 --> STF2 & WP2 & C2
+          C2 --> CT2
+          T --> CT2
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-number">7</span>
+      <div>
+        <div class="panel-title">Tenant Isolation — Pola Query</div>
+        <div class="panel-desc">Setiap query data tenant-scoped WAJIB menyertakan wo_id langsung</div>
+      </div>
+    </div>
+    <div class="mermaid">
+      graph TB
+          classDef correct fill:#22c55e15,stroke:#22c55e,stroke-width:2px,color:#86efac
+          classDef wrong fill:#ef444415,stroke:#ef4444,stroke-width:2px,color:#fca5a5
+
+          subgraph Correct["BENAR 1 hop langsung filter"]
+              Q1["SELECT * FROM guests WHERE wo_id = 'uuid-wo'"]:::correct
+          end
+
+          subgraph Wrong["SALAH filter lewat JOIN"]
+              Q2["SELECT * FROM guests JOIN customers ON ... WHERE customers.wo_id = 'uuid-wo'"]:::wrong
+          end
+    </div>
+  </div>
+
+  <div class="footer">
+    Berdasarkan <strong>database/README.md</strong> — Platform Undangan Digital B2B<br/>
+    Diperbarui: 2026-05-25
+  </div>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontSize: '14px',
+      primaryColor: '#3b82f6',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#334155',
+      lineColor: '#64748b',
+      secondaryColor: '#1e293b',
+      tertiaryColor: '#0f172a',
+    },
+    flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+  });
+</script>
+
+</body>
+</html>

@@ -5,9 +5,11 @@
 **Branch:** main
 
 ## OVERVIEW
+
 Wedding invitation app ("undangan_pernikahan"). AdonisJS 7 backend + Edge.js templates + Alpine.js frontend + SQLite.
 
 ## STRUCTURE
+
 ```
 pernikahan/
 ├── app/
@@ -40,32 +42,35 @@ pernikahan/
 ```
 
 ## WHERE TO LOOK
-| Task | Location | Notes |
-|------|----------|-------|
-| Add route | `start/routes.ts` | Lazy-import controllers, apply middleware |
-| Add controller | `app/controllers/` | Class-based, use `HttpContext` from `@adonisjs/core/http` |
-| Add model | `app/models/` | Extend generated `FooSchema` from `#database/schema` |
-| Add migration | `database/migrations/` | Timestamped filenames, run `node ace migration:run` |
-| Modify invitation template | `resources/views/components/invitation/{theme}/` | 2 themes: `java_style` (9 files), `image_sequence` (7 files) |
-| Modify admin pages | `resources/views/pages/admin/` (6 files) | Edge.js, guarded by `auth` middleware |
-| Change validation | `app/validators/` | VineJS schemas |
-| Add theme | `resources/views/components/invitation/{name}/` + register in `invitation_controller.ts` `VALID_THEMES` |
-| Config changes | `config/` | Heavily commented; read comments before editing |
-| Seed data | `database/seeders/` | Run `node ace db:seed` |
+
+| Task                       | Location                                                                                                | Notes                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Add route                  | `start/routes.ts`                                                                                       | Lazy-import controllers, apply middleware                    |
+| Add controller             | `app/controllers/`                                                                                      | Class-based, use `HttpContext` from `@adonisjs/core/http`    |
+| Add model                  | `app/models/`                                                                                           | Extend generated `FooSchema` from `#database/schema`         |
+| Add migration              | `database/migrations/`                                                                                  | Timestamped filenames, run `node ace migration:run`          |
+| Modify invitation template | `resources/views/components/invitation/{theme}/`                                                        | 2 themes: `java_style` (9 files), `image_sequence` (7 files) |
+| Modify admin pages         | `resources/views/pages/admin/` (6 files)                                                                | Edge.js, guarded by `auth` middleware                        |
+| Change validation          | `app/validators/`                                                                                       | VineJS schemas                                               |
+| Add theme                  | `resources/views/components/invitation/{name}/` + register in `invitation_controller.ts` `VALID_THEMES` |
+| Config changes             | `config/`                                                                                               | Heavily commented; read comments before editing              |
+| Seed data                  | `database/seeders/`                                                                                     | Run `node ace db:seed`                                       |
 
 ## CODE MAP
-| Symbol | Type | Location | Role |
-|--------|------|----------|------|
-| `InvitationController` | Controller | `app/controllers/invitation_controller.ts` | Public wedding pages + RSVP |
-| `AdminController` | Controller | `app/controllers/admin_controller.ts` | Dashboard, edit, stories, gallery, guests |
-| `AdminAuthController` | Controller | `app/controllers/admin_auth_controller.ts` | Login/logout |
-| `Invitation` | Model | `app/models/invitation.ts` | Central model; hasMany stories, galleries, guests |
-| `User` | Model | `app/models/user.ts` | Auth user with `withAuthFinder` mixin |
-| `VALID_THEMES` | Const | `app/controllers/invitation_controller.ts:6` | Theme registry — add new themes here |
-| `middleware` | Export | `start/kernel.ts:47` | Named middleware (`guest`, `auth`) for route groups |
-| `home.edge` | Template | `resources/views/pages/home.edge` | Entry template; dispatches to theme component |
+
+| Symbol                 | Type       | Location                                     | Role                                                |
+| ---------------------- | ---------- | -------------------------------------------- | --------------------------------------------------- |
+| `InvitationController` | Controller | `app/controllers/invitation_controller.ts`   | Public wedding pages + RSVP                         |
+| `AdminController`      | Controller | `app/controllers/admin_controller.ts`        | Dashboard, edit, stories, gallery, guests           |
+| `AdminAuthController`  | Controller | `app/controllers/admin_auth_controller.ts`   | Login/logout                                        |
+| `Invitation`           | Model      | `app/models/invitation.ts`                   | Central model; hasMany stories, galleries, guests   |
+| `User`                 | Model      | `app/models/user.ts`                         | Auth user with `withAuthFinder` mixin               |
+| `VALID_THEMES`         | Const      | `app/controllers/invitation_controller.ts:6` | Theme registry — add new themes here                |
+| `middleware`           | Export     | `start/kernel.ts:47`                         | Named middleware (`guest`, `auth`) for route groups |
+| `home.edge`            | Template   | `resources/views/pages/home.edge`            | Entry template; dispatches to theme component       |
 
 ## CONVENTIONS
+
 - **Path aliases**: `#` prefix (e.g., `#controllers/user_controller`, `#models/user`) — NOT `@/`
 - **Lazy controller imports**: `const FooController = () => import('#controllers/foo_controller')` in routes
 - **Models extend generated schema**: `class Invitation extends InvitationSchema` (from `#database/schema`)
@@ -77,6 +82,7 @@ pernikahan/
 - **Env vars**: `SCREAMING_SNAKE_CASE` validated in `start/env.ts`
 
 ## ANTI-PATTERNS (THIS PROJECT)
+
 - **NEVER edit `server/` files** — auto-generated by AdonisJS
 - **NEVER edit `database/schema.ts`** — auto-generated by Lucid ORM
 - **NEVER edit `ace.js`** — overridden during build
@@ -84,6 +90,7 @@ pernikahan/
 - **Do NOT format `.edge` files** — excluded from Prettier
 
 ## COMMANDS
+
 ```bash
 npm run dev        # Development with HMR
 npm run build      # Production build (tsc + vite)
@@ -103,6 +110,7 @@ node ace make:migration name
 ```
 
 ## NOTES
+
 - **No CI/CD** configured — no GitHub Actions, Dockerfile, or deployment configs
 - **No tests written** — Japa configured with 3 suites but only `tests/bootstrap.ts` exists
 - **2 invitation themes**: `java_style` (default) and `image_sequence`. Toggle via `?theme=` query param or DB `style` field

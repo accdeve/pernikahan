@@ -4,51 +4,52 @@ type ParamValue = string | number | bigint | boolean
 
 export type ScannedRoutes = {
   ALL: {
-    'invitation.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
-    'invitation.rsvp': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
-    'admin_auth.show_login': { paramsTuple?: []; params?: {} }
-    'admin_auth.login': { paramsTuple?: []; params?: {} }
-    'admin_auth.logout': { paramsTuple?: []; params?: {} }
-    'admin.dashboard': { paramsTuple?: []; params?: {} }
-    'admin.edit': { paramsTuple?: []; params?: {} }
-    'admin.update': { paramsTuple?: []; params?: {} }
-    'admin.stories': { paramsTuple?: []; params?: {} }
-    'admin.create_story': { paramsTuple?: []; params?: {} }
-    'admin.delete_story': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'admin.gallery': { paramsTuple?: []; params?: {} }
-    'admin.create_gallery': { paramsTuple?: []; params?: {} }
-    'admin.delete_gallery': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'admin.guests': { paramsTuple?: []; params?: {} }
-    'admin.delete_guest': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'home': { paramsTuple?: []; params?: {} }
+    'admin.auth.login': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.auth.login.post': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.signup.signup': { paramsTuple?: []; params?: {} }
+    'admin.signup.signup.post': { paramsTuple?: []; params?: {} }
+    'admin.panel.logout': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.panel.dashboard': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.panel.customers.store': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.panel.customers.detail': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
+    'admin.panel.customers.update': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
+    'admin.panel.stories.store': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
+    'admin.panel.stories.delete': { paramsTuple: [ParamValue,ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue,'id': ParamValue} }
+    'admin.panel.gallery.store': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
+    'admin.panel.gallery.delete': { paramsTuple: [ParamValue,ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue,'id': ParamValue} }
+    'admin.panel.guests.delete': { paramsTuple: [ParamValue,ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue,'id': ParamValue} }
+    'invitation.show': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
+    'invitation.rsvp': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
   }
   GET: {
-    'invitation.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
-    'admin_auth.show_login': { paramsTuple?: []; params?: {} }
-    'admin.dashboard': { paramsTuple?: []; params?: {} }
-    'admin.edit': { paramsTuple?: []; params?: {} }
-    'admin.stories': { paramsTuple?: []; params?: {} }
-    'admin.gallery': { paramsTuple?: []; params?: {} }
-    'admin.guests': { paramsTuple?: []; params?: {} }
+    'home': { paramsTuple?: []; params?: {} }
+    'admin.auth.login': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.signup.signup': { paramsTuple?: []; params?: {} }
+    'admin.panel.dashboard': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.panel.customers.detail': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
+    'invitation.show': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
   }
   HEAD: {
-    'invitation.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
-    'admin_auth.show_login': { paramsTuple?: []; params?: {} }
-    'admin.dashboard': { paramsTuple?: []; params?: {} }
-    'admin.edit': { paramsTuple?: []; params?: {} }
-    'admin.stories': { paramsTuple?: []; params?: {} }
-    'admin.gallery': { paramsTuple?: []; params?: {} }
-    'admin.guests': { paramsTuple?: []; params?: {} }
+    'home': { paramsTuple?: []; params?: {} }
+    'admin.auth.login': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.signup.signup': { paramsTuple?: []; params?: {} }
+    'admin.panel.dashboard': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.panel.customers.detail': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
+    'invitation.show': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
   }
   POST: {
-    'invitation.rsvp': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
-    'admin_auth.login': { paramsTuple?: []; params?: {} }
-    'admin_auth.logout': { paramsTuple?: []; params?: {} }
-    'admin.update': { paramsTuple?: []; params?: {} }
-    'admin.create_story': { paramsTuple?: []; params?: {} }
-    'admin.delete_story': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'admin.create_gallery': { paramsTuple?: []; params?: {} }
-    'admin.delete_gallery': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'admin.delete_guest': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.auth.login.post': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.signup.signup.post': { paramsTuple?: []; params?: {} }
+    'admin.panel.logout': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.panel.customers.store': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.panel.customers.update': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
+    'admin.panel.stories.store': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
+    'admin.panel.stories.delete': { paramsTuple: [ParamValue,ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue,'id': ParamValue} }
+    'admin.panel.gallery.store': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
+    'admin.panel.gallery.delete': { paramsTuple: [ParamValue,ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue,'id': ParamValue} }
+    'admin.panel.guests.delete': { paramsTuple: [ParamValue,ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue,'id': ParamValue} }
+    'invitation.rsvp': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

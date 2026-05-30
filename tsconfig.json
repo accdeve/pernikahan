@@ -2,6 +2,12 @@
   "extends": "@adonisjs/tsconfig/tsconfig.app.json",
   "compilerOptions": {
     "rootDir": "./",
-    "outDir": "./build"
+    "outDir": "./build",
+    "jsx": "react-jsx",
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "resources/js/*": ["./resources/js/*"]
+    }
   }
 }

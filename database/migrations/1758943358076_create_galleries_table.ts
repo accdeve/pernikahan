@@ -6,7 +6,13 @@ export default class extends BaseSchema {
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id').notNullable()
-      table.integer('invitation_id').unsigned().references('id').inTable('invitations').onDelete('CASCADE').notNullable()
+      table
+        .integer('invitation_id')
+        .unsigned()
+        .references('id')
+        .inTable('invitations')
+        .onDelete('CASCADE')
+        .notNullable()
       table.string('image_url').notNullable()
       table.string('caption').nullable()
       table.integer('sort_order').defaultTo(0).notNullable()

@@ -1,0 +1,34 @@
+<!-- resources/views/components/b2b/rsvp.edge -->
+<div class="info-card" style="text-align: left; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 2.5rem 2rem; margin-bottom: 2rem;">
+  <form @submit.prevent="submitRSVP()">
+    <div class="form-group" style="margin-bottom: 1.2rem;">
+      <label class="form-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #cbd5e1;">Nama Lengkap</label>
+      <input class="form-input" type="text" x-model="rsvpForm.name" placeholder="Masukkan nama Anda" required 
+             style="width: 100%; box-sizing: border-box; background: rgba(20, 17, 15, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 0.8rem 1rem; color: #ffffff; font-size: 0.95rem; font-family: inherit; transition: all 0.2s;" />
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.2rem;">
+      <label class="form-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #cbd5e1;">Status Kehadiran</label>
+      <select class="form-input" x-model="rsvpForm.attending" required
+              style="width: 100%; box-sizing: border-box; background: rgba(20, 17, 15, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 0.8rem 1rem; color: #ffffff; font-size: 0.95rem; font-family: inherit; transition: all 0.2s;">
+        <option value="true">Hadir dengan Senang Hati</option>
+        <option value="false">Maaf, Tidak Bisa Hadir</option>
+      </select>
+    </div>
+
+    <div class="form-group" x-show="rsvpForm.attending === 'true'" style="margin-bottom: 1.2rem;">
+      <label class="form-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #cbd5e1;">Jumlah Orang</label>
+      <input class="form-input" type="number" min="1" max="10" x-model="rsvpForm.count" required
+             style="width: 100%; box-sizing: border-box; background: rgba(20, 17, 15, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 0.8rem 1rem; color: #ffffff; font-size: 0.95rem; font-family: inherit; transition: all 0.2s;" />
+    </div>
+
+    <div class="form-group" x-show="rsvpForm.attending === 'false'" style="margin-bottom: 1.2rem;">
+      <label class="form-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #cbd5e1;">Alasan / Kirim Pesan Maaf</label>
+      <input class="form-input" type="text" x-model="rsvpForm.reason" placeholder="Berikan pesan maaf..."
+             style="width: 100%; box-sizing: border-box; background: rgba(20, 17, 15, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 0.8rem 1rem; color: #ffffff; font-size: 0.95rem; font-family: inherit; transition: all 0.2s;" />
+    </div>
+
+    <button class="btn-gold" type="submit" x-text="rsvpLoading ? 'Mengirim...' : 'Kirim Konfirmasi'" :disabled="rsvpLoading"
+            style="width: 100%; background: linear-gradient(135deg, var(--accent, #D4AF37) 0%, var(--primary, #8B5A2B) 100%); border: none; border-radius: 12px; padding: 0.9rem; color: #ffffff; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s;"></button>
+  </form>
+</div>

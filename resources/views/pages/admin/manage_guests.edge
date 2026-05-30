@@ -8,36 +8,36 @@
   </div>
 
   @if(flashMessages.has('success'))
-    <div class="alert alert-success text-center font-sans mb-6" style="padding: 12px; font-size: 0.9rem; min-width: auto; width: 100%;">
+    <div class="alert alert-success text-center font-sans mb-6">
       {{ flashMessages.get('success') }}
     </div>
   @endif
 
   <!-- Personal Invitation Link Generator -->
-  <div class="glass-card font-sans mb-8">
-    <h3 class="font-serif text-gold mb-4" style="font-size: 1.25rem;">Tautan Undangan Kustom (Guest Link Generator)</h3>
-    <p class="text-muted mb-4" style="font-size: 0.85rem;">
+  <div class="font-sans mb-8" style="background-color: #FFFFFF; border: 1px solid #E2E2E0; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);">
+    <h3 class="font-serif mb-4" style="font-size: 1.35rem; font-weight: 500; color: #111111;">Tautan Undangan Kustom (Guest Link Generator)</h3>
+    <p class="mb-4" style="font-size: 0.9rem; color: #6E6E6C; line-height: 1.5;">
       Masukkan nama tamu di bawah ini untuk membuat tautan undangan personal yang otomatis menampilkan nama mereka pada sampul undangan.
     </p>
     
     <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
       <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
-        <label for="invitee_name" class="form-label text-gold">Nama Tamu Undangan</label>
+        <label for="invitee_name" class="form-label">Nama Tamu Undangan</label>
         <input type="text" id="invitee_name" class="form-control" placeholder="Contoh: Bapak Budi Santoso & Istri" />
       </div>
       
-      <button type="button" id="btn-generate-link" class="btn-primary-gold" style="margin: 0; width: auto; height: 42px;">
+      <button type="button" id="btn-generate-link" class="btn-primary-gold" style="margin: 0; width: auto; height: 42px; border-radius: 8px;">
         <span class="material-symbols-outlined">link</span>
         Buat Tautan
       </button>
     </div>
 
     <!-- Generated Link Output Container -->
-    <div id="generated-link-container" class="mt-4" style="display: none; padding: 12px; border-radius: 4px; border: 1px solid var(--outline-muted); background: rgba(0,0,0,0.2);">
-      <p class="form-label text-gold" style="margin-bottom: 6px;">Salin Tautan Berikut:</p>
+    <div id="generated-link-container" class="mt-4" style="display: none; padding: 1.25rem; border-radius: 8px; border: 1px solid #E2E2E0; background: #FAF9F6;">
+      <p class="form-label" style="margin-bottom: 6px;">Salin Tautan Berikut:</p>
       <div style="display: flex; gap: 10px; align-items: center;">
-        <input type="text" id="generated-link-input" class="form-control" style="background: rgba(0,0,0,0.5);" readonly />
-        <button type="button" id="btn-copy-generated-link" class="btn-copy-gold" style="height: 42px; border-radius: 4px; white-space: nowrap;">
+        <input type="text" id="generated-link-input" class="form-control" style="background: #FFFFFF;" readonly />
+        <button type="button" id="btn-copy-generated-link" class="btn-copy-gold" style="height: 42px; border-radius: 8px; white-space: nowrap;">
           <span class="material-symbols-outlined">content_copy</span>
           Salin Tautan
         </button>
@@ -46,16 +46,16 @@
   </div>
 
   <!-- Guests RSVPs Moderation List -->
-  <div class="glass-card font-sans">
-    <h3 class="font-serif text-gold mb-6" style="font-size: 1.25rem;">Daftar Tamu & Konfirmasi Kehadiran</h3>
+  <div class="font-sans" style="background-color: #FFFFFF; border: 1px solid #E2E2E0; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);">
+    <h3 class="font-serif mb-6" style="font-size: 1.35rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 10px;">Daftar Tamu & Konfirmasi Kehadiran</h3>
     
     <div class="admin-table-container">
       <table class="admin-table">
         <thead>
           <tr>
-            <th style="width: 150px;">Tanggal/Waktu</th>
-            <th style="width: 180px;">Nama Tamu</th>
-            <th style="width: 100px; text-align: center;">Kehadiran</th>
+            <th style="width: 180px;">Tanggal/Waktu</th>
+            <th style="width: 220px;">Nama Tamu</th>
+            <th style="width: 120px; text-align: center;">Kehadiran</th>
             <th>Ucapan & Doa Restu</th>
             <th style="width: 80px; text-align: center;">Aksi</th>
           </tr>
@@ -64,21 +64,21 @@
           @if(guests && guests.length > 0)
             @each(guest in guests)
               <tr>
-                <td style="font-size: 0.8rem; color: var(--on-surface-variant);">
+                <td style="font-size: 0.85rem; color: #6E6E6C;">
                   {{ guest.createdAt.toFormat('dd MMM yyyy, HH:mm') }} WIB
                 </td>
-                <td><strong>{{ guest.name }}</strong></td>
+                <td style="font-weight: 600; color: #111111;">{{ guest.name }}</td>
                 <td style="text-align: center;">
-                  <span class="comment-badge {{ guest.attendance === 'hadir' ? 'badge-hadir' : 'badge-tidak' }}">
-                    {{ guest.attendance === 'hadir' ? 'Hadir' : 'Absen' }}
+                  <span class="badge" style="font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 4px; {{ guest.attendance === 'hadir' ? 'background: #E8F5E9; color: #2E7D32;' : 'background: #FFEBEE; color: #C62828;' }}">
+                    {{ guest.attendance === 'hadir' ? 'Hadir' : 'Tidak Hadir' }}
                   </span>
                 </td>
-                <td style="font-size: 0.85rem; line-height: 1.4;">{{ guest.comment || '-' }}</td>
+                <td style="font-size: 0.9rem; color: #111111; line-height: 1.4;">{{ guest.comment || '-' }}</td>
                 <td style="text-align: center;">
                   <form action="/admin/guests/delete/{{ guest.id }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus ucapan dari tamu ini?');">
                     {{ csrfField() }}
-                    <button type="submit" class="btn-copy-gold" style="border-color: var(--danger); color: var(--danger); padding: 4px 8px;">
-                      <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
+                    <button type="submit" class="btn-copy-gold" style="border-color: rgba(198, 40, 40, 0.2); color: #C62828; padding: 6px 10px; background: rgba(198, 40, 40, 0.03);" onmouseover="this.style.background='#FFEBEE'; this.style.borderColor='#C62828'" onmouseout="this.style.background='rgba(198,40,40,0.03)'; this.style.borderColor='rgba(198, 40, 40, 0.2)'">
+                      <span class="material-symbols-outlined" style="font-size: 1.15rem; vertical-align: middle;">delete</span>
                     </button>
                   </form>
                 </td>
@@ -86,7 +86,7 @@
             @endeach
           @else
             <tr>
-              <td colspan="5" class="text-center text-muted" style="padding: 2rem;">Belum ada konfirmasi kehadiran dari para tamu.</td>
+              <td colspan="5" class="text-center text-muted" style="padding: 3rem; color: #6E6E6C;">Belum ada konfirmasi kehadiran dari para tamu.</td>
             </tr>
           @endif
         </tbody>
@@ -109,7 +109,7 @@
       const copyToast = document.getElementById('copy-toast');
       
       const slug = "{{ invitation.slug }}";
-
+ 
       if (btnGenerate && inviteeName && container && linkInput) {
         btnGenerate.addEventListener('click', () => {
           const val = inviteeName.value.trim();

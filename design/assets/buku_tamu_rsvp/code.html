@@ -1,292 +1,389 @@
-<!DOCTYPE html>
+<!doctype html>
 
-<html class="dark" lang="id"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>J &amp; M | Buku Tamu &amp; RSVP</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&amp;family=Newsreader:ital,wght@0,400;1,400&amp;family=Bodoni+Moda:wght@700&amp;family=Great+Vibes&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
+<html class="dark" lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>J &amp; M | Buku Tamu &amp; RSVP</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&amp;family=Newsreader:ital,wght@0,400;1,400&amp;family=Bodoni+Moda:wght@700&amp;family=Great+Vibes&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
       tailwind.config = {
-        darkMode: "class",
+        darkMode: 'class',
         theme: {
           extend: {
-            "colors": {
-                    "surface": "#16130b",
-                    "tertiary-fixed-dim": "#c8c6c7",
-                    "background": "#16130b",
-                    "surface-accent": "#1F1F20",
-                    "tertiary-fixed": "#e4e2e3",
-                    "on-surface-variant": "#d0c5af",
-                    "on-secondary-container": "#bab8b9",
-                    "outline-muted": "#4D4635",
-                    "on-secondary-fixed": "#1c1b1c",
-                    "secondary-fixed-dim": "#c8c6c7",
-                    "on-background": "#eae1d4",
-                    "on-tertiary-container": "#454546",
-                    "outline-variant": "#4d4635",
-                    "on-primary-fixed": "#241a00",
-                    "on-tertiary-fixed-variant": "#464748",
-                    "primary-container": "#d4af37",
-                    "surface-dim": "#16130b",
-                    "on-primary-fixed-variant": "#574500",
-                    "outline": "#99907c",
-                    "tertiary-container": "#b3b2b3",
-                    "error": "#ffb4ab",
-                    "on-error": "#690005",
-                    "on-tertiary": "#303031",
-                    "on-secondary": "#313031",
-                    "primary-fixed": "#ffe088",
-                    "gold-gradient-start": "#D4AF37",
-                    "surface-container-lowest": "#110e07",
-                    "surface-container-low": "#1f1b13",
-                    "secondary": "#c8c6c7",
-                    "secondary-container": "#4a494a",
-                    "surface-variant": "#38342b",
-                    "on-error-container": "#ffdad6",
-                    "inverse-on-surface": "#343027",
-                    "primary": "#f2ca50",
-                    "tertiary": "#cfcecf",
-                    "surface-container-highest": "#38342b",
-                    "secondary-fixed": "#e5e2e3",
-                    "surface-container": "#231f17",
-                    "surface-bright": "#3d392f",
-                    "inverse-primary": "#735c00",
-                    "on-primary": "#3c2f00",
-                    "surface-container-high": "#2d2a21",
-                    "on-tertiary-fixed": "#1b1c1d",
-                    "gold-gradient-mid": "#99907C",
-                    "surface-tint": "#e9c349",
-                    "on-secondary-fixed-variant": "#474647",
-                    "on-primary-container": "#554300",
-                    "on-surface": "#eae1d4",
-                    "error-container": "#93000a",
-                    "inverse-surface": "#eae1d4",
-                    "primary-fixed-dim": "#e9c349"
+            colors: {
+              'surface': '#16130b',
+              'tertiary-fixed-dim': '#c8c6c7',
+              'background': '#16130b',
+              'surface-accent': '#1F1F20',
+              'tertiary-fixed': '#e4e2e3',
+              'on-surface-variant': '#d0c5af',
+              'on-secondary-container': '#bab8b9',
+              'outline-muted': '#4D4635',
+              'on-secondary-fixed': '#1c1b1c',
+              'secondary-fixed-dim': '#c8c6c7',
+              'on-background': '#eae1d4',
+              'on-tertiary-container': '#454546',
+              'outline-variant': '#4d4635',
+              'on-primary-fixed': '#241a00',
+              'on-tertiary-fixed-variant': '#464748',
+              'primary-container': '#d4af37',
+              'surface-dim': '#16130b',
+              'on-primary-fixed-variant': '#574500',
+              'outline': '#99907c',
+              'tertiary-container': '#b3b2b3',
+              'error': '#ffb4ab',
+              'on-error': '#690005',
+              'on-tertiary': '#303031',
+              'on-secondary': '#313031',
+              'primary-fixed': '#ffe088',
+              'gold-gradient-start': '#D4AF37',
+              'surface-container-lowest': '#110e07',
+              'surface-container-low': '#1f1b13',
+              'secondary': '#c8c6c7',
+              'secondary-container': '#4a494a',
+              'surface-variant': '#38342b',
+              'on-error-container': '#ffdad6',
+              'inverse-on-surface': '#343027',
+              'primary': '#f2ca50',
+              'tertiary': '#cfcecf',
+              'surface-container-highest': '#38342b',
+              'secondary-fixed': '#e5e2e3',
+              'surface-container': '#231f17',
+              'surface-bright': '#3d392f',
+              'inverse-primary': '#735c00',
+              'on-primary': '#3c2f00',
+              'surface-container-high': '#2d2a21',
+              'on-tertiary-fixed': '#1b1c1d',
+              'gold-gradient-mid': '#99907C',
+              'surface-tint': '#e9c349',
+              'on-secondary-fixed-variant': '#474647',
+              'on-primary-container': '#554300',
+              'on-surface': '#eae1d4',
+              'error-container': '#93000a',
+              'inverse-surface': '#eae1d4',
+              'primary-fixed-dim': '#e9c349',
             },
-            "borderRadius": {
-                    "DEFAULT": "0.125rem",
-                    "lg": "0.25rem",
-                    "xl": "0.5rem",
-                    "full": "0.75rem"
+            borderRadius: {
+              DEFAULT: '0.125rem',
+              lg: '0.25rem',
+              xl: '0.5rem',
+              full: '0.75rem',
             },
-            "spacing": {
-                    "container-max": "480px",
-                    "edge-margin": "1.5rem",
-                    "stack-md": "1rem",
-                    "section-gap": "6rem",
-                    "stack-lg": "2rem",
-                    "stack-sm": "0.5rem"
+            spacing: {
+              'container-max': '480px',
+              'edge-margin': '1.5rem',
+              'stack-md': '1rem',
+              'section-gap': '6rem',
+              'stack-lg': '2rem',
+              'stack-sm': '0.5rem',
             },
-            "fontFamily": {
-                    "label-caps": ["Bodoni Moda"],
-                    "display-hero": ["Great Vibes"],
-                    "headline-lg": ["Playfair Display"],
-                    "headline-md": ["Playfair Display"],
-                    "body-lg": ["Newsreader"],
-                    "body-md": ["Newsreader"]
+            fontFamily: {
+              'label-caps': ['Bodoni Moda'],
+              'display-hero': ['Great Vibes'],
+              'headline-lg': ['Playfair Display'],
+              'headline-md': ['Playfair Display'],
+              'body-lg': ['Newsreader'],
+              'body-md': ['Newsreader'],
             },
-            "fontSize": {
-                    "label-caps": ["10px", {"lineHeight": "1", "letterSpacing": "0.4em", "fontWeight": "700"}],
-                    "display-hero": ["60px", {"lineHeight": "1.2", "fontWeight": "400"}],
-                    "headline-lg": ["48px", {"lineHeight": "1.1", "fontWeight": "700"}],
-                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}],
-                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
-                    "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}]
-            }
+            fontSize: {
+              'label-caps': [
+                '10px',
+                { lineHeight: '1', letterSpacing: '0.4em', fontWeight: '700' },
+              ],
+              'display-hero': ['60px', { lineHeight: '1.2', fontWeight: '400' }],
+              'headline-lg': ['48px', { lineHeight: '1.1', fontWeight: '700' }],
+              'headline-md': ['32px', { lineHeight: '1.2', fontWeight: '600' }],
+              'body-lg': ['18px', { lineHeight: '1.6', fontWeight: '400' }],
+              'body-md': ['14px', { lineHeight: '1.5', fontWeight: '400' }],
+            },
           },
         },
       }
     </script>
-<style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .active-icon {
-            font-variation-settings: 'FILL' 1;
-        }
-        body {
-            background-color: #16130b;
-            color: #eae1d4;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #4D4635;
-        }
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24;
+      }
+      .active-icon {
+        font-variation-settings: 'FILL' 1;
+      }
+      body {
+        background-color: #16130b;
+        color: #eae1d4;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #4d4635;
+      }
     </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
-  </style>
+    <style>
+      body {
+        min-height: max(884px, 100dvh);
+      }
+    </style>
   </head>
-<body class="font-body-md text-body-md selection:bg-primary/30">
-<!-- Top App Bar -->
-<header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md border-b border-outline-muted/40 h-16">
-<div class="flex items-center justify-between px-edge-margin h-full w-full max-w-container-max mx-auto">
-<span class="material-symbols-outlined text-primary">menu</span>
-<h1 class="font-headline-md text-headline-md text-primary">J &amp; M</h1>
-<div class="w-6"></div> <!-- Spacer for balance -->
-</div>
-</header>
-<main class="w-full max-w-container-max mx-auto pt-24 pb-32 px-edge-margin min-h-screen relative">
-<!-- Section Header -->
-<div class="text-center mb-stack-lg">
-<span class="font-label-caps text-label-caps text-primary opacity-80 block mb-2">PENGALAMAN DIGITAL</span>
-<h2 class="font-headline-lg text-headline-lg text-on-surface mb-stack-sm">RSVP &amp; Ucapan</h2>
-<div class="w-12 h-[1px] bg-primary/40 mx-auto"></div>
-</div>
-<!-- RSVP Form Section -->
-<section class="mb-section-gap">
-<div class="bg-surface-container-low p-stack-lg border border-outline-muted/30 rounded-lg">
-<form class="space-y-stack-md" id="rsvp-form">
-<div class="space-y-2">
-<label class="font-label-caps text-label-caps text-on-surface-variant block">NAMA LENGKAP</label>
-<input class="w-full bg-surface-container text-on-surface border-outline-muted focus:border-primary focus:ring-0 transition-all px-4 py-3 placeholder:text-outline/50" placeholder="Masukkan nama Anda" type="text"/>
-</div>
-<div class="space-y-2">
-<label class="font-label-caps text-label-caps text-on-surface-variant block">KEHADIRAN</label>
-<div class="grid grid-cols-2 gap-4">
-<label class="relative flex items-center justify-center p-3 border border-outline-muted cursor-pointer hover:border-primary transition-colors group">
-<input class="hidden peer" name="attendance" type="radio" value="hadir"/>
-<span class="peer-checked:text-primary transition-colors font-body-md">Hadir</span>
-<div class="absolute inset-0 border-2 border-transparent peer-checked:border-primary/50 pointer-events-none"></div>
-</label>
-<label class="relative flex items-center justify-center p-3 border border-outline-muted cursor-pointer hover:border-primary transition-colors group">
-<input class="hidden peer" name="attendance" type="radio" value="tidak"/>
-<span class="peer-checked:text-primary transition-colors font-body-md">Tidak Hadir</span>
-<div class="absolute inset-0 border-2 border-transparent peer-checked:border-primary/50 pointer-events-none"></div>
-</label>
-</div>
-</div>
-<div class="space-y-2">
-<label class="font-label-caps text-label-caps text-on-surface-variant block">KIRIM UCAPAN</label>
-<textarea class="w-full bg-surface-container text-on-surface border-outline-muted focus:border-primary focus:ring-0 transition-all px-4 py-3 placeholder:text-outline/50" placeholder="Tuliskan pesan atau doa untuk kedua mempelai..." rows="4"></textarea>
-</div>
-<button class="w-full bg-primary py-4 flex items-center justify-center gap-2 group active:scale-95 transition-all" type="submit">
-<span class="material-symbols-outlined text-on-primary">send</span>
-<span class="font-label-caps text-label-caps text-on-primary">KIRIM KONFIRMASI</span>
-</button>
-</form>
-</div>
-</section>
-<!-- Guestbook Feed -->
-<section class="space-y-stack-lg">
-<div class="flex items-center gap-4">
-<h3 class="font-headline-md text-headline-md text-on-surface whitespace-nowrap">Buku Tamu</h3>
-<div class="flex-grow h-[1px] bg-outline-muted/30"></div>
-<span class="font-label-caps text-label-caps text-primary">124 UCAPAN</span>
-</div>
-<div class="space-y-stack-md custom-scrollbar max-h-[600px] overflow-y-auto pr-2">
-<!-- Message Card 1 -->
-<div class="p-6 bg-surface-container-high/50 border-l-2 border-primary/40 relative overflow-hidden group">
-<div class="flex justify-between items-start mb-2">
-<span class="font-label-caps text-label-caps text-primary">ANDI &amp; SARA</span>
-<span class="text-[10px] text-outline opacity-60">Baru saja</span>
-</div>
-<p class="font-body-lg text-body-lg italic text-on-surface-variant leading-relaxed">
-                        "Selamat menempuh hidup baru J &amp; M! Semoga cinta kalian selalu mekar seperti bunga di taman surga. Kami sangat senang bisa hadir!"
-                    </p>
-</div>
-<!-- Message Card 2 -->
-<div class="p-6 bg-surface-container-high/50 border-l-2 border-outline-muted/40 relative group">
-<div class="flex justify-between items-start mb-2">
-<span class="font-label-caps text-label-caps text-primary">IBU RATNA</span>
-<span class="text-[10px] text-outline opacity-60">2 jam yang lalu</span>
-</div>
-<p class="font-body-lg text-body-lg italic text-on-surface-variant leading-relaxed">
-                        "Doa terbaik untuk kalian berdua. Maaf Ibu tidak bisa hadir secara langsung, namun doa Ibu menyertai langkah kalian berdua."
-                    </p>
-</div>
-<!-- Message Card 3 -->
-<div class="p-6 bg-surface-container-high/50 border-l-2 border-outline-muted/40 relative group">
-<div class="flex justify-between items-start mb-2">
-<span class="font-label-caps text-label-caps text-primary">KELUARGA SUDARSONO</span>
-<span class="text-[10px] text-outline opacity-60">5 jam yang lalu</span>
-</div>
-<p class="font-body-lg text-body-lg italic text-on-surface-variant leading-relaxed">
-                        "Barakallah, semoga menjadi keluarga yang sakinah, mawaddah, dan warahmah. Sangat terharu melihat perjalanan kalian."
-                    </p>
-</div>
-<!-- Decorative Asset -->
-<div class="py-stack-lg flex justify-center opacity-20">
-<img class="w-32 grayscale contrast-125 brightness-75" data-alt="A detailed digital illustration of traditional Javanese Gunungan wayang motifs in a sophisticated gold and bronze metallic finish. The artwork features intricate filigree patterns that evoke cultural heritage and refined editorial style, set against a deep charcoal-black background with subtle atmospheric lighting. The mood is solemn yet luxurious, representing a premium digital invitation aesthetic for a high-end wedding." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB138E4bWlGtQ0Mb367WwcwTe1O99mJ5BxPgw8xUk4sqQHbU3O7Uf7ejTN8O_4uKL53IW4y__C190Wjp_jk45ftLMsaU5Ecdi7ic0ycUvppdRb3A9WK6eQIAvOr5r0ZtvQvprPKl-91xyIxwS3UccufaUZxPjGDIANJGFEPTepXXMVYb4BeYoUA1LrwSnob3uRICmWLHBKMXXewCSAtAcw5H4QDQWZJsCI1TBhBF_zMdG_SxQ4XCy1k29SOkg0oZaqfvG78WPySXRs"/>
-</div>
-</div>
-</section>
-<!-- Footer Accent -->
-<footer class="mt-section-gap text-right opacity-40">
-<h4 class="font-display-hero text-headline-md text-primary">Javanese Heritage</h4>
-<p class="font-label-caps text-label-caps">MCMXXIV</p>
-</footer>
-</main>
-<!-- Bottom Navigation Bar -->
-<nav class="fixed bottom-0 left-0 right-0 w-full max-w-container-max mx-auto bg-surface/95 backdrop-blur-lg border-t border-outline-muted/40 flex justify-around items-center py-2 pb-safe z-50">
-<a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary transition-all" href="#">
-<span class="material-symbols-outlined">home</span>
-<span class="font-label-caps text-[9px] uppercase tracking-widest mt-1">Home</span>
-</a>
-<a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary transition-all" href="#">
-<span class="material-symbols-outlined">favorite</span>
-<span class="font-label-caps text-[9px] uppercase tracking-widest mt-1">Couple</span>
-</a>
-<a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary transition-all" href="#">
-<span class="material-symbols-outlined">calendar_today</span>
-<span class="font-label-caps text-[9px] uppercase tracking-widest mt-1">Event</span>
-</a>
-<a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary transition-all" href="#">
-<span class="material-symbols-outlined">photo_library</span>
-<span class="font-label-caps text-[9px] uppercase tracking-widest mt-1">Gallery</span>
-</a>
-<a class="flex flex-col items-center justify-center text-primary font-bold scale-90 duration-300" href="#">
-<span class="material-symbols-outlined active-icon" style="font-variation-settings: 'FILL' 1;">mail</span>
-<span class="font-label-caps text-[9px] uppercase tracking-widest mt-1">RSVP</span>
-</a>
-</nav>
-<script>
-        // Simple form handling simulation
-        document.getElementById('rsvp-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const btn = this.querySelector('button');
-            const originalText = btn.innerHTML;
-            
-            btn.classList.add('opacity-50', 'pointer-events-none');
-            btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> <span class="font-label-caps text-label-caps">MENGIRIM...</span>`;
-            
-            setTimeout(() => {
-                btn.innerHTML = `<span class="material-symbols-outlined">check_circle</span> <span class="font-label-caps text-label-caps">TERKIRIM!</span>`;
-                btn.classList.remove('bg-primary');
-                btn.classList.add('bg-green-600', 'text-white');
-                
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.classList.remove('opacity-50', 'pointer-events-none', 'bg-green-600', 'text-white');
-                    btn.classList.add('bg-primary');
-                    this.reset();
-                }, 3000);
-            }, 1500);
-        });
+  <body class="font-body-md text-body-md selection:bg-primary/30">
+    <!-- Top App Bar -->
+    <header
+      class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md border-b border-outline-muted/40 h-16"
+    >
+      <div
+        class="flex items-center justify-between px-edge-margin h-full w-full max-w-container-max mx-auto"
+      >
+        <span class="material-symbols-outlined text-primary">menu</span>
+        <h1 class="font-headline-md text-headline-md text-primary">J &amp; M</h1>
+        <div class="w-6"></div>
+        <!-- Spacer for balance -->
+      </div>
+    </header>
+    <main
+      class="w-full max-w-container-max mx-auto pt-24 pb-32 px-edge-margin min-h-screen relative"
+    >
+      <!-- Section Header -->
+      <div class="text-center mb-stack-lg">
+        <span class="font-label-caps text-label-caps text-primary opacity-80 block mb-2"
+          >PENGALAMAN DIGITAL</span
+        >
+        <h2 class="font-headline-lg text-headline-lg text-on-surface mb-stack-sm">
+          RSVP &amp; Ucapan
+        </h2>
+        <div class="w-12 h-[1px] bg-primary/40 mx-auto"></div>
+      </div>
+      <!-- RSVP Form Section -->
+      <section class="mb-section-gap">
+        <div class="bg-surface-container-low p-stack-lg border border-outline-muted/30 rounded-lg">
+          <form class="space-y-stack-md" id="rsvp-form">
+            <div class="space-y-2">
+              <label class="font-label-caps text-label-caps text-on-surface-variant block"
+                >NAMA LENGKAP</label
+              >
+              <input
+                class="w-full bg-surface-container text-on-surface border-outline-muted focus:border-primary focus:ring-0 transition-all px-4 py-3 placeholder:text-outline/50"
+                placeholder="Masukkan nama Anda"
+                type="text"
+              />
+            </div>
+            <div class="space-y-2">
+              <label class="font-label-caps text-label-caps text-on-surface-variant block"
+                >KEHADIRAN</label
+              >
+              <div class="grid grid-cols-2 gap-4">
+                <label
+                  class="relative flex items-center justify-center p-3 border border-outline-muted cursor-pointer hover:border-primary transition-colors group"
+                >
+                  <input class="hidden peer" name="attendance" type="radio" value="hadir" />
+                  <span class="peer-checked:text-primary transition-colors font-body-md"
+                    >Hadir</span
+                  >
+                  <div
+                    class="absolute inset-0 border-2 border-transparent peer-checked:border-primary/50 pointer-events-none"
+                  ></div>
+                </label>
+                <label
+                  class="relative flex items-center justify-center p-3 border border-outline-muted cursor-pointer hover:border-primary transition-colors group"
+                >
+                  <input class="hidden peer" name="attendance" type="radio" value="tidak" />
+                  <span class="peer-checked:text-primary transition-colors font-body-md"
+                    >Tidak Hadir</span
+                  >
+                  <div
+                    class="absolute inset-0 border-2 border-transparent peer-checked:border-primary/50 pointer-events-none"
+                  ></div>
+                </label>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label class="font-label-caps text-label-caps text-on-surface-variant block"
+                >KIRIM UCAPAN</label
+              >
+              <textarea
+                class="w-full bg-surface-container text-on-surface border-outline-muted focus:border-primary focus:ring-0 transition-all px-4 py-3 placeholder:text-outline/50"
+                placeholder="Tuliskan pesan atau doa untuk kedua mempelai..."
+                rows="4"
+              ></textarea>
+            </div>
+            <button
+              class="w-full bg-primary py-4 flex items-center justify-center gap-2 group active:scale-95 transition-all"
+              type="submit"
+            >
+              <span class="material-symbols-outlined text-on-primary">send</span>
+              <span class="font-label-caps text-label-caps text-on-primary">KIRIM KONFIRMASI</span>
+            </button>
+          </form>
+        </div>
+      </section>
+      <!-- Guestbook Feed -->
+      <section class="space-y-stack-lg">
+        <div class="flex items-center gap-4">
+          <h3 class="font-headline-md text-headline-md text-on-surface whitespace-nowrap">
+            Buku Tamu
+          </h3>
+          <div class="flex-grow h-[1px] bg-outline-muted/30"></div>
+          <span class="font-label-caps text-label-caps text-primary">124 UCAPAN</span>
+        </div>
+        <div class="space-y-stack-md custom-scrollbar max-h-[600px] overflow-y-auto pr-2">
+          <!-- Message Card 1 -->
+          <div
+            class="p-6 bg-surface-container-high/50 border-l-2 border-primary/40 relative overflow-hidden group"
+          >
+            <div class="flex justify-between items-start mb-2">
+              <span class="font-label-caps text-label-caps text-primary">ANDI &amp; SARA</span>
+              <span class="text-[10px] text-outline opacity-60">Baru saja</span>
+            </div>
+            <p class="font-body-lg text-body-lg italic text-on-surface-variant leading-relaxed">
+              "Selamat menempuh hidup baru J &amp; M! Semoga cinta kalian selalu mekar seperti bunga
+              di taman surga. Kami sangat senang bisa hadir!"
+            </p>
+          </div>
+          <!-- Message Card 2 -->
+          <div
+            class="p-6 bg-surface-container-high/50 border-l-2 border-outline-muted/40 relative group"
+          >
+            <div class="flex justify-between items-start mb-2">
+              <span class="font-label-caps text-label-caps text-primary">IBU RATNA</span>
+              <span class="text-[10px] text-outline opacity-60">2 jam yang lalu</span>
+            </div>
+            <p class="font-body-lg text-body-lg italic text-on-surface-variant leading-relaxed">
+              "Doa terbaik untuk kalian berdua. Maaf Ibu tidak bisa hadir secara langsung, namun doa
+              Ibu menyertai langkah kalian berdua."
+            </p>
+          </div>
+          <!-- Message Card 3 -->
+          <div
+            class="p-6 bg-surface-container-high/50 border-l-2 border-outline-muted/40 relative group"
+          >
+            <div class="flex justify-between items-start mb-2">
+              <span class="font-label-caps text-label-caps text-primary">KELUARGA SUDARSONO</span>
+              <span class="text-[10px] text-outline opacity-60">5 jam yang lalu</span>
+            </div>
+            <p class="font-body-lg text-body-lg italic text-on-surface-variant leading-relaxed">
+              "Barakallah, semoga menjadi keluarga yang sakinah, mawaddah, dan warahmah. Sangat
+              terharu melihat perjalanan kalian."
+            </p>
+          </div>
+          <!-- Decorative Asset -->
+          <div class="py-stack-lg flex justify-center opacity-20">
+            <img
+              class="w-32 grayscale contrast-125 brightness-75"
+              data-alt="A detailed digital illustration of traditional Javanese Gunungan wayang motifs in a sophisticated gold and bronze metallic finish. The artwork features intricate filigree patterns that evoke cultural heritage and refined editorial style, set against a deep charcoal-black background with subtle atmospheric lighting. The mood is solemn yet luxurious, representing a premium digital invitation aesthetic for a high-end wedding."
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuB138E4bWlGtQ0Mb367WwcwTe1O99mJ5BxPgw8xUk4sqQHbU3O7Uf7ejTN8O_4uKL53IW4y__C190Wjp_jk45ftLMsaU5Ecdi7ic0ycUvppdRb3A9WK6eQIAvOr5r0ZtvQvprPKl-91xyIxwS3UccufaUZxPjGDIANJGFEPTepXXMVYb4BeYoUA1LrwSnob3uRICmWLHBKMXXewCSAtAcw5H4QDQWZJsCI1TBhBF_zMdG_SxQ4XCy1k29SOkg0oZaqfvG78WPySXRs"
+            />
+          </div>
+        </div>
+      </section>
+      <!-- Footer Accent -->
+      <footer class="mt-section-gap text-right opacity-40">
+        <h4 class="font-display-hero text-headline-md text-primary">Javanese Heritage</h4>
+        <p class="font-label-caps text-label-caps">MCMXXIV</p>
+      </footer>
+    </main>
+    <!-- Bottom Navigation Bar -->
+    <nav
+      class="fixed bottom-0 left-0 right-0 w-full max-w-container-max mx-auto bg-surface/95 backdrop-blur-lg border-t border-outline-muted/40 flex justify-around items-center py-2 pb-safe z-50"
+    >
+      <a
+        class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary transition-all"
+        href="#"
+      >
+        <span class="material-symbols-outlined">home</span>
+        <span class="font-label-caps text-[9px] uppercase tracking-widest mt-1">Home</span>
+      </a>
+      <a
+        class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary transition-all"
+        href="#"
+      >
+        <span class="material-symbols-outlined">favorite</span>
+        <span class="font-label-caps text-[9px] uppercase tracking-widest mt-1">Couple</span>
+      </a>
+      <a
+        class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary transition-all"
+        href="#"
+      >
+        <span class="material-symbols-outlined">calendar_today</span>
+        <span class="font-label-caps text-[9px] uppercase tracking-widest mt-1">Event</span>
+      </a>
+      <a
+        class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary transition-all"
+        href="#"
+      >
+        <span class="material-symbols-outlined">photo_library</span>
+        <span class="font-label-caps text-[9px] uppercase tracking-widest mt-1">Gallery</span>
+      </a>
+      <a
+        class="flex flex-col items-center justify-center text-primary font-bold scale-90 duration-300"
+        href="#"
+      >
+        <span
+          class="material-symbols-outlined active-icon"
+          style="font-variation-settings: 'FILL' 1"
+          >mail</span
+        >
+        <span class="font-label-caps text-[9px] uppercase tracking-widest mt-1">RSVP</span>
+      </a>
+    </nav>
+    <script>
+      // Simple form handling simulation
+      document.getElementById('rsvp-form').addEventListener('submit', function (e) {
+        e.preventDefault()
+        const btn = this.querySelector('button')
+        const originalText = btn.innerHTML
 
-        // Add subtle intersection observer for scroll reveals
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('opacity-100', 'translate-y-0');
-                    entry.target.classList.remove('opacity-0', 'translate-y-4');
-                }
-            });
-        }, { threshold: 0.1 });
+        btn.classList.add('opacity-50', 'pointer-events-none')
+        btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> <span class="font-label-caps text-label-caps">MENGIRIM...</span>`
 
-        document.querySelectorAll('section, .p-6').forEach(el => {
-            el.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-4');
-            observer.observe(el);
-        });
+        setTimeout(() => {
+          btn.innerHTML = `<span class="material-symbols-outlined">check_circle</span> <span class="font-label-caps text-label-caps">TERKIRIM!</span>`
+          btn.classList.remove('bg-primary')
+          btn.classList.add('bg-green-600', 'text-white')
+
+          setTimeout(() => {
+            btn.innerHTML = originalText
+            btn.classList.remove('opacity-50', 'pointer-events-none', 'bg-green-600', 'text-white')
+            btn.classList.add('bg-primary')
+            this.reset()
+          }, 3000)
+        }, 1500)
+      })
+
+      // Add subtle intersection observer for scroll reveals
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('opacity-100', 'translate-y-0')
+              entry.target.classList.remove('opacity-0', 'translate-y-4')
+            }
+          })
+        },
+        { threshold: 0.1 }
+      )
+
+      document.querySelectorAll('section, .p-6').forEach((el) => {
+        el.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-4')
+        observer.observe(el)
+      })
     </script>
-</body></html>
+  </body>
+</html>

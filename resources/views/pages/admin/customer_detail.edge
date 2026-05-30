@@ -1,0 +1,516 @@
+@layouts.admin({ title: 'Workspace Pengantin - Admin Panel', customer: customer })
+  <!-- Header with Stats -->
+  <div class="admin-header font-sans">
+    <div class="admin-header-title">
+      <h1 class="font-serif" style="font-size: 2.2rem; font-weight: 600; color: #111111; letter-spacing: -0.02em;">
+        Workspace: {{ customer.male_name }} & {{ customer.female_name }}
+      </h1>
+      <p style="font-size: 0.95rem; color: #6E6E6C;">
+        Kelola undangan, galeri, timeline kisah, dan moderasi RSVP tamu
+      </p>
+    </div>
+
+    <!-- Right Side Actions: View Public Page / Share -->
+    @if(invitation)
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <a href="/{{ session.get('supabase_wo_slug') }}/{{ invitation.slug }}" target="_blank" class="btn-copy-gold" style="padding: 0.7rem 1.4rem; font-size: 0.875rem; border-radius: 8px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+          <span class="material-symbols-outlined" style="font-size: 1.25rem;">open_in_new</span>
+          Lihat Undangan Publik
+        </a>
+      </div>
+    @endif
+  </div>
+
+  @if(flashMessages.has('success'))
+    <div class="alert alert-success text-center font-sans mb-6">
+      {{ flashMessages.get('success') }}
+    </div>
+  @endif
+
+  @if(flashMessages.has('errors'))
+    <div class="alert alert-destructive text-center font-sans mb-6">
+      {{ flashMessages.get('errors') }}
+    </div>
+  @endif
+
+  <!-- ========================================== -->
+  <!-- TAB 1: METADATA / DETAIL UNDANGAN          -->
+  <!-- ========================================== -->
+  <div x-show="currentTab === 'metadata'" x-transition class="font-sans">
+    <div style="background-color: #FFFFFF; border: 1px solid #E2E2E0; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);">
+      <h2 class="font-serif mb-6" style="font-size: 1.6rem; font-weight: 500; color: #111111;">Detail & Informasi Undangan</h2>
+      
+      <form action="/admin/{{ session.get('supabase_wo_slug') }}/customers/{{ customer.id }}/edit" method="POST">
+        {{ csrfField() }}
+        
+        <!-- Mempelai Pria (Groom) -->
+        <h3 class="font-serif mb-4" style="font-size: 1.3rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 8px; margin-top: 1.5rem;">Mempelai Pria</h3>
+        
+        <div class="admin-row-grid">
+          <div class="form-group">
+            <label for="groom_name" class="form-label">Nama Lengkap Mempelai Pria</label>
+            <input type="text" id="groom_name" name="groomName" class="form-control" value="{{ invitation ? invitation.groomName : '' }}" required />
+          </div>
+          <div class="form-group">
+            <label for="groom_nickname" class="form-label">Nama Panggilan</label>
+            <input type="text" id="groom_nickname" name="groomNickname" class="form-control" value="{{ invitation ? invitation.groomNickname : '' }}" required />
+          </div>
+        </div>
+
+        <div class="admin-row-grid">
+          <div class="form-group">
+            <label for="groom_parent_father" class="form-label">Nama Ayah Pria</label>
+            <input type="text" id="groom_parent_father" name="groomParentFather" class="form-control" value="{{ invitation ? (invitation.groomParentFather || '') : '' }}" placeholder="Bapak H. Ridwan Jaya" />
+          </div>
+          <div class="form-group">
+            <label for="groom_parent_mother" class="form-label">Nama Ibu Pria</label>
+            <input type="text" id="groom_parent_mother" name="groomParentMother" class="form-control" value="{{ invitation ? (invitation.groomParentMother || '') : '' }}" placeholder="Ibu Hj. Kartika" />
+          </div>
+        </div>
+
+        <!-- Mempelai Wanita (Bride) -->
+        <h3 class="font-serif mb-4" style="font-size: 1.3rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 8px; margin-top: 2rem;">Mempelai Wanita</h3>
+        
+        <div class="admin-row-grid">
+          <div class="form-group">
+            <label for="bride_name" class="form-label">Nama Lengkap Mempelai Wanita</label>
+            <input type="text" id="bride_name" name="brideName" class="form-control" value="{{ invitation ? invitation.brideName : '' }}" required />
+          </div>
+          <div class="form-group">
+            <label for="bride_nickname" class="form-label">Nama Panggilan</label>
+            <input type="text" id="bride_nickname" name="brideNickname" class="form-control" value="{{ invitation ? invitation.brideNickname : '' }}" required />
+          </div>
+        </div>
+
+        <div class="admin-row-grid">
+          <div class="form-group">
+            <label for="bride_parent_father" class="form-label">Nama Ayah Wanita</label>
+            <input type="text" id="bride_parent_father" name="brideParentFather" class="form-control" value="{{ invitation ? (invitation.brideParentFather || '') : '' }}" placeholder="Bapak Ahmad Santoso" />
+          </div>
+          <div class="form-group">
+            <label for="bride_parent_mother" class="form-label">Nama Ibu Wanita</label>
+            <input type="text" id="bride_parent_mother" name="brideParentMother" class="form-control" value="{{ invitation ? (invitation.brideParentMother || '') : '' }}" placeholder="Ibu Siti Maryam" />
+          </div>
+        </div>
+
+        <!-- Jadwal & Lokasi Acara -->
+        <h3 class="font-serif mb-4" style="font-size: 1.3rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 8px; margin-top: 2rem;">Waktu & Tempat Acara</h3>
+        
+        <div class="admin-row-grid">
+          <div class="form-group">
+            <label for="akad_datetime" class="form-label">Waktu Akad Nikah</label>
+            <input type="datetime-local" id="akad_datetime" name="akadDatetime" class="form-control" value="{{ invitation && invitation.akadDatetime ? invitation.akadDatetime.toFormat('yyyy-MM-dd\'T\'HH:mm') : '' }}" required />
+          </div>
+          <div class="form-group">
+            <label for="resepsi_datetime" class="form-label">Waktu Resepsi</label>
+            <input type="datetime-local" id="resepsi_datetime" name="resepsiDatetime" class="form-control" value="{{ invitation && invitation.resepsiDatetime ? invitation.resepsiDatetime.toFormat('yyyy-MM-dd\'T\'HH:mm') : '' }}" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="event_location" class="form-label">Nama Gedung / Lokasi</label>
+          <input type="text" id="event_location" name="eventLocation" class="form-control" value="{{ invitation ? invitation.eventLocation : '' }}" required />
+        </div>
+
+        <div class="form-group">
+          <label for="event_address" class="form-label">Alamat Lengkap Gedung</label>
+          <input type="text" id="event_address" name="eventAddress" class="form-control" value="{{ invitation ? invitation.eventAddress : '' }}" required />
+        </div>
+
+        <div class="form-group">
+          <label for="google_maps_url" class="form-label">Link Google Maps (Share Link)</label>
+          <input type="url" id="google_maps_url" name="googleMapsUrl" class="form-control" value="{{ invitation ? (invitation.googleMapsUrl || '') : '' }}" placeholder="https://maps.app.goo.gl/..." />
+        </div>
+
+        <!-- Tanda Kasih Digital -->
+        <h3 class="font-serif mb-4" style="font-size: 1.3rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 8px; margin-top: 2rem;">Tanda Kasih Digital</h3>
+        
+        <div class="admin-row-grid">
+          <div class="form-group">
+            <label for="bank_name" class="form-label">Nama Bank</label>
+            <input type="text" id="bank_name" name="bankName" class="form-control" value="{{ invitation ? (invitation.bankName || '') : '' }}" placeholder="Bank Mandiri" />
+          </div>
+          <div class="form-group">
+            <label for="bank_account_number" class="form-label">Nomor Rekening</label>
+            <input type="text" id="bank_account_number" name="bankAccountNumber" class="form-control" value="{{ invitation ? (invitation.bankAccountNumber || '') : '' }}" placeholder="123 4567 890" />
+          </div>
+        </div>
+        <div class="form-group" style="max-width: 50%;">
+          <label for="bank_account_holder" class="form-label">Nama Pemilik Rekening</label>
+          <input type="text" id="bank_account_holder" name="bankAccountHolder" class="form-control" value="{{ invitation ? (invitation.bankAccountHolder || '') : '' }}" placeholder="Nama Penerima Mandiri" />
+        </div>
+
+        <div class="admin-row-grid mt-4">
+          <div class="form-group">
+            <label for="wallet_name" class="form-label">Nama E-Wallet (Opsional)</label>
+            <input type="text" id="wallet_name" name="walletName" class="form-control" value="{{ invitation ? (invitation.walletName || '') : '' }}" placeholder="GoPay / OVO" />
+          </div>
+          <div class="form-group">
+            <label for="wallet_number" class="form-label">Nomor E-Wallet</label>
+            <input type="text" id="wallet_number" name="walletNumber" class="form-control" value="{{ invitation ? (invitation.walletNumber || '') : '' }}" placeholder="0812 3456 7890" />
+          </div>
+        </div>
+        <div class="form-group" style="max-width: 50%;">
+          <label for="wallet_holder" class="form-label">Nama Pemilik E-Wallet</label>
+          <input type="text" id="wallet_holder" name="walletHolder" class="form-control" value="{{ invitation ? (invitation.walletHolder || '') : '' }}" placeholder="Nama Penerima E-Wallet" />
+        </div>
+
+        <!-- Additional Settings -->
+        <h3 class="font-serif mb-4" style="font-size: 1.3rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 8px; margin-top: 2rem;">Pengaturan Tambahan</h3>
+        
+        <div class="admin-row-grid">
+          <div class="form-group">
+            <label for="slug" class="form-label">Slug URL Undangan</label>
+            <input type="text" id="slug" name="slug" class="form-control" value="{{ invitation ? invitation.slug : '' }}" required />
+          </div>
+          <div class="form-group">
+            <label for="bg_music_url" class="form-label">Background Music URL</label>
+            <input type="text" id="bg_music_url" name="bgMusicUrl" class="form-control" value="{{ invitation ? (invitation.bgMusicUrl || '') : '' }}" placeholder="/audio/gamelan.mp3" />
+          </div>
+        </div>
+        
+        <div class="form-group mt-4" style="max-width: 50%;">
+          <label for="style" class="form-label">Tema Desain Undangan</label>
+          <select id="style" name="style" class="form-control" style="height: auto; padding: 0.75rem 1rem;">
+            <option value="java_style" {{ invitation && invitation.style === 'java_style' ? 'selected' : '' }}>Royal Javanese Heritage (Default)</option>
+            <option value="image_sequence" {{ invitation && invitation.style === 'image_sequence' ? 'selected' : '' }}>Aeterna Editorial (Modern Scroll Animation)</option>
+          </select>
+        </div>
+
+        <!-- Save Button -->
+        <div class="mt-8 text-center">
+          <button type="submit" class="btn-primary-gold" style="width: auto; padding: 0.85rem 3rem; border-radius: 8px;">
+            <span class="material-symbols-outlined">save</span>
+            Simpan Semua Perubahan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 2: TIMELINE STORIES (Love Story)       -->
+  <!-- ========================================== -->
+  <div x-show="currentTab === 'stories'" x-transition class="font-sans">
+    <!-- Add Story Card -->
+    <div class="mb-8" style="background-color: #FFFFFF; border: 1px solid #E2E2E0; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);">
+      <h2 class="font-serif mb-6" style="font-size: 1.5rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 10px;">Tambah Kisah Perjalanan (Milestone)</h2>
+      
+      <form action="/admin/{{ session.get('supabase_wo_slug') }}/customers/{{ customer.id }}/stories" method="POST">
+        {{ csrfField() }}
+        
+        <div class="admin-row-grid">
+          <div class="form-group">
+            <label for="milestone_date" class="form-label">Waktu / Tanggal</label>
+            <input type="text" id="milestone_date" name="milestoneDate" class="form-control" placeholder="Contoh: September 2021" required />
+          </div>
+          <div class="form-group">
+            <label for="story_title" class="form-label">Judul Momen</label>
+            <input type="text" id="story_title" name="title" class="form-control" placeholder="Contoh: Pertemuan Pertama" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="story_image_url" class="form-label">URL Foto Pendukung</label>
+          <input type="url" id="story_image_url" name="imageUrl" class="form-control" placeholder="https://images.unsplash.com/..." />
+        </div>
+
+        <div class="form-group">
+          <label for="story_description" class="form-label">Deskripsi Cerita</label>
+          <textarea id="story_description" name="description" rows="3" class="form-control" placeholder="Jelaskan secara singkat momen romantis atau berkesan ini..." required></textarea>
+        </div>
+
+        <div class="form-group" style="max-width: 200px;">
+          <label for="story_sort_order" class="form-label">Urutan Tampil (Sort Order)</label>
+          <input type="number" id="story_sort_order" name="sortOrder" class="form-control" value="0" required />
+        </div>
+
+        <button type="submit" class="btn-primary-gold display-inline-flex" style="margin: 0; width: auto; border-radius: 8px;">
+          <span class="material-symbols-outlined">add</span>
+          Tambah Tonggak Kisah
+        </button>
+      </form>
+    </div>
+
+    <!-- Stories List Table -->
+    <div style="background-color: #FFFFFF; border: 1px solid #E2E2E0; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);">
+      <h3 class="font-serif mb-6" style="font-size: 1.4rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 10px;">Daftar Kisah Saat Ini</h3>
+      
+      <div class="admin-table-container" style="margin-top: 0;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width: 80px;">Urutan</th>
+              <th style="width: 150px;">Tanggal/Momen</th>
+              <th style="width: 200px;">Judul</th>
+              <th>Narasi Kisah</th>
+              <th style="width: 100px;">Preview</th>
+              <th style="width: 80px; text-align: center;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if(stories && stories.length > 0)
+              @each(story in stories)
+                <tr>
+                  <td>{{ story.sort_order }}</td>
+                  <td><strong>{{ story.milestone_date }}</strong></td>
+                  <td style="font-weight: 600; color: #111111;">{{ story.title }}</td>
+                  <td style="font-size: 0.9rem; color: #6E6E6C; line-height: 1.5;">{{ story.description }}</td>
+                  <td>
+                    @if(story.image_url)
+                      <a href="{{ story.image_url }}" target="_blank" style="font-size: 0.85rem; text-decoration: underline; color: #111111; font-weight: 600;">Lihat</a>
+                    @else
+                      <span class="text-muted" style="font-size: 0.85rem; color: #6E6E6C;">-</span>
+                    @endif
+                  </td>
+                  <td style="text-align: center;">
+                    <form action="/admin/{{ session.get('supabase_wo_slug') }}/customers/{{ customer.id }}/stories/delete/{{ story.id }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus momen kisah ini?');">
+                      {{ csrfField() }}
+                      <button type="submit" class="btn-copy-gold" style="border-color: rgba(198, 40, 40, 0.2); color: #C62828; padding: 6px 10px; background: rgba(198, 40, 40, 0.03);" onmouseover="this.style.background='#FFEBEE'; this.style.borderColor='#C62828'" onmouseout="this.style.background='rgba(198,40,40,0.03)'; this.style.borderColor='rgba(198, 40, 40, 0.2)'">
+                        <span class="material-symbols-outlined" style="font-size: 1.15rem; vertical-align: middle;">delete</span>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              @end
+            @else
+              <tr>
+                <td colspan="6" class="text-center text-muted" style="padding: 3rem; color: #6E6E6C;">
+                  Belum ada momen kisah romantis terdaftar untuk pasangan ini.
+                </td>
+              </tr>
+            @endif
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 3: GALLERY PHOTOS (Pre-Wedding)        -->
+  <!-- ========================================== -->
+  <div x-show="currentTab === 'gallery'" x-transition class="font-sans">
+    <!-- Add Photo Card -->
+    <div class="mb-8" style="background-color: #FFFFFF; border: 1px solid #E2E2E0; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);">
+      <h2 class="font-serif mb-6" style="font-size: 1.5rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 10px;">Unggah Galeri Foto</h2>
+      
+      <form action="/admin/{{ session.get('supabase_wo_slug') }}/customers/{{ customer.id }}/gallery" method="POST">
+        {{ csrfField() }}
+        
+        <div class="form-group">
+          <label for="gallery_image_url" class="form-label">URL Foto Lengkap (Unsplash, G Drive, dll)</label>
+          <input type="url" id="gallery_image_url" name="imageUrl" class="form-control" placeholder="https://images.unsplash.com/..." required />
+        </div>
+
+        <div class="admin-row-grid">
+          <div class="form-group">
+            <label for="gallery_caption" class="form-label">Keterangan / Caption Foto</label>
+            <input type="text" id="gallery_caption" name="caption" class="form-control" placeholder="Contoh: Batik Keagungan di Keraton" />
+          </div>
+          <div class="form-group" style="max-width: 200px;">
+            <label for="gallery_sort_order" class="form-label">Urutan Tampil (Sort Order)</label>
+            <input type="number" id="gallery_sort_order" name="sortOrder" class="form-control" value="0" required />
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary-gold display-inline-flex" style="margin: 0; width: auto; border-radius: 8px;">
+          <span class="material-symbols-outlined">add_a_photo</span>
+          Tambah ke Galeri
+        </button>
+      </form>
+    </div>
+
+    <!-- Photos Grid Table -->
+    <div style="background-color: #FFFFFF; border: 1px solid #E2E2E0; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);">
+      <h3 class="font-serif mb-6" style="font-size: 1.4rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 10px;">Koleksi Galeri Foto</h3>
+      
+      <div class="admin-table-container" style="margin-top: 0;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width: 80px;">Urutan</th>
+              <th style="width: 160px;">Preview Foto</th>
+              <th>Tautan / URL Foto</th>
+              <th>Keterangan (Caption)</th>
+              <th style="width: 80px; text-align: center;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if(galleries && galleries.length > 0)
+              @each(photo in galleries)
+                <tr>
+                  <td>{{ photo.sort_order }}</td>
+                  <td>
+                    <img src="{{ photo.image_url }}" alt="{{ photo.caption || '' }}" style="width: 100px; height: 75px; object-fit: cover; border-radius: 6px; border: 1px solid #E2E2E0;" />
+                  </td>
+                  <td style="font-size: 0.9rem; color: #6E6E6C; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <a href="{{ photo.image_url }}" target="_blank" style="text-decoration: underline; color: #111111; font-weight: 500;">
+                      {{ photo.image_url }}
+                    </a>
+                  </td>
+                  <td style="font-weight: 600; color: #111111;">{{ photo.caption || '-' }}</td>
+                  <td style="text-align: center;">
+                    <form action="/admin/{{ session.get('supabase_wo_slug') }}/customers/{{ customer.id }}/gallery/delete/{{ photo.id }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus foto dari galeri ini?');">
+                      {{ csrfField() }}
+                      <button type="submit" class="btn-copy-gold" style="border-color: rgba(198, 40, 40, 0.2); color: #C62828; padding: 6px 10px; background: rgba(198, 40, 40, 0.03);" onmouseover="this.style.background='#FFEBEE'; this.style.borderColor='#C62828'" onmouseout="this.style.background='rgba(198,40,40,0.03)'; this.style.borderColor='rgba(198, 40, 40, 0.2)'">
+                        <span class="material-symbols-outlined" style="font-size: 1.15rem; vertical-align: middle;">delete</span>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              @end
+            @else
+              <tr>
+                <td colspan="5" class="text-center text-muted" style="padding: 3rem; color: #6E6E6C;">
+                  Belum ada foto pre-wedding yang ditambahkan ke galeri.
+                </td>
+              </tr>
+            @endif
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 4: TAMU & RSVP (Guest Moderation)      -->
+  <!-- ========================================== -->
+  <div x-show="currentTab === 'guests'" x-transition class="font-sans">
+    <!-- Stats Cards for RSVP -->
+    <div class="admin-stats-grid" style="margin-bottom: 2rem;">
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="color: #111111; background-color: #FAF9F6;">
+          <span class="material-symbols-outlined">group</span>
+        </div>
+        <div>
+          <p class="admin-stat-value">{{ totalGuests }}</p>
+          <p class="admin-stat-label">Total Konfirmasi RSVP</p>
+        </div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="color: #2E7D32; background-color: #E8F5E9; border-color: rgba(46, 125, 80, 0.15)">
+          <span class="material-symbols-outlined">check_circle</span>
+        </div>
+        <div>
+          <p class="admin-stat-value" style="color: #2E7D32;">{{ attendingCount }}</p>
+          <p class="admin-stat-label">Tamu Menyatakan Hadir</p>
+        </div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="color: #C62828; background-color: #FFEBEE; border-color: rgba(198, 40, 40, 0.15)">
+          <span class="material-symbols-outlined">cancel</span>
+        </div>
+        <div>
+          <p class="admin-stat-value" style="color: #C62828;">{{ decliningCount }}</p>
+          <p class="admin-stat-label">Tamu Tidak Dapat Hadir</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personal Invitation Link Generator Card -->
+    <div class="mb-8" style="background-color: #FFFFFF; border: 1px solid #E2E2E0; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);" x-data="{ inviteeName: '', generatedUrl: '', showUrlContainer: false }">
+      <h3 class="font-serif mb-4" style="font-size: 1.35rem; font-weight: 500; color: #111111;">Pembuat Tautan Undangan Kustom (Guest Link Generator)</h3>
+      <p class="mb-4" style="font-size: 0.9rem; color: #6E6E6C; line-height: 1.5;">
+        Masukkan nama tamu untuk mendapatkan tautan undangan personal yang otomatis menampilkan nama mereka pada halaman pembuka/sampul.
+      </p>
+      
+      <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+        <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+          <label for="invitee_name" class="form-label">Nama Tamu Undangan</label>
+          <input type="text" id="invitee_name" x-model="inviteeName" class="form-control" placeholder="Contoh: Bapak Ir. H. Joko & Keluarga" />
+        </div>
+        
+        <button type="button" @click="
+          if (!inviteeName.trim()) { alert('Tolong masukkan nama tamu terlebih dahulu.'); return; }
+          generatedUrl = `${window.location.origin}/{{ session.get('supabase_wo_slug') }}/{{ invitation ? invitation.slug : customer.id }}?to=${encodeURIComponent(inviteeName.trim())}`;
+          showUrlContainer = true;
+        " class="btn-primary-gold" style="margin: 0; width: auto; height: 42px; border-radius: 8px;">
+          <span class="material-symbols-outlined">link</span>
+          Buat Tautan
+        </button>
+      </div>
+
+      <!-- Output Generated Link -->
+      <div x-show="showUrlContainer" class="mt-4" style="padding: 1.25rem; border-radius: 8px; border: 1px solid #E2E2E0; background: #FAF9F6;" x-transition>
+        <p class="form-label" style="margin-bottom: 6px;">Salin Tautan Personal Tamu:</p>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <input type="text" :value="generatedUrl" class="form-control" style="background: #FFFFFF;" readonly />
+          <button type="button" @click="
+            navigator.clipboard.writeText(generatedUrl).then(() => {
+              const toast = document.getElementById('copy-toast-custom');
+              toast.classList.add('show');
+              setTimeout(() => { toast.classList.remove('show'); }, 2000);
+            });
+          " class="btn-copy-gold" style="height: 42px; border-radius: 8px; white-space: nowrap;">
+            <span class="material-symbols-outlined">content_copy</span>
+            Salin Tautan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RSVP Moderation Table -->
+    <div style="background-color: #FFFFFF; border: 1px solid #E2E2E0; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);">
+      <h3 class="font-serif mb-6" style="font-size: 1.4rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 10px;">Daftar Tamu & Konfirmasi Kehadiran</h3>
+      
+      <div class="admin-table-container" style="margin-top: 0;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width: 180px;">Tanggal/Waktu RSVP</th>
+              <th style="width: 220px;">Nama Tamu</th>
+              <th style="width: 120px; text-align: center;">Konfirmasi</th>
+              <th>Doa Restu & Ucapan</th>
+              <th style="width: 80px; text-align: center;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if(guests && guests.length > 0)
+              @each(guest in guests)
+                <tr>
+                  <td style="font-size: 0.85rem; color: #6E6E6C;">
+                    {{ guest.createdAt.toFormat('dd MMM yyyy, HH:mm') }} WIB
+                  </td>
+                  <td style="font-weight: 600; color: #111111;">{{ guest.name }}</td>
+                  <td style="text-align: center;">
+                    <span class="badge" style="font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 4px; {{ guest.attendance === 'hadir' ? 'background: #E8F5E9; color: #2E7D32;' : 'background: #FFEBEE; color: #C62828;' }}">
+                      {{ guest.attendance === 'hadir' ? 'Hadir' : 'Tidak Hadir' }}
+                    </span>
+                  </td>
+                  <td style="font-size: 0.9rem; color: #111111; line-height: 1.4;">{{ guest.comment || '-' }}</td>
+                  <td style="text-align: center;">
+                    <form action="/admin/{{ session.get('supabase_wo_slug') }}/customers/{{ customer.id }}/guests/delete/{{ guest.id }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus RSVP dari tamu ini?');">
+                      {{ csrfField() }}
+                      <button type="submit" class="btn-copy-gold" style="border-color: rgba(198, 40, 40, 0.2); color: #C62828; padding: 6px 10px; background: rgba(198, 40, 40, 0.03);" onmouseover="this.style.background='#FFEBEE'; this.style.borderColor='#C62828'" onmouseout="this.style.background='rgba(198,40,40,0.03)'; this.style.borderColor='rgba(198, 40, 40, 0.2)'">
+                        <span class="material-symbols-outlined" style="font-size: 1.15rem; vertical-align: middle;">delete</span>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              @end
+            @else
+              <tr>
+                <td colspan="5" class="text-center text-muted" style="padding: 3rem; color: #6E6E6C;">
+                  Belum ada konfirmasi kehadiran (RSVP) yang masuk dari tamu undangan.
+                </td>
+              </tr>
+            @endif
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Copy Link Toast -->
+  <div id="copy-toast-custom" class="toast-toast" style="position: fixed; bottom: 2rem; right: 2rem; background: #111111; color: #FAF9F6; padding: 0.8rem 1.6rem; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 0.9rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); opacity: 0; pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease; transform: translateY(10px); z-index: 9999;">
+    Tautan personal disalin ke clipboard!
+  </div>
+
+  <!-- Styling for custom toast custom state -->
+  <style>
+    #copy-toast-custom.show {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+  </style>
+@end

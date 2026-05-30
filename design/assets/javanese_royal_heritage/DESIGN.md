@@ -101,11 +101,13 @@ spacing:
 ---
 
 ## Brand & Style
+
 The brand personality is deeply rooted in Javanese heritage—elegant, respectful, and sophisticated. It targets a refined audience, evoking an emotional response of warmth, tradition, and premium exclusivity.
 
 The design style is **Editorial Minimalism mixed with Heritage Accents**. It utilizes high-contrast serif typography and generous whitespace common in luxury editorials, but grounds it with tactile cultural elements like the "Mega Mendung" batik patterns and "Gunungan Wayang" silhouettes. The interface feels like a high-end digital invitation, balancing the weight of tradition with the fluidity of modern motion (subtle pulses and slide-up reveals).
 
 ## Colors
+
 The palette is dominated by a luxurious "Heritage Gold" set against an "Obsidian Black" background to create a deep, immersive experience.
 
 - **Primary (Gold):** Used for key accents, headings, and call-to-action elements. It frequently appears as a linear gradient (Gold to Muted Bronze) to simulate a metallic sheen.
@@ -114,32 +116,40 @@ The palette is dominated by a luxurious "Heritage Gold" set against an "Obsidian
 - **Accents:** Muted bronze and deep charcoal are used for dividers and secondary containers to maintain a subtle hierarchy.
 
 ## Typography
+
 The typography system uses a tri-font approach to convey different layers of meaning:
+
 - **Great Vibes (Display):** Reserved for names and the primary "Undangan" title. It is the emotional heart of the design, representing the personal, handwritten touch.
 - **Playfair Display (Headlines):** Used for dates and major section headers. It provides the "Editorial" feel and structural authority.
 - **Newsreader (Body):** Used for Javanese philosophy and descriptive text. Its high legibility and classic serif look reinforce the literary nature of the content.
 - **Bodoni Moda (Labels):** Used for small, uppercase metadata and navigation labels. It adds a fashion-forward, modern luxury finish.
 
 ## Layout & Spacing
-The layout follows a **Fixed Mobile-First Grid** optimized for a 480px width, centered on larger screens with a deep shadow to mimic a physical card or mobile device. 
+
+The layout follows a **Fixed Mobile-First Grid** optimized for a 480px width, centered on larger screens with a deep shadow to mimic a physical card or mobile device.
 
 - **Vertical Rhythm:** Large gaps (96px+) between major sections (Hero, Event, Footer) are essential to maintain the "minimalist luxury" feel.
 - **Safe Areas:** A standard 24px (1.5rem) horizontal padding is used for all text content.
 - **Alignment:** Content is primarily center-aligned for the hero and event sections to emphasize symmetry, shifting to right-aligned in the footer for a modern, unexpected finish.
 
 ## Elevation & Depth
+
 The system avoids heavy drop shadows for components, instead using **Tonal Layers and Glassmorphism**:
+
 - **Fixed Elements:** The top app bar and bottom navigation use a high-opacity backdrop blur (80-95%) and a subtle top/bottom border in `outline-muted`.
 - **Containers:** Content cards (like the event schedule) are defined by slightly lighter surface values (`surface-container-low`) rather than shadows, creating a "flat but layered" look.
 - **Imagery:** Hero illustrations (Chibi characters) utilize a soft ambient shadow to lift them off the background without breaking the overall flat editorial aesthetic.
 
 ## Shapes
+
 The shape language is primarily **Sharp & Architectural** with selective softness:
+
 - **Buttons:** Use a square or nearly square corner (4px) to maintain a formal, serious tone.
 - **Feature Cards:** Use a larger radius (8px to 16px) specifically for the main event containers to make them feel more approachable and distinct from the background.
 - **Navigation:** The bottom bar uses a heavily rounded top-edge (24px) to create a "docked" feel that is friendly to thumb interactions.
 
 ## Components
+
 - **Primary Buttons:** Rectangular, full-width, utilizing the primary Gold color with `on-primary` (dark) text. They should include a small leading icon for clarity.
 - **Event Cards:** A combined container with a vertical divider. Time is displayed in `headline-md`, while titles use `label-caps` with an "active subtle pulse" animation.
 - **Navigation Bar:** Iconic representation using `material-symbols-outlined` with a fill state for active items. Labels are extremely small (9px) to keep the focus on the icons.

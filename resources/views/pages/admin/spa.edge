@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WO Admin Panel - Undangan Pernikahan</title>
+    
+    <!-- Google Fonts (Outfit & Playfair Display) & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+
+    @viteReactRefresh()
+    @vite(['resources/css/tailwind.css', 'resources/js/admin/index.tsx'])
+  </head>
+  <body class="bg-[#FAF9F6] text-[#111111] antialiased min-h-screen">
+    <!-- Server Configurations for Client-Side React Hydration -->
+    <script id="server-config" type="application/json">
+      {
+        "woId": "{{ session.get('supabase_wo_id') }}",
+        "woSlug": "{{ session.get('supabase_wo_slug') }}",
+        "woName": "{{ session.get('supabase_wo_name') }}",
+        "woLocation": "{{ session.get('supabase_wo_location') }}",
+        "userEmail": "{{ session.get('supabase_user_email') }}",
+        "accessToken": "{{ session.get('supabase_access_token') }}",
+        "refreshToken": "{{ session.get('supabase_refresh_token') }}"
+      }
+    </script>
+
+    <!-- React App Root Mount Node -->
+    <div id="root"></div>
+  </body>
+</html>

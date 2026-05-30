@@ -8,145 +8,145 @@
   </div>
 
   @if(flashMessages.has('success'))
-    <div class="alert alert-success text-center font-sans mb-6" style="padding: 12px; font-size: 0.9rem; min-width: auto; width: 100%;">
+    <div class="alert alert-success text-center font-sans mb-6">
       {{ flashMessages.get('success') }}
     </div>
   @endif
 
-  <!-- Edit Form -->
-  <div class="glass-card font-sans">
+  <!-- Edit Form Container -->
+  <div class="font-sans" style="background-color: #FFFFFF; border: 1px solid #E2E2E0; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);">
     <form action="/admin/edit" method="POST">
       {{ csrfField() }}
       
       <!-- Mempelai Pria (Groom) -->
-      <h3 class="font-serif text-gold mb-4" style="font-size: 1.2rem; border-bottom: 1px solid var(--outline-muted); padding-bottom: 6px;">Detail Mempelai Pria</h3>
+      <h3 class="font-serif mb-4" style="font-size: 1.35rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 10px;">Detail Mempelai Pria</h3>
       
       <div class="admin-row-grid">
         <div class="form-group">
-          <label for="groom_name" class="form-label text-gold">Nama Lengkap Mempelai Pria</label>
+          <label for="groom_name" class="form-label">Nama Lengkap Mempelai Pria</label>
           <input type="text" id="groom_name" name="groomName" class="form-control" value="{{ invitation.groomName }}" required />
         </div>
         <div class="form-group">
-          <label for="groom_nickname" class="form-label text-gold">Nama Panggilan</label>
+          <label for="groom_nickname" class="form-label">Nama Panggilan</label>
           <input type="text" id="groom_nickname" name="groomNickname" class="form-control" value="{{ invitation.groomNickname }}" required />
         </div>
       </div>
 
       <div class="admin-row-grid">
         <div class="form-group">
-          <label for="groom_parent_father" class="form-label text-gold">Nama Ayah</label>
+          <label for="groom_parent_father" class="form-label">Nama Ayah</label>
           <input type="text" id="groom_parent_father" name="groomParentFather" class="form-control" value="{{ invitation.groomParentFather || '' }}" placeholder="Contoh: Bapak H. Ridwan Jaya" />
         </div>
         <div class="form-group">
-          <label for="groom_parent_mother" class="form-label text-gold">Nama Ibu</label>
+          <label for="groom_parent_mother" class="form-label">Nama Ibu</label>
           <input type="text" id="groom_parent_mother" name="groomParentMother" class="form-control" value="{{ invitation.groomParentMother || '' }}" placeholder="Contoh: Ibu Hj. Kartika" />
         </div>
       </div>
 
       <!-- Mempelai Wanita (Bride) -->
-      <h3 class="font-serif text-gold mb-4 mt-8" style="font-size: 1.2rem; border-bottom: 1px solid var(--outline-muted); padding-bottom: 6px;">Detail Mempelai Wanita</h3>
+      <h3 class="font-serif mb-4 mt-8" style="font-size: 1.35rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 10px;">Detail Mempelai Wanita</h3>
       
       <div class="admin-row-grid">
         <div class="form-group">
-          <label for="bride_name" class="form-label text-gold">Nama Lengkap Mempelai Wanita</label>
+          <label for="bride_name" class="form-label">Nama Lengkap Mempelai Wanita</label>
           <input type="text" id="bride_name" name="brideName" class="form-control" value="{{ invitation.brideName }}" required />
         </div>
         <div class="form-group">
-          <label for="bride_nickname" class="form-label text-gold">Nama Panggilan</label>
+          <label for="bride_nickname" class="form-label">Nama Panggilan</label>
           <input type="text" id="bride_nickname" name="brideNickname" class="form-control" value="{{ invitation.brideNickname }}" required />
         </div>
       </div>
 
       <div class="admin-row-grid">
         <div class="form-group">
-          <label for="bride_parent_father" class="form-label text-gold">Nama Ayah</label>
+          <label for="bride_parent_father" class="form-label">Nama Ayah</label>
           <input type="text" id="bride_parent_father" name="brideParentFather" class="form-control" value="{{ invitation.brideParentFather || '' }}" placeholder="Contoh: Bapak Ahmad Santoso" />
         </div>
         <div class="form-group">
-          <label for="bride_parent_mother" class="form-label text-gold">Nama Ibu</label>
+          <label for="bride_parent_mother" class="form-label">Nama Ibu</label>
           <input type="text" id="bride_parent_mother" name="brideParentMother" class="form-control" value="{{ invitation.brideParentMother || '' }}" placeholder="Contoh: Ibu Siti Maryam" />
         </div>
       </div>
 
       <!-- Jadwal Acara (Timing) -->
-      <h3 class="font-serif text-gold mb-4 mt-8" style="font-size: 1.2rem; border-bottom: 1px solid var(--outline-muted); padding-bottom: 6px;">Waktu & Tempat Acara</h3>
+      <h3 class="font-serif mb-4 mt-8" style="font-size: 1.35rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 10px;">Waktu & Tempat Acara</h3>
       
       <div class="admin-row-grid">
         <div class="form-group">
-          <label for="akad_datetime" class="form-label text-gold">Waktu Akad Nikah</label>
+          <label for="akad_datetime" class="form-label">Waktu Akad Nikah</label>
           <input type="datetime-local" id="akad_datetime" name="akadDatetime" class="form-control" value="{{ invitation.akadDatetime.toFormat('yyyy-MM-dd\'T\'HH:mm') }}" required />
         </div>
         <div class="form-group">
-          <label for="resepsi_datetime" class="form-label text-gold">Waktu Resepsi</label>
+          <label for="resepsi_datetime" class="form-label">Waktu Resepsi</label>
           <input type="datetime-local" id="resepsi_datetime" name="resepsiDatetime" class="form-control" value="{{ invitation.resepsiDatetime.toFormat('yyyy-MM-dd\'T\'HH:mm') }}" required />
         </div>
       </div>
 
       <div class="form-group">
-        <label for="event_location" class="form-label text-gold">Nama Gedung / Lokasi</label>
+        <label for="event_location" class="form-label">Nama Gedung / Lokasi</label>
         <input type="text" id="event_location" name="eventLocation" class="form-control" value="{{ invitation.eventLocation }}" required />
       </div>
 
       <div class="form-group">
-        <label for="event_address" class="form-label text-gold">Alamat Lengkap</label>
+        <label for="event_address" class="form-label">Alamat Lengkap</label>
         <input type="text" id="event_address" name="eventAddress" class="form-control" value="{{ invitation.eventAddress }}" required />
       </div>
 
       <div class="form-group">
-        <label for="google_maps_url" class="form-label text-gold">Link Google Maps (Share Link)</label>
+        <label for="google_maps_url" class="form-label">Link Google Maps (Share Link)</label>
         <input type="url" id="google_maps_url" name="googleMapsUrl" class="form-control" value="{{ invitation.googleMapsUrl || '' }}" placeholder="https://maps.app.goo.gl/..." />
       </div>
 
       <!-- Tanda Kasih Digital (Gift Registry) -->
-      <h3 class="font-serif text-gold mb-4 mt-8" style="font-size: 1.2rem; border-bottom: 1px solid var(--outline-muted); padding-bottom: 6px;">Tanda Kasih Digital</h3>
+      <h3 class="font-serif mb-4 mt-8" style="font-size: 1.35rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 10px;">Tanda Kasih Digital</h3>
       
       <div class="admin-row-grid">
         <div class="form-group">
-          <label for="bank_name" class="form-label text-gold">Nama Bank</label>
+          <label for="bank_name" class="form-label">Nama Bank</label>
           <input type="text" id="bank_name" name="bankName" class="form-control" value="{{ invitation.bankName || '' }}" placeholder="Contoh: Bank Mandiri" />
         </div>
         <div class="form-group">
-          <label for="bank_account_number" class="form-label text-gold">Nomor Rekening</label>
+          <label for="bank_account_number" class="form-label">Nomor Rekening</label>
           <input type="text" id="bank_account_number" name="bankAccountNumber" class="form-control" value="{{ invitation.bankAccountNumber || '' }}" placeholder="Contoh: 123 4567 890" />
         </div>
       </div>
       <div class="form-group" style="max-width: 50%;">
-        <label for="bank_account_holder" class="form-label text-gold">Nama Pemilik Rekening</label>
+        <label for="bank_account_holder" class="form-label">Nama Pemilik Rekening</label>
         <input type="text" id="bank_account_holder" name="bankAccountHolder" class="form-control" value="{{ invitation.bankAccountHolder || '' }}" placeholder="Contoh: Muhammad Pratama" />
       </div>
 
       <div class="admin-row-grid mt-4">
         <div class="form-group">
-          <label for="wallet_name" class="form-label text-gold">Nama E-Wallet (Opsional)</label>
+          <label for="wallet_name" class="form-label">Nama E-Wallet (Opsional)</label>
           <input type="text" id="wallet_name" name="walletName" class="form-control" value="{{ invitation.walletName || '' }}" placeholder="Contoh: GoPay / OVO" />
         </div>
         <div class="form-group">
-          <label for="wallet_number" class="form-label text-gold">Nomor E-Wallet</label>
+          <label for="wallet_number" class="form-label">Nomor E-Wallet</label>
           <input type="text" id="wallet_number" name="walletNumber" class="form-control" value="{{ invitation.walletNumber || '' }}" placeholder="Contoh: 0812 3456 7890" />
         </div>
       </div>
       <div class="form-group" style="max-width: 50%;">
-        <label for="wallet_holder" class="form-label text-gold">Nama Pemilik E-Wallet</label>
+        <label for="wallet_holder" class="form-label">Nama Pemilik E-Wallet</label>
         <input type="text" id="wallet_holder" name="walletHolder" class="form-control" value="{{ invitation.walletHolder || '' }}" placeholder="Contoh: Juliana Saputri" />
       </div>
 
       <!-- Assets (Audio / Slug) -->
-      <h3 class="font-serif text-gold mb-4 mt-8" style="font-size: 1.2rem; border-bottom: 1px solid var(--outline-muted); padding-bottom: 6px;">Pengaturan Tambahan</h3>
+      <h3 class="font-serif mb-4 mt-8" style="font-size: 1.35rem; font-weight: 500; color: #111111; border-bottom: 1px solid #E2E2E0; padding-bottom: 10px;">Pengaturan Tambahan</h3>
       
       <div class="admin-row-grid">
         <div class="form-group">
-          <label for="slug" class="form-label text-gold">Slug URL Undangan</label>
+          <label for="slug" class="form-label">Slug URL Undangan</label>
           <input type="text" id="slug" name="slug" class="form-control" value="{{ invitation.slug }}" required />
         </div>
         <div class="form-group">
-          <label for="bg_music_url" class="form-label text-gold">Background Music URL</label>
+          <label for="bg_music_url" class="form-label">Background Music URL</label>
           <input type="text" id="bg_music_url" name="bgMusicUrl" class="form-control" value="{{ invitation.bgMusicUrl || '' }}" placeholder="Contoh: /audio/gamelan.mp3" />
         </div>
       </div>
       
       <div class="form-group mt-4" style="max-width: 50%;">
-        <label for="style" class="form-label text-gold">Tema Desain</label>
-        <select id="style" name="style" class="form-control">
+        <label for="style" class="form-label">Tema Desain</label>
+        <select id="style" name="style" class="form-control" style="height: auto; padding: 0.75rem 1rem;">
           <option value="java_style" {{ invitation.style === 'java_style' ? 'selected' : '' }}>Javanese Royal Heritage</option>
           <option value="image_sequence" {{ invitation.style === 'image_sequence' ? 'selected' : '' }}>Aeterna Editorial (Image Sequence)</option>
         </select>
@@ -154,7 +154,7 @@
 
       <!-- Save Button -->
       <div class="mt-8 text-center">
-        <button type="submit" class="btn-primary-gold" style="width: auto; padding: 0.85rem 3rem;">
+        <button type="submit" class="btn-primary-gold" style="width: auto; padding: 0.85rem 3rem; border-radius: 8px;">
           <span class="material-symbols-outlined">save</span>
           Simpan Semua Perubahan
         </button>

@@ -1,0 +1,213 @@
+@layouts.wo({ title: 'NikahB2B - Registrasi Wedding Organizer Baru' })
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      --accent-color: #818cf8;
+      --accent-glow: rgba(129, 140, 248, 0.4);
+      --glass-bg: rgba(30, 41, 59, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .auth-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .auth-card:hover {
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4), 0 0 30px var(--accent-glow);
+    }
+
+    .brand-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, #ffffff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent-color);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.5rem;
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 0.4rem;
+      color: #cbd5e1;
+    }
+
+    .form-input {
+      width: 100%;
+      box-sizing: border-box;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem;
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+      margin-top: 1.5rem;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4), 0 0 15px var(--accent-glow);
+    }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .auth-link {
+      color: var(--accent-color);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .auth-link:hover {
+      color: #a5b4fc;
+      text-decoration: underline;
+    }
+
+    .alert-error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      padding: 0.8rem 1rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+      display: none;
+    }
+  </style>
+
+  <div class="auth-card" x-data="signupHandler()">
+    <div class="brand-title">NikahB2B</div>
+    <div class="brand-subtitle">Daftarkan Wedding Organizer & Buat Akun Staff</div>
+
+    <div class="alert-error" x-ref="errorAlert" x-text="errorMessage"></div>
+
+    <form @submit.prevent="handleSignup()">
+      <!-- Bagian 1: Data WO -->
+      <div class="section-title">Informasi Wedding Organizer</div>
+      <div class="form-group">
+        <label class="form-label" for="woName">Nama Wedding Organizer</label>
+        <input class="form-input" type="text" id="woName" x-model="woName" placeholder="Contoh: WO Bahagia" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="woEmail">Email Resmi WO</label>
+        <input class="form-input" type="email" id="woEmail" x-model="woEmail" placeholder="info@wobahagia.com" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="woLocation">Domisili / Kota</label>
+        <input class="form-input" type="text" id="woLocation" x-model="woLocation" placeholder="Contoh: Jakarta" />
+      </div>
+
+      <!-- Bagian 2: Data Staff Admin -->
+      <div class="section-title">Akun Staff Utama (Admin)</div>
+      <div class="form-group">
+        <label class="form-label" for="staffName">Nama Lengkap</label>
+        <input class="form-input" type="text" id="staffName" x-model="staffName" placeholder="Contoh: Budi Santoso" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="staffEmail">Email Staff Login</label>
+        <input class="form-input" type="email" id="staffEmail" x-model="staffEmail" placeholder="budi@wobahagia.com" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input class="form-input" type="password" id="password" x-model="password" placeholder="••••••••" required />
+      </div>
+
+      <button class="btn-submit" type="submit" x-text="loading ? 'Mendaftarkan...' : 'Daftar & Masuk'" :disabled="loading"></button>
+    </form>
+
+    <div class="auth-footer">
+      Sudah punya akun? <a href="/b2b/login" class="auth-link">Masuk di sini</a>
+    </div>
+  </div>
+@end

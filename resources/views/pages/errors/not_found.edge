@@ -1,8 +1,197 @@
-<h1>
-  404 - Page not found
-</h1>
-<p>
-  This template is rendered by the
-  <a href="http://docs.adonisjs.com/guides/exception-handling#status-pages">status pages feature</a>
-  of the global exception handler.
-</p>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 — Halaman Tidak Ditemukan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #FAF9F6;
+      font-family: 'Outfit', system-ui, sans-serif;
+      color: #111111;
+      padding: 2rem;
+      overflow: hidden;
+    }
+
+    .error-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      max-width: 520px;
+      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Decorative SVG illustration */
+    .error-illustration {
+      width: 180px;
+      height: 180px;
+      margin-bottom: 2.5rem;
+      opacity: 0.85;
+    }
+
+    .error-illustration svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .error-code {
+      font-size: 7rem;
+      font-weight: 200;
+      line-height: 1;
+      letter-spacing: -0.06em;
+      color: #111111;
+      margin-bottom: 0.75rem;
+    }
+
+    .error-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem;
+      font-weight: 500;
+      color: #111111;
+      margin-bottom: 1rem;
+    }
+
+    .error-subtitle {
+      font-size: 1rem;
+      font-weight: 300;
+      color: #6E6E6C;
+      line-height: 1.65;
+      margin-bottom: 2.5rem;
+      max-width: 400px;
+    }
+
+    .error-actions {
+      display: flex;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.8rem 1.75rem;
+      background-color: #111111;
+      color: #FAF9F6;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 14px rgba(17, 17, 17, 0.08);
+    }
+
+    .btn-back:hover {
+      background-color: #333333;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(17, 17, 17, 0.12);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.8rem 1.75rem;
+      background: transparent;
+      color: #111111;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: 1px solid #E2E2E0;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-secondary:hover {
+      border-color: #111111;
+      background: #FFFFFF;
+    }
+
+    /* Subtle floating ornament */
+    .ornament {
+      position: fixed;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(17,17,17,0.02), rgba(17,17,17,0.04));
+      pointer-events: none;
+    }
+    .ornament-1 { width: 320px; height: 320px; top: -80px; right: -60px; }
+    .ornament-2 { width: 200px; height: 200px; bottom: -40px; left: -40px; }
+
+    @media (max-width: 480px) {
+      .error-code { font-size: 5rem; }
+      .error-title { font-size: 1.35rem; }
+      .error-illustration { width: 140px; height: 140px; margin-bottom: 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background ornaments -->
+  <div class="ornament ornament-1"></div>
+  <div class="ornament ornament-2"></div>
+
+  <div class="error-page">
+    <!-- Minimal map/compass illustration -->
+    <div class="error-illustration">
+      <svg viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Outer circle -->
+        <circle cx="90" cy="90" r="80" stroke="#E2E2E0" stroke-width="1.5" fill="none"/>
+        <!-- Inner circle -->
+        <circle cx="90" cy="90" r="55" stroke="#E2E2E0" stroke-width="1" fill="none" stroke-dasharray="4 4"/>
+        <!-- Compass needle N -->
+        <polygon points="90,30 95,85 85,85" fill="#111111" opacity="0.7"/>
+        <!-- Compass needle S -->
+        <polygon points="90,150 95,95 85,95" fill="#E2E2E0"/>
+        <!-- Center dot -->
+        <circle cx="90" cy="90" r="4" fill="#111111" opacity="0.6"/>
+        <!-- Cardinal markers -->
+        <text x="90" y="22" text-anchor="middle" font-family="Outfit" font-size="10" font-weight="500" fill="#111111" opacity="0.5">N</text>
+        <text x="90" y="170" text-anchor="middle" font-family="Outfit" font-size="10" font-weight="500" fill="#111111" opacity="0.3">S</text>
+        <text x="166" y="94" text-anchor="middle" font-family="Outfit" font-size="10" font-weight="500" fill="#111111" opacity="0.3">E</text>
+        <text x="14" y="94" text-anchor="middle" font-family="Outfit" font-size="10" font-weight="500" fill="#111111" opacity="0.3">W</text>
+        <!-- Tick marks -->
+        <line x1="90" y1="10" x2="90" y2="16" stroke="#111111" stroke-width="1.5" opacity="0.4"/>
+        <line x1="90" y1="164" x2="90" y2="170" stroke="#111111" stroke-width="1.5" opacity="0.3"/>
+        <line x1="10" y1="90" x2="16" y2="90" stroke="#111111" stroke-width="1.5" opacity="0.3"/>
+        <line x1="164" y1="90" x2="170" y2="90" stroke="#111111" stroke-width="1.5" opacity="0.3"/>
+      </svg>
+    </div>
+
+    <div class="error-code">404</div>
+    <h1 class="error-title">Halaman Tidak Ditemukan</h1>
+    <p class="error-subtitle">
+      Sepertinya halaman yang Anda cari sudah dipindahkan, dihapus, atau mungkin belum pernah ada. Mari kembali ke jalur yang benar.
+    </p>
+
+    <div class="error-actions">
+      <a href="/" class="btn-back">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Kembali ke Beranda
+      </a>
+      <a href="javascript:history.back()" class="btn-secondary">
+        Halaman Sebelumnya
+      </a>
+    </div>
+  </div>
+</body>
+</html>

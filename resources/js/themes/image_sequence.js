@@ -10,7 +10,7 @@ import { initAudio, initClipboard, initRsvpForm } from '../shared.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
-document.addEventListener('DOMContentLoaded', () => {
+function init() {
   const btnOpen = document.getElementById('btn-open-invitation')
   const cover = document.getElementById('cover')
   const mainContent = document.getElementById('invitation-main-content')
@@ -21,11 +21,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const coverDate = document.querySelector('.cover-date')
   const guestCardEditorial = document.querySelector('.guest-card-editorial')
 
-  if (coverSubtitle) gsap.fromTo(coverSubtitle, { opacity: 0, y: -15 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', delay: 0.3 })
-  if (coverTitle) gsap.fromTo(coverTitle, { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 1.8, ease: 'power2.out', delay: 0.6 })
-  if (coverDate) gsap.fromTo(coverDate, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', delay: 1.0 })
-  if (guestCardEditorial) gsap.fromTo(guestCardEditorial, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', delay: 1.3 })
-  if (btnOpen) gsap.fromTo(btnOpen, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', delay: 1.6 })
+  if (coverSubtitle)
+    gsap.fromTo(
+      coverSubtitle,
+      { opacity: 0, y: -15 },
+      { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', delay: 0.3 }
+    )
+  if (coverTitle)
+    gsap.fromTo(
+      coverTitle,
+      { opacity: 0, scale: 0.96 },
+      { opacity: 1, scale: 1, duration: 1.8, ease: 'power2.out', delay: 0.6 }
+    )
+  if (coverDate)
+    gsap.fromTo(
+      coverDate,
+      { opacity: 0, y: 15 },
+      { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', delay: 1.0 }
+    )
+  if (guestCardEditorial)
+    gsap.fromTo(
+      guestCardEditorial,
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', delay: 1.3 }
+    )
+  if (btnOpen)
+    gsap.fromTo(
+      btnOpen,
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', delay: 1.6 }
+    )
 
   // ─── 1. OPEN INVITATION ──────────────────────────────────────────────────
   const audio = initAudio()
@@ -38,13 +63,19 @@ document.addEventListener('DOMContentLoaded', () => {
         opacity: 0,
         duration: 1.6,
         ease: 'power4.inOut',
-        onComplete: () => { cover.style.display = 'none' },
+        onComplete: () => {
+          cover.style.display = 'none'
+        },
       })
 
       // Reveal content (already at scroll position 0 since cover was fixed)
       mainContent.classList.remove('hidden')
       window.scrollTo({ top: 0, behavior: 'instant' })
-      gsap.fromTo(mainContent, { opacity: 0 }, { opacity: 1, duration: 1.2, ease: 'power2.out', delay: 0.3 })
+      gsap.fromTo(
+        mainContent,
+        { opacity: 0 },
+        { opacity: 1, duration: 1.2, ease: 'power2.out', delay: 0.3 }
+      )
 
       // Start editorial animations after content is visible
       setTimeout(() => {
@@ -85,10 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
       pin: true,
       scrub: 0.8,
       onUpdate: (self) => {
-        const activeIndex = Math.min(
-          Math.round(self.progress * (totalFrames - 1)),
-          totalFrames - 1
-        )
+        const activeIndex = Math.min(Math.round(self.progress * (totalFrames - 1)), totalFrames - 1)
         slides.forEach((slide, i) => slide.classList.toggle('active', i === activeIndex))
         texts.forEach((text, i) => text.classList.toggle('active', i === activeIndex))
       },
@@ -114,7 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ─── 4. EDITORIAL NAV HIGHLIGHT ─────────────────────────────────────────
   function setupNavHighlight() {
-    const sectionIds = ['cover', 'editorial-sequence-container', 'editorial-event', 'editorial-rsvp']
+    const sectionIds = [
+      'cover',
+      'editorial-sequence-container',
+      'editorial-event',
+      'editorial-rsvp',
+    ]
     const headerLinks = document.querySelectorAll('.editorial-nav-link')
     const bottomLinks = document.querySelectorAll('.editorial-bottom-nav-btn')
 
@@ -126,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const sec = document.getElementById(id)
         if (sec && scrollPos >= sec.offsetTop) currentId = id
       })
-
       ;[...headerLinks, ...bottomLinks].forEach((link) => {
         link.classList.toggle('active', link.getAttribute('href') === `#${currentId}`)
       })
@@ -136,4 +168,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── 5. CLIPBOARD & RSVP ────────────────────────────────────────────────
   initClipboard()
   initRsvpForm('comment-card-editorial', false)
-})
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init)
+} else {
+  init()
+}

@@ -1,108 +1,165 @@
-@layouts.admin({ title: 'Dashboard Admin - Undangan Pernikahan', activeTab: 'dashboard' })
+@layouts.admin({ title: 'Dashboard WO - Admin Panel', activeTab: 'dashboard' })
+<div x-data="{ openCreateModal: false }">
   <!-- Header -->
-  <div class="admin-header">
+  <div class="admin-header font-sans">
     <div class="admin-header-title">
-      <h1>Ringkasan Informasi</h1>
-      <p>Ikhtisar RSVP dan Pengaturan Undangan Anda</p>
+      <h1 class="font-serif" style="font-size: 2.2rem; font-weight: 600; color: #111111; letter-spacing: -0.02em;">{{ woName }}</h1>
+      <p style="font-size: 0.95rem; color: #6E6E6C;">{{ woLocation ? 'Domisili: ' + woLocation : 'Wedding Organizer Workspace' }}</p>
     </div>
     
     <div>
-      <a href="/{{ invitation.slug }}" target="_blank" class="btn-primary-gold display-inline-flex" style="padding: 0.6rem 1.2rem; font-size: 0.75rem;">
-        <span class="material-symbols-outlined" style="font-size: 1.15rem;">visibility</span>
-        Lihat Undangan
-      </a>
+      <button type="button" @click="openCreateModal = true" class="btn-primary-gold display-inline-flex" style="padding: 0.7rem 1.4rem; font-size: 0.875rem; border-radius: 8px; font-weight: 500;">
+        <span class="material-symbols-outlined" style="font-size: 1.2rem; vertical-align: middle; margin-right: 6px;">person_add</span>
+        Tambah Klien Baru
+      </button>
     </div>
   </div>
 
+  @if(flashMessages.has('success'))
+    <div class="alert alert-success text-center font-sans mb-6">
+      {{ flashMessages.get('success') }}
+    </div>
+  @endif
+
+  @if(flashMessages.has('errors'))
+    <div class="alert alert-destructive text-center font-sans mb-6">
+      {{ flashMessages.get('errors') }}
+    </div>
+  @endif
+
   <!-- Stats Grid -->
-  <div class="admin-stats-grid">
+  <div class="admin-stats-grid font-sans">
     <!-- Stat 1 -->
-    <div class="admin-stat-card glass-card">
-      <div class="admin-stat-icon">
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon" style="color: #111111; background-color: #FAF9F6; border-color: #E2E2E0;">
         <span class="material-symbols-outlined">group</span>
       </div>
       <div>
-        <p class="admin-stat-value">{{ totalGuests }}</p>
-        <p class="admin-stat-label">Total Respon RSVP</p>
+        <p class="admin-stat-value">{{ totalCustomers }}</p>
+        <p class="admin-stat-label">Total Klien Pengantin</p>
       </div>
     </div>
 
     <!-- Stat 2 -->
-    <div class="admin-stat-card glass-card">
-      <div class="admin-stat-icon" style="color: var(--success); background-color: rgba(129, 199, 132, 0.08); border-color: rgba(129, 199, 132, 0.2)">
-        <span class="material-symbols-outlined">check_circle</span>
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon" style="color: #2E7D32; background-color: #E8F5E9; border-color: rgba(46, 125, 80, 0.15)">
+        <span class="material-symbols-outlined">favorite</span>
       </div>
       <div>
-        <p class="admin-stat-value">{{ attendingCount }}</p>
-        <p class="admin-stat-label">Hadir</p>
+        <p class="admin-stat-value" style="color: #2E7D32;">{{ activeWeddings }}</p>
+        <p class="admin-stat-label">Javanese Heritage Aktif</p>
       </div>
     </div>
 
     <!-- Stat 3 -->
-    <div class="admin-stat-card glass-card">
-      <div class="admin-stat-icon" style="color: var(--danger); background-color: rgba(229, 115, 115, 0.08); border-color: rgba(229, 115, 115, 0.2)">
-        <span class="material-symbols-outlined">cancel</span>
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon" style="color: #1A1A1A; background-color: #F5F5F5; border-color: rgba(26, 26, 26, 0.1)">
+        <span class="material-symbols-outlined">auto_stories</span>
       </div>
       <div>
-        <p class="admin-stat-value">{{ decliningCount }}</p>
-        <p class="admin-stat-label">Tidak Hadir</p>
+        <p class="admin-stat-value" style="color: #111111;">{{ activeAnniversaries }}</p>
+        <p class="admin-stat-label">Aeterna Editorial Aktif</p>
       </div>
     </div>
   </div>
 
-  <!-- Rows Grid -->
-  <div class="admin-row-grid">
-    <!-- Wedding Copy Summary -->
-    <div class="glass-card font-sans">
-      <h3 class="font-serif text-gold mb-6" style="font-size: 1.25rem;">Detail Mempelai & Acara</h3>
-      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem;">
-        <div>
-          <strong class="text-gold">Mempelai Pria:</strong> {{ invitation.groomName }} ({{ invitation.groomNickname }})
-        </div>
-        <div>
-          <strong class="text-gold">Mempelai Wanita:</strong> {{ invitation.brideName }} ({{ invitation.brideNickname }})
-        </div>
-        <div>
-          <strong class="text-gold">Akad Nikah:</strong> {{ invitation.akadDatetime.setLocale('id').toFormat('dd MMMM yyyy, HH:mm') }} WIB
-        </div>
-        <div>
-          <strong class="text-gold">Resepsi:</strong> {{ invitation.resepsiDatetime.setLocale('id').toFormat('dd MMMM yyyy, HH:mm') }} WIB
-        </div>
-        <div>
-          <strong class="text-gold">Lokasi:</strong> {{ invitation.eventLocation }} - {{ invitation.eventAddress }}
-        </div>
-        <div>
-          <strong class="text-gold">Gamelan Audio:</strong> <code>{{ invitation.bgMusicUrl || 'Default' }}</code>
-        </div>
-      </div>
-      <div class="mt-6">
-        <a href="/admin/edit" class="btn-primary-gold w-100" style="padding: 0.6rem; font-size: 0.8rem; border-radius: 6px;">
-          <span class="material-symbols-outlined">edit</span>
-          Edit Detail Undangan
-        </a>
-      </div>
+  <!-- Customers List Card (Shadcn Table Style) -->
+  <div class="font-sans mb-10" style="background-color: #FFFFFF; border: 1px solid #E2E2E0; border-radius: 16px; padding: 2.2rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);">
+    <h3 class="font-serif mb-6" style="font-size: 1.4rem; font-weight: 500; color: #111111;">Daftar Klien Pernikahan</h3>
+    
+    <div class="admin-table-container">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Pasangan Pengantin</th>
+            <th>Email Kontak</th>
+            <th style="text-align: center;">Tampilan Tema</th>
+            <th style="text-align: center;">Status Publikasi</th>
+            <th style="text-align: center;">Aksi Pengelolaan</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if(customers && customers.length > 0)
+            @each(cust in customers)
+              <tr>
+                <td style="font-weight: 600; color: #111111; font-size: 1rem;">
+                  {{ cust.maleName }} & {{ cust.femaleName }}
+                </td>
+                <td style="color: #6E6E6C;">{{ cust.email }}</td>
+                <td style="text-align: center;">
+                  <span class="badge" style="font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 4px; background: #FAF9F6; border: 1px solid #E2E2E0; color: #111111;">
+                    {{ cust.style === 'java_style' ? 'Royal Javanese' : 'Aeterna Editorial' }}
+                  </span>
+                </td>
+                <td style="text-align: center;">
+                  <span class="badge" style="font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 4px; {{ cust.isActive ? 'background: #E8F5E9; color: #2E7D32;' : 'background: #FFF3E0; color: #E65100;' }}">
+                    {{ cust.isActive ? 'Aktif' : 'Belum Aktif' }}
+                  </span>
+                </td>
+                <td style="text-align: center;">
+                  <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+                    <!-- Scoped couple workspace link -->
+                    <a href="/admin/{{ session.get('supabase_wo_slug') }}/customers/{{ cust.id }}" class="btn-copy-gold" style="padding: 6px 12px; font-size: 0.825rem; font-weight: 600; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                      <span class="material-symbols-outlined" style="font-size: 1.05rem;">settings</span>
+                      Kelola Klien
+                    </a>
+                    
+                    @if(cust.isActive)
+                      <a href="/{{ session.get('supabase_wo_slug') }}/{{ cust.slug }}" target="_blank" class="btn-copy-gold" style="padding: 6px 12px; font-size: 0.825rem; font-weight: 600; border-radius: 6px; text-decoration: none; border-color: #E2E2E0; color: #6E6E6C; display: inline-flex; align-items: center; gap: 4px; background: transparent;" onmouseover="this.style.background='#FAF9F6'; this.style.color='#111111'" onmouseout="this.style.background='transparent'; this.style.color='#6E6E6C'">
+                        <span class="material-symbols-outlined" style="font-size: 1.05rem;">open_in_new</span>
+                        Lihat Page
+                      </a>
+                    @endif
+                  </div>
+                </td>
+              </tr>
+            @end
+          @else
+            <tr>
+              <td colspan="5" style="text-align: center; color: #6E6E6C; padding: 3rem;">
+                Belum ada klien pengantin terdaftar. Klik tombol "Tambah Klien Baru" untuk memulai!
+              </td>
+            </tr>
+          @endif
+        </tbody>
+      </table>
     </div>
 
-    <!-- Recent Wishes -->
-    <div class="glass-card font-sans">
-      <h3 class="font-serif text-gold mb-6" style="font-size: 1.25rem;">Ucapan Terbaru</h3>
-      <div class="comments-list" style="max-height: 280px;">
-        @if(recentGuests && recentGuests.length > 0)
-          @each(guest in recentGuests)
-            <div class="comment-item">
-              <div class="comment-header">
-                <span class="comment-author font-serif text-gold">{{ guest.name }}</span>
-                <span class="comment-badge {{ guest.attendance === 'hadir' ? 'badge-hadir' : 'badge-tidak' }}">
-                  {{ guest.attendance === 'hadir' ? 'Hadir' : 'Tidak Hadir' }}
-                </span>
-              </div>
-              <p class="comment-text" style="font-size: 0.8rem;">{{ guest.comment }}</p>
-            </div>
-          @endeach
-        @else
-          <p class="text-muted text-center" style="font-size: 0.85rem; padding: 2rem 0;">Belum ada respon RSVP.</p>
-        @endif
+    <!-- Create Customer Dialog Modal (Shadcn clean structure) -->
+    <div x-show="openCreateModal" class="font-sans" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000;" x-transition>
+      <div @click.away="openCreateModal = false" style="background: #FFFFFF; border: 1px solid #E2E2E0; border-radius: 16px; padding: 2.2rem; width: 100%; max-width: 460px; box-shadow: 0 10px 40px rgba(0,0,0,0.06);" x-transition>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h3 class="font-serif" style="font-size: 1.35rem; font-weight: 500; color: #111111; margin: 0;">Tambah Klien Baru</h3>
+          <button type="button" @click="openCreateModal = false" style="background: transparent; border: none; color: #6E6E6C; cursor: pointer; display: flex; align-items: center;">
+            <span class="material-symbols-outlined" style="font-size: 1.4rem;">close</span>
+          </button>
+        </div>
+
+        <form action="/admin/{{ session.get('supabase_wo_slug') }}/customers" method="POST">
+          {{ csrfField() }}
+          
+          <div class="form-group">
+            <label for="maleName" class="form-label">Nama Pengantin Pria</label>
+            <input type="text" id="maleName" name="maleName" class="form-control" placeholder="Contoh: Muhammad" required />
+          </div>
+
+          <div class="form-group">
+            <label for="femaleName" class="form-label">Nama Pengantin Wanita</label>
+            <input type="text" id="femaleName" name="femaleName" class="form-control" placeholder="Contoh: Juliana" required />
+          </div>
+
+          <div class="form-group">
+            <label for="email" class="form-label">Email Kontak Klien</label>
+            <input type="email" id="email" name="email" class="form-control" placeholder="klien@example.com" required />
+          </div>
+
+          <button type="submit" class="btn-primary-gold w-100 mt-6" style="padding: 10px; border-radius: 8px;">
+            <span class="material-symbols-outlined" style="font-size: 1.15rem; vertical-align: middle;">save</span>
+            Inisialisasi & Simpan Klien
+          </button>
+        </form>
       </div>
     </div>
   </div>
+</div>
 @end

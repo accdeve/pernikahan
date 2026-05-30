@@ -1,0 +1,662 @@
+@layouts.wo({ title: 'NikahB2B - Dashboard Wedding Organizer' })
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
+      --accent-color: #6366f1;
+      --accent-hover: #818cf8;
+      --accent-glow: rgba(99, 102, 241, 0.3);
+      --glass-bg: rgba(17, 24, 39, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --card-bg: rgba(31, 41, 55, 0.6);
+      --success: #10b981;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+    }
+
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: rgba(17, 24, 39, 0.95);
+      border-right: 1px solid var(--glass-border);
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #ffffff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .nav-item a {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.8rem 1rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .nav-item.active a, .nav-item a:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-item.active a {
+      background: var(--accent-color);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 1.5rem;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--accent-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+    }
+
+    .user-info {
+      font-size: 0.875rem;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .user-role {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: capitalize;
+    }
+
+    .btn-logout {
+      width: 100%;
+      background: transparent;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      padding: 0.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Main Content Area */
+    .main-content {
+      padding: 2.5rem;
+      overflow-y: auto;
+    }
+
+    .header-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .page-title h1 {
+      margin: 0;
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+    }
+
+    .page-title p {
+      margin: 0.25rem 0 0 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border: none;
+      border-radius: 12px;
+      padding: 0.75rem 1.25rem;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      color: var(--accent-hover);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .stat-icon.green {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+    }
+
+    .stat-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* Section Cards */
+    .dashboard-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Customer Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .data-table th {
+      padding: 1rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-weight: 600;
+    }
+
+    .data-table td {
+      padding: 1.2rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 0.95rem;
+    }
+
+    .data-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+    }
+
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+    }
+
+    .btn-action {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      background: var(--accent-color);
+      border-color: var(--accent-hover);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    /* Modal Form Overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-card {
+      background: #111827;
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .btn-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    .btn-close:hover {
+      color: white;
+    }
+  </style>
+
+  <div class="dashboard-container" x-data="dashboardHandler()" x-init="initDashboard()">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <i class="fa-solid fa-unity"></i> NikahB2B
+      </div>
+
+      <nav>
+        <ul class="nav-menu">
+          <li class="nav-item active">
+            <a href="/b2b/dashboard">
+              <i class="fa-solid fa-chart-line"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="/b2b/customers">
+              <i class="fa-solid fa-users"></i> Customer Klien
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile" x-show="staff">
+          <div class="user-avatar" x-text="getInitials(staff?.name)">U</div>
+          <div class="user-info">
+            <div class="user-name" x-text="staff?.name">Admin WO</div>
+            <div class="user-role" x-text="staff?.role">admin</div>
+          </div>
+        </div>
+        <button class="btn-logout" @click="handleLogout()">Keluar</button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <div class="header-actions">
+        <div class="page-title">
+          <h1 x-text="wo?.name || 'Loading WO...'">Wedding Organizer</h1>
+          <p x-text="wo?.location ? 'Domisili: ' + wo.location : 'Loading profile...'"></p>
+        </div>
+
+        <button class="btn-primary" @click="openCreateModal = true">
+          <i class="fa-solid fa-user-plus"></i> Customer Baru
+        </button>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" x-text="customers.length">0</div>
+            <div class="stat-label">Total Customer</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i class="fa-solid fa-heart"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" x-text="activeWeddingsCount()">0</div>
+            <div class="stat-label">Wedding Aktif</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fa-solid fa-calendar-check"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" x-text="activeAnniversariesCount()">0</div>
+            <div class="stat-label">Anniversary Aktif</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i class="fa-solid fa-award"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">Basic</div>
+            <div class="stat-label">Plan Aktif</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer List Table -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fa-solid fa-rectangle-list"></i> Daftar Pasangan Pengantin (Customer)
+          </h2>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Pasangan (Male & Female)</th>
+                <th>Email Kontak</th>
+                <th>Wedding Status</th>
+                <th>Anniversary Status</th>
+                <th>Aksi Aktivasi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="cust in customers" :key="cust.id">
+                <tr>
+                  <td style="font-weight: 600;" x-text="cust.male_name + ' & ' + cust.female_name">John & Doe</td>
+                  <td x-text="cust.email">pengantin@gmail.com</td>
+                  <td>
+                    <span :class="cust.wedding_active ? 'badge badge-success' : 'badge badge-warning'" 
+                          x-text="cust.wedding_active ? 'Aktif' : 'Belum Aktif'"></span>
+                  </td>
+                  <td>
+                    <span :class="cust.anniversary_active ? 'badge badge-success' : 'badge badge-warning'" 
+                          x-text="cust.anniversary_active ? 'Aktif' : 'Belum Aktif'"></span>
+                  </td>
+                  <td>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                      <!-- Quick activate buttons -->
+                      <button class="btn-action" 
+                              x-show="!cust.wedding_active" 
+                              @click="activateTemplate(cust.id, 'wedding')">
+                        <i class="fa-solid fa-ring"></i> Wedding
+                      </button>
+                      <button class="btn-action" 
+                              x-show="!cust.anniversary_active" 
+                              @click="activateTemplate(cust.id, 'anniversary')">
+                        <i class="fa-solid fa-calendar-heart"></i> Anniversary
+                      </button>
+                      
+                      <!-- Kelola Kado Button -->
+                      <button class="btn-action" 
+                              x-show="cust.wedding_active || cust.anniversary_active" 
+                              @click="openManageBanks(cust)"
+                              style="background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.4); color: #a5b4fc;">
+                        <i class="fa-solid fa-wallet"></i> Kelola Kado
+                      </button>
+
+                      <!-- View links -->
+                      <a :href="'/undangan/' + getSlug(cust)" target="_blank" class="btn-action" x-show="cust.wedding_active">
+                        <i class="fa-solid fa-eye"></i> Undangan
+                      </a>
+                      <a :href="'/memory/' + getSlug(cust)" target="_blank" class="btn-action" x-show="cust.anniversary_active">
+                        <i class="fa-solid fa-eye"></i> Memory
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <tr x-show="customers.length === 0">
+                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 3rem;">
+                  Belum ada customer. Silakan klik tombol "Customer Baru" untuk menambah customer pertama Anda!
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- Create Customer Modal -->
+    <div class="modal-overlay" x-show="openCreateModal" style="display: none;">
+      <div class="modal-card" @click.away="openCreateModal = false">
+        <div class="modal-header">
+          <h3 class="modal-title">Tambah Customer (Pasangan) Baru</h3>
+          <button class="btn-close" @click="openCreateModal = false">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form @submit.prevent="handleCreateCustomer()">
+          <div class="form-group">
+            <label class="form-label" for="maleName">Nama Pengantin Pria</label>
+            <input class="form-input" type="text" id="maleName" x-model="newCustomer.maleName" placeholder="Contoh: Muhammad" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="femaleName">Nama Pengantin Wanita</label>
+            <input class="form-input" type="text" id="femaleName" x-model="newCustomer.femaleName" placeholder="Contoh: Juliana" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="custEmail">Email Kontak Customer</label>
+            <input class="form-input" type="email" id="custEmail" x-model="newCustomer.email" placeholder="klien@gmail.com" required />
+          </div>
+
+          <button class="btn-submit" type="submit" x-text="modalLoading ? 'Menyimpan...' : 'Simpan Customer'" :disabled="modalLoading"></button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Manage Bank/E-Wallet Modal -->
+    <div class="modal-overlay" x-show="openBankModal" style="display: none;">
+      <div class="modal-card" style="max-width: 650px; max-height: 85vh; overflow-y: auto;" @click.away="openBankModal = false">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title" style="font-size: 1.35rem; font-weight: 700; color: var(--text-main);">Kelola Rekening & E-Wallet Kado</h3>
+            <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0.25rem 0 0 0;" x-text="selectedCustomer ? selectedCustomer.female_name + ' & ' + selectedCustomer.male_name : ''"></p>
+          </div>
+          <button class="btn-close" @click="openBankModal = false">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1rem;">
+          <template x-for="meta in activeMetadataList" :key="meta.id">
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 16px; padding: 1.5rem; position: relative;">
+              <h4 style="margin: 0 0 1rem 0; font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent-hover); display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-wallet"></i>
+                <span x-text="meta.type === 'wedding' ? 'Template: Undangan Pernikahan (Wedding)' : 'Template: Buku Kenangan (Anniversary)'"></span>
+              </h4>
+
+              <!-- Accounts List -->
+              <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+                <template x-for="(bank, idx) in meta.parsed_banks" :key="idx">
+                  <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 0.75rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                      <span class="badge" :class="meta.type === 'wedding' ? 'badge-success' : 'badge-warning'" style="font-size: 0.7rem; border-radius: 6px; padding: 0.2rem 0.5rem;" x-text="bank.bank">BCA</span>
+                      <strong style="font-size: 1rem; color: var(--text-main);" x-text="bank.account_number"></strong>
+                      <span style="color: var(--text-muted); font-size: 0.85rem;" x-text="'a.n. ' + bank.holder_name"></span>
+                    </div>
+                    <button @click="removeBankFromMetadata(meta.id, idx)" style="background: transparent; border: none; color: #fca5a5; cursor: pointer; padding: 0.25rem; font-size: 1.1rem; transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#fca5a5'">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
+                </template>
+                <div x-show="meta.parsed_banks.length === 0" style="text-align: center; font-size: 0.85rem; color: var(--text-muted); padding: 1rem 0;">
+                  Belum ada rekening transfer yang didaftarkan.
+                </div>
+              </div>
+
+              <!-- Add Form -->
+              <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem;">
+                <h5 style="margin: 0 0 1rem 0; font-size: 0.9rem; color: var(--text-main); font-weight: 600;">Tambah Rekening Baru:</h5>
+                <div style="display: grid; grid-template-columns: 1.2fr 1.5fr 1.5fr auto; gap: 0.75rem; align-items: end;">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; display: block; font-weight: 500;">Pilih Bank/E-Wallet</label>
+                    <select class="form-input" style="margin-bottom: 0; padding: 0.6rem 0.8rem; background: #1f2937; border-color: rgba(255,255,255,0.1); border-radius: 10px; width: 100%; color: white;" x-model="newBank.bank">
+                      <template x-for="opt in bankOptions">
+                        <option :value="opt" x-text="opt" style="background: #111827; color: white;"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; display: block; font-weight: 500;">Nomor Rekening / HP</label>
+                    <input class="form-input" style="margin-bottom: 0; padding: 0.6rem 0.8rem; background: #1f2937; border-color: rgba(255,255,255,0.1); border-radius: 10px;" type="text" placeholder="Contoh: 7820129482" x-model="newBank.account_number" />
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; display: block; font-weight: 500;">Nama Pemilik</label>
+                    <input class="form-input" style="margin-bottom: 0; padding: 0.6rem 0.8rem; background: #1f2937; border-color: rgba(255,255,255,0.1); border-radius: 10px;" type="text" placeholder="Contoh: Juliana" x-model="newBank.holder_name" />
+                  </div>
+                  <button @click="addBankToMetadata(meta.id)" class="btn-primary" style="padding: 0.65rem 1rem; box-shadow: none; border-radius: 10px; height: 38px;">
+                    <i class="fa-solid fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+@end

@@ -6,7 +6,13 @@ export default class extends BaseSchema {
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id').notNullable()
-      table.integer('invitation_id').unsigned().references('id').inTable('invitations').onDelete('CASCADE').notNullable()
+      table
+        .integer('invitation_id')
+        .unsigned()
+        .references('id')
+        .inTable('invitations')
+        .onDelete('CASCADE')
+        .notNullable()
       table.string('milestone_date').notNullable() // e.g. "SEPTEMBER 2021"
       table.string('title').notNullable()
       table.text('description').notNullable()

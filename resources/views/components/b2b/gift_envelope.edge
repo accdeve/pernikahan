@@ -1,0 +1,54 @@
+<!-- resources/views/components/b2b/gift_envelope.edge -->
+<div class="info-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 2.5rem 2rem; margin-bottom: 2rem; text-align: center;">
+  <div style="font-size: 2rem; color: var(--accent, #D4AF37); margin-bottom: 1rem;">
+    <i class="fa-solid fa-gift"></i>
+  </div>
+  <h3>Amplop Digital & Kado Pernikahan</h3>
+  <p style="color: var(--text-muted, #A69F95); font-size: 0.9rem; margin-bottom: 2rem;">
+    Bagi keluarga dan kerabat yang ingin memberikan tanda kasih secara digital, Anda dapat menyalurkannya melalui rekening bank atau e-wallet di bawah ini:
+  </p>
+
+  <div style="display: flex; flex-direction: column; gap: 1.5rem; text-align: left;">
+    <!-- Bank Account Cards -->
+    <template x-for="bank in (meta?.bank_account ? (typeof meta.bank_account === 'string' ? JSON.parse(meta.bank_account) : meta.bank_account) : [])">
+      <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+        <div>
+          <!-- Custom Neon Brand Badge -->
+          <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 0.5rem;"
+               x-bind:style="
+                 let key = bank.bank.toUpperCase();
+                 if (key === 'BCA') return 'background: rgba(0, 86, 163, 0.15); border: 1px solid rgba(0, 86, 163, 0.3); color: #60a5fa;';
+                 if (key === 'MANDIRI') return 'background: rgba(0, 61, 121, 0.2); border: 1px solid rgba(253, 184, 19, 0.4); color: #fbbf24;';
+                 if (key === 'BNI') return 'background: rgba(229, 83, 0, 0.15); border: 1px solid rgba(229, 83, 0, 0.3); color: #f97316;';
+                 if (key === 'BRI') return 'background: rgba(0, 82, 156, 0.15); border: 1px solid rgba(0, 82, 156, 0.3); color: #3b82f6;';
+                 if (key === 'BSI') return 'background: rgba(0, 137, 123, 0.15); border: 1px solid rgba(0, 137, 123, 0.3); color: #14b8a6;';
+                 if (key === 'CIMB NIAGA') return 'background: rgba(222, 0, 0, 0.15); border: 1px solid rgba(222, 0, 0, 0.3); color: #f87171;';
+                 if (key === 'PERMATA') return 'background: rgba(0, 155, 76, 0.15); border: 1px solid rgba(0, 155, 76, 0.3); color: #4ade80;';
+                 if (key === 'GOPAY') return 'background: rgba(0, 174, 214, 0.15); border: 1px solid rgba(0, 174, 214, 0.3); color: #22d3ee;';
+                 if (key === 'OVO') return 'background: rgba(76, 42, 134, 0.15); border: 1px solid rgba(76, 42, 134, 0.3); color: #c084fc;';
+                 if (key === 'DANA') return 'background: rgba(16, 142, 233, 0.15); border: 1px solid rgba(16, 142, 233, 0.3); color: #38bdf8;';
+                 if (key === 'LINKAJA') return 'background: rgba(230, 27, 34, 0.15); border: 1px solid rgba(230, 27, 34, 0.3); color: #f87171;';
+                 if (key === 'SHOPEEPAY') return 'background: rgba(238, 77, 45, 0.15); border: 1px solid rgba(238, 77, 45, 0.3); color: #fb923c;';
+                 return 'background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--accent);';
+               ">
+            <template x-if="['GOPAY', 'OVO', 'DANA', 'LINKAJA', 'SHOPEEPAY'].includes(bank.bank.toUpperCase())">
+              <i class="fa-solid fa-mobile-button" style="font-size: 0.75rem;"></i>
+            </template>
+            <template x-if="!['GOPAY', 'OVO', 'DANA', 'LINKAJA', 'SHOPEEPAY'].includes(bank.bank.toUpperCase())">
+              <i class="fa-solid fa-building-columns" style="font-size: 0.75rem;"></i>
+            </template>
+            <span x-text="bank.bank">BCA</span>
+          </div>
+          <div style="font-size: 1.25rem; font-weight: 700; margin: 0.15rem 0; color: var(--text, #F4F1EA); letter-spacing: 0.03em;" x-text="bank.account_number">1234567890</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted, #A69F95); font-weight: 500;" x-text="'a.n. ' + bank.holder_name">John Doe</div>
+        </div>
+        <button @click="navigator.clipboard.writeText(bank.account_number); alert('Nomor rekening berhasil disalin!')"
+                style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); color: var(--accent, #D4AF37); padding: 0.6rem 1rem; border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-family: inherit; font-weight: 600; display: flex; align-items: center; gap: 0.4rem; transition: all 0.2s;"
+                onmouseover="this.style.background='rgba(255, 255, 255, 0.08)'; this.style.borderColor='var(--accent)';"
+                onmouseout="this.style.background='rgba(255, 255, 255, 0.04)'; this.style.borderColor='rgba(255, 255, 255, 0.08)';">
+          <i class="fa-regular fa-copy"></i> Salin
+        </button>
+      </div>
+    </template>
+  </div>
+</div>

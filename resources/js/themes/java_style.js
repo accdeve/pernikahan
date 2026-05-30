@@ -7,7 +7,7 @@
 import { gsap } from 'gsap'
 import { initAudio, initClipboard, initRsvpForm } from '../shared.js'
 
-document.addEventListener('DOMContentLoaded', () => {
+function init() {
   const btnOpen = document.getElementById('btn-open-invitation')
   const cover = document.getElementById('cover')
   const mainContent = document.getElementById('invitation-main-content')
@@ -20,11 +20,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const guestCard = document.querySelector('.guest-card')
   const javaneseLabel = document.querySelector('.javanese-label')
 
-  if (coverNames) gsap.fromTo(coverNames, { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 1.8, ease: 'power2.out', delay: 0.3 })
-  if (javaneseLabel) gsap.fromTo(javaneseLabel, { opacity: 0, y: -10 }, { opacity: 0.8, y: 0, duration: 1.2, ease: 'power2.out', delay: 0.6 })
-  if (coverDate) gsap.fromTo(coverDate, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', delay: 0.8 })
-  if (guestCard) gsap.fromTo(guestCard, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', delay: 1.2 })
-  if (btnOpen) gsap.fromTo(btnOpen, { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 1.5, ease: 'elastic.out(1, 0.75)', delay: 1.5 })
+  if (coverNames)
+    gsap.fromTo(
+      coverNames,
+      { opacity: 0, scale: 0.95 },
+      { opacity: 1, scale: 1, duration: 1.8, ease: 'power2.out', delay: 0.3 }
+    )
+  if (javaneseLabel)
+    gsap.fromTo(
+      javaneseLabel,
+      { opacity: 0, y: -10 },
+      { opacity: 0.8, y: 0, duration: 1.2, ease: 'power2.out', delay: 0.6 }
+    )
+  if (coverDate)
+    gsap.fromTo(
+      coverDate,
+      { opacity: 0, y: 15 },
+      { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', delay: 0.8 }
+    )
+  if (guestCard)
+    gsap.fromTo(
+      guestCard,
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', delay: 1.2 }
+    )
+  if (btnOpen)
+    gsap.fromTo(
+      btnOpen,
+      { opacity: 0, scale: 0.85 },
+      { opacity: 1, scale: 1, duration: 1.5, ease: 'elastic.out(1, 0.75)', delay: 1.5 }
+    )
 
   // ─── 1. OPEN INVITATION ──────────────────────────────────────────────────
   const audio = initAudio()
@@ -36,15 +61,25 @@ document.addEventListener('DOMContentLoaded', () => {
         opacity: 0,
         duration: 1.6,
         ease: 'power4.inOut',
-        onComplete: () => { cover.style.display = 'none' },
+        onComplete: () => {
+          cover.style.display = 'none'
+        },
       })
 
       mainContent.classList.remove('hidden')
-      gsap.fromTo(mainContent, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 1.5, ease: 'power3.out', delay: 0.2 })
+      gsap.fromTo(
+        mainContent,
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 1.5, ease: 'power3.out', delay: 0.2 }
+      )
 
       if (bottomControls) {
         bottomControls.classList.remove('hidden')
-        gsap.fromTo(bottomControls, { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: 0.8 })
+        gsap.fromTo(
+          bottomControls,
+          { opacity: 0, y: 60 },
+          { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: 0.8 }
+        )
       }
 
       if (audio) {
@@ -67,7 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetDate = new Date(targetStr).getTime()
       const updateTimer = () => {
         const diff = targetDate - Date.now()
-        if (diff <= 0) { clearInterval(timerInterval); return }
+        if (diff <= 0) {
+          clearInterval(timerInterval)
+          return
+        }
         const days = Math.floor(diff / 86400000)
         const hours = Math.floor((diff % 86400000) / 3600000)
         const minutes = Math.floor((diff % 3600000) / 60000)
@@ -106,7 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
       petal.style.animationDelay = `${Math.random() * 2}s`
       container.appendChild(petal)
       currentPetals++
-      setTimeout(() => { petal.remove(); currentPetals-- }, duration * 1000)
+      setTimeout(() => {
+        petal.remove()
+        currentPetals--
+      }, duration * 1000)
     }
     setInterval(createPetal, 400)
   }
@@ -114,14 +155,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── 4. SCROLL REVEAL ───────────────────────────────────────────────────
   function setupScrollReveal() {
     const fadeUps = document.querySelectorAll('.fade-up')
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
-          entry.target.classList.add('animated')
-          gsap.fromTo(entry.target, { opacity: 0, y: 35 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out' })
-        }
-      })
-    }, { root: mainContent, threshold: 0.05, rootMargin: '0px 0px -40px 0px' })
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
+            entry.target.classList.add('animated')
+            gsap.fromTo(
+              entry.target,
+              { opacity: 0, y: 35 },
+              { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out' }
+            )
+          }
+        })
+      },
+      { root: mainContent, threshold: 0.05, rootMargin: '0px 0px -40px 0px' }
+    )
     fadeUps.forEach((el) => observer.observe(el))
   }
 
@@ -142,10 +190,23 @@ document.addEventListener('DOMContentLoaded', () => {
       lightboxImg.src = photos[i].src
       lightboxCaption.textContent = photos[i].caption
     }
-    galleryItems.forEach((item, i) => item.addEventListener('click', () => { lightbox.classList.add('active'); showPhoto(i) }))
-    document.querySelector('.lightbox-close')?.addEventListener('click', () => lightbox.classList.remove('active'))
-    document.querySelector('.lightbox-prev')?.addEventListener('click', (e) => { e.stopPropagation(); showPhoto((currentIndex - 1 + photos.length) % photos.length) })
-    document.querySelector('.lightbox-next')?.addEventListener('click', (e) => { e.stopPropagation(); showPhoto((currentIndex + 1) % photos.length) })
+    galleryItems.forEach((item, i) =>
+      item.addEventListener('click', () => {
+        lightbox.classList.add('active')
+        showPhoto(i)
+      })
+    )
+    document
+      .querySelector('.lightbox-close')
+      ?.addEventListener('click', () => lightbox.classList.remove('active'))
+    document.querySelector('.lightbox-prev')?.addEventListener('click', (e) => {
+      e.stopPropagation()
+      showPhoto((currentIndex - 1 + photos.length) % photos.length)
+    })
+    document.querySelector('.lightbox-next')?.addEventListener('click', (e) => {
+      e.stopPropagation()
+      showPhoto((currentIndex + 1) % photos.length)
+    })
     lightbox.addEventListener('click', () => lightbox.classList.remove('active'))
   }
 
@@ -169,7 +230,9 @@ document.addEventListener('DOMContentLoaded', () => {
     mainContent.addEventListener('scroll', () => {
       const scrollPos = mainContent.scrollTop + 120
       let currentId = 'couple'
-      sections.forEach((sec) => { if (sec.offsetTop <= scrollPos) currentId = sec.id })
+      sections.forEach((sec) => {
+        if (sec.offsetTop <= scrollPos) currentId = sec.id
+      })
       navButtons.forEach((btn) => {
         btn.classList.toggle('active', btn.getAttribute('href') === `#${currentId}`)
       })
@@ -179,4 +242,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── 7. CLIPBOARD & RSVP ────────────────────────────────────────────────
   initClipboard()
   initRsvpForm('comment-card-heritage', true)
-})
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init)
+} else {
+  init()
+}

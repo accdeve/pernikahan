@@ -1,0 +1,179 @@
+version: '3.8'
+
+services:
+  # =========================================================================
+  # 1. WEB APP SERVICE ("awed")
+  # =========================================================================
+  awed:
+    container_name: awed
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-3333}:${PORT:-3333}"
+    environment:
+      - TZ=UTC
+      - PORT=${PORT:-3333}
+      - HOST=0.0.0.0
+      - NODE_ENV=${NODE_ENV:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - APP_KEY=${APP_KEY}
+      - APP_URL=${APP_URL:-http://localhost:3333}
+      - SESSION_DRIVER=${SESSION_DRIVER:-cookie}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+      - SUPABASE_URL=http://supabase-kong:8000
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    depends_on:
+      supabase-kong:
+        condition: service_healthy
+    networks:
+      - awed-network
+
+  # =========================================================================
+  # 2. SUPABASE INFRASTRUCTURE (Self-Hosted Services)
+  # =========================================================================
+  supabase-db:
+    container_name: supabase-db
+    image: supabase/postgres:15.1.1.78
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - supabase-db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - awed-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  supabase-kong:
+    container_name: supabase-kong
+    image: kong:2.8.1-alpine
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /var/kong/kong.yml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl http2
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+    volumes:
+      - ./supabase/volumes/api:/var/kong
+    ports:
+      - "54321:8000"
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    networks:
+      - awed-network
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  supabase-auth:
+    container_name: supabase-auth
+    image: supabase/gotrue:v2.132.1
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@supabase-db:5432/postgres?sslmode=disable
+      GOTRUE_SITE_URL: ${APP_URL:-http://localhost:3333}
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "false"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      
+      # Google OAuth Dynamic Credentials
+      GOTRUE_EXTERNAL_GOOGLE_ENABLED: "true"
+      GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOTRUE_EXTERNAL_GOOGLE_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: ${VITE_SUPABASE_URL}/auth/v1/callback
+    networks:
+      - awed-network
+
+  supabase-rest:
+    container_name: supabase-rest
+    image: postgrest/postgrest:v10.1.2
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://postgres:${POSTGRES_PASSWORD}@supabase-db:5432/postgres
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - awed-network
+
+  supabase-storage:
+    container_name: supabase-storage
+    image: supabase/storage-api:v0.43.0
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    environment:
+      ANON_KEY: ${SUPABASE_ANON_KEY}
+      SERVICE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      POSTGRES_CONNECTION: postgres://postgres:${POSTGRES_PASSWORD}@supabase-db:5432/postgres
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      FILE_SIZE_LIMIT_IN_BYTES: 52428800
+      
+      # S3 Configuration
+      STORAGE_BACKEND: s3
+      GLOBAL_S3_BUCKET: ${S3_BUCKET_NAME}
+      GLOBAL_S3_ENDPOINT: https://${S3_SERVER_URL}
+      REGION: ${S3_REGION}
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      GLOBAL_S3_FORCE_PATH_STYLE: "true"
+    networks:
+      - awed-network
+
+  supabase-studio:
+    container_name: supabase-studio
+    image: supabase/studio:20230615-18db0cf
+    ports:
+      - "54323:3000"
+    environment:
+      STUDIO_PG_META_URL: http://supabase-meta:8080
+      SUPABASE_URL: http://supabase-kong:8000
+    networks:
+      - awed-network
+
+  supabase-meta:
+    container_name: supabase-meta
+    image: supabase/postgres-meta:v0.68.0
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: supabase-db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - awed-network
+
+networks:
+  awed-network:
+    name: awed-network
+    driver: bridge
+
+volumes:
+  supabase-db-data:
+    name: supabase-db-data

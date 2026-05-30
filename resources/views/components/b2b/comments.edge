@@ -1,0 +1,27 @@
+<!-- resources/views/components/b2b/comments.edge -->
+<div class="info-card" style="text-align: left; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 2.5rem 2rem; margin-bottom: 2rem;">
+  <form @submit.prevent="submitComment()">
+    <div class="form-group" style="margin-bottom: 1.2rem;">
+      <label class="form-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #cbd5e1;">Tulis Ucapan Selamat</label>
+      <textarea class="form-input" rows="3" x-model="commentForm.comment" placeholder="Tulis doa restu Anda untuk kedua mempelai..." required
+                style="width: 100%; box-sizing: border-box; background: rgba(20, 17, 15, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 0.8rem 1rem; color: #ffffff; font-size: 0.95rem; font-family: inherit; transition: all 0.2s; resize: vertical;"></textarea>
+    </div>
+    <button class="btn-gold" type="submit" x-text="commentLoading ? 'Mengirim...' : 'Kirim Ucapan'" :disabled="commentLoading"
+            style="width: 100%; background: linear-gradient(135deg, var(--accent, #D4AF37) 0%, var(--primary, #8B5A2B) 100%); border: none; border-radius: 12px; padding: 0.9rem; color: #ffffff; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s;"></button>
+  </form>
+
+  <!-- List Ucapan -->
+  <div class="msg-list" style="margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+    <template x-for="msg in comments">
+      <div class="msg-card" style="background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.04); padding: 1.2rem; border-radius: 14px;">
+        <div class="msg-header" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span class="msg-author" style="font-weight: 600; color: var(--accent, #D4AF37);" x-text="msg.name">Tamu</span>
+          <span :class="msg.attending ? 'msg-attendance' : 'msg-attendance no'" 
+                :style="msg.attending ? 'font-size: 0.7rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #34d399; padding: 0.15rem 0.5rem; border-radius: 99px;' : 'font-size: 0.7rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 0.15rem 0.5rem; border-radius: 99px;'"
+                x-text="msg.attending ? 'Hadir' : 'Tidak Hadir'"></span>
+        </div>
+        <div class="msg-text" style="font-size: 0.925rem; line-height: 1.5; color: var(--text, #F4F1EA);" x-text="msg.comment">Ucapan...</div>
+      </div>
+    </template>
+  </div>
+</div>

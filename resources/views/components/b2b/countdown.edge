@@ -1,0 +1,19 @@
+<!-- resources/views/components/b2b/countdown.edge -->
+<div class="countdown-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; max-width: 400px; margin: 2rem auto;">
+  <div class="countdown-box" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem 0.5rem; text-align: center;">
+    <div class="countdown-val" style="font-size: 1.8rem; font-weight: 700; color: var(--accent, #D4AF37);" x-text="timeLeft.days">00</div>
+    <div class="countdown-lbl" style="font-size: 0.75rem; color: var(--text-muted, #A69F95); text-transform: uppercase; letter-spacing: 0.05em;">Hari</div>
+  </div>
+  <div class="countdown-box" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem 0.5rem; text-align: center;">
+    <div class="countdown-val" style="font-size: 1.8rem; font-weight: 700; color: var(--accent, #D4AF37);" x-text="timeLeft.hours">00</div>
+    <div class="countdown-lbl" style="font-size: 0.75rem; color: var(--text-muted, #A69F95); text-transform: uppercase; letter-spacing: 0.05em;">Jam</div>
+  </div>
+  <div class="countdown-box" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem 0.5rem; text-align: center;">
+    <div class="countdown-val" style="font-size: 1.8rem; font-weight: 700; color: var(--accent, #D4AF37);" x-text="timeLeft.minutes">00</div>
+    <div class="countdown-lbl" style="font-size: 0.75rem; color: var(--text-muted, #A69F95); text-transform: uppercase; letter-spacing: 0.05em;">Menit</div>
+  </div>
+  <div class="countdown-box" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem 0.5rem; text-align: center;">
+    <div class="countdown-val" style="font-size: 1.8rem; font-weight: 700; color: var(--accent, #D4AF37);" x-text="timeLeft.seconds">00</div>
+    <div class="countdown-lbl" style="font-size: 0.75rem; color: var(--text-muted, #A69F95); text-transform: uppercase; letter-spacing: 0.05em;">Detik</div>
+  </div>
+</div>

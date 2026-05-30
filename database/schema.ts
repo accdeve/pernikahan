@@ -8,7 +8,15 @@ import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
 export class GallerySchema extends BaseModel {
-  static $columns = ['caption', 'createdAt', 'id', 'imageUrl', 'invitationId', 'sortOrder', 'updatedAt'] as const
+  static $columns = [
+    'caption',
+    'createdAt',
+    'id',
+    'imageUrl',
+    'invitationId',
+    'sortOrder',
+    'updatedAt',
+  ] as const
   $columns = GallerySchema.$columns
   @column()
   declare caption: string | null
@@ -27,7 +35,15 @@ export class GallerySchema extends BaseModel {
 }
 
 export class GuestSchema extends BaseModel {
-  static $columns = ['attendance', 'comment', 'createdAt', 'id', 'invitationId', 'name', 'updatedAt'] as const
+  static $columns = [
+    'attendance',
+    'comment',
+    'createdAt',
+    'id',
+    'invitationId',
+    'name',
+    'updatedAt',
+  ] as const
   $columns = GuestSchema.$columns
   @column()
   declare attendance: string | null
@@ -46,7 +62,33 @@ export class GuestSchema extends BaseModel {
 }
 
 export class InvitationSchema extends BaseModel {
-  static $columns = ['akadDatetime', 'bankAccountHolder', 'bankAccountNumber', 'bankName', 'bgMusicUrl', 'brideName', 'brideNickname', 'brideParentFather', 'brideParentMother', 'createdAt', 'eventAddress', 'eventLocation', 'googleMapsUrl', 'groomName', 'groomNickname', 'groomParentFather', 'groomParentMother', 'id', 'resepsiDatetime', 'slug', 'style', 'updatedAt', 'walletHolder', 'walletName', 'walletNumber'] as const
+  static $columns = [
+    'akadDatetime',
+    'bankAccountHolder',
+    'bankAccountNumber',
+    'bankName',
+    'bgMusicUrl',
+    'brideName',
+    'brideNickname',
+    'brideParentFather',
+    'brideParentMother',
+    'createdAt',
+    'eventAddress',
+    'eventLocation',
+    'googleMapsUrl',
+    'groomName',
+    'groomNickname',
+    'groomParentFather',
+    'groomParentMother',
+    'id',
+    'resepsiDatetime',
+    'slug',
+    'style',
+    'updatedAt',
+    'walletHolder',
+    'walletName',
+    'walletNumber',
+  ] as const
   $columns = InvitationSchema.$columns
   @column.dateTime()
   declare akadDatetime: DateTime
@@ -101,7 +143,17 @@ export class InvitationSchema extends BaseModel {
 }
 
 export class StorySchema extends BaseModel {
-  static $columns = ['createdAt', 'description', 'id', 'imageUrl', 'invitationId', 'milestoneDate', 'sortOrder', 'title', 'updatedAt'] as const
+  static $columns = [
+    'createdAt',
+    'description',
+    'id',
+    'imageUrl',
+    'invitationId',
+    'milestoneDate',
+    'sortOrder',
+    'title',
+    'updatedAt',
+  ] as const
   $columns = StorySchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

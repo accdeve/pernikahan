@@ -1,0 +1,378 @@
+@layouts.wo({ title: 'Undangan Pernikahan' })
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #8B5A2B;
+      --primary-dark: #5C3A1A;
+      --secondary: #F5F5DC;
+      --accent: #D4AF37;
+      --bg: #14110F;
+      --text: #F4F1EA;
+      --text-muted: #A69F95;
+      --glass-bg: rgba(92, 58, 26, 0.1);
+      --glass-border: rgba(212, 175, 55, 0.2);
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      background-image: radial-gradient(circle at top right, rgba(139, 90, 43, 0.15), transparent 60%);
+    }
+
+    .invitation-container {
+      max-width: 600px;
+      margin: 0 auto;
+      min-height: 100vh;
+      box-shadow: 0 0 100px rgba(0,0,0,0.8);
+      position: relative;
+      background: #191613;
+      border-left: 1px solid var(--glass-border);
+      border-right: 1px solid var(--glass-border);
+    }
+
+    /* Section Styles */
+    section {
+      padding: 5rem 2rem;
+      text-align: center;
+      position: relative;
+    }
+
+    /* Hero Section */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 0 2rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .hero-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.2rem;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      margin-bottom: 2rem;
+      text-transform: uppercase;
+    }
+
+    .couple-names {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, #ffffff 30%, #D4AF37 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .event-summary-date {
+      font-family: 'Cinzel', serif;
+      font-size: 1.1rem;
+      border-top: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 0.5rem 2rem;
+      margin-top: 2rem;
+      letter-spacing: 0.1em;
+    }
+
+    /* Countdown Widget */
+    .countdown-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      max-width: 400px;
+      margin: 3rem auto 0 auto;
+    }
+
+    .countdown-box {
+      background: rgba(139, 90, 43, 0.15);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 1rem 0.5rem;
+    }
+
+    .countdown-val {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .countdown-lbl {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Common typography */
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      margin-bottom: 1.5rem;
+      color: var(--accent);
+    }
+
+    .accent-divider {
+      color: var(--accent);
+      font-size: 1.2rem;
+      margin: 1.5rem 0 3rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .accent-divider::before, .accent-divider::after {
+      content: '';
+      width: 50px;
+      height: 1px;
+      background: var(--glass-border);
+    }
+
+    /* Cards */
+    .info-card {
+      background: rgba(92, 58, 26, 0.08);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .info-icon {
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+
+    .time-lbl {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Story Timeline */
+    .story-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+      text-align: left;
+      margin-top: 3rem;
+    }
+
+    .story-item {
+      background: rgba(255,255,255,0.02);
+      border-left: 3px solid var(--accent);
+      padding: 1.5rem 2rem;
+      border-radius: 0 16px 16px 0;
+    }
+
+    .story-date {
+      font-family: 'Cinzel', serif;
+      color: var(--accent);
+      font-weight: bold;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .story-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Input & Forms */
+    .form-input {
+      width: 100%;
+      box-sizing: border-box;
+      background: rgba(20, 17, 15, 0.8);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 0.8rem 1rem;
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      margin-bottom: 1.2rem;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+    }
+
+    .btn-gold {
+      width: 100%;
+      background: linear-gradient(135deg, #D4AF37 0%, #8B5A2B 100%);
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem;
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-gold:hover {
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Guestbook Messages */
+    .msg-list {
+      margin-top: 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      text-align: left;
+    }
+
+    .msg-card {
+      background: rgba(255,255,255,0.01);
+      border: 1px solid rgba(255,255,255,0.03);
+      padding: 1.5rem;
+      border-radius: 16px;
+    }
+
+    .msg-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .msg-author {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .msg-attendance {
+      font-size: 0.75rem;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      padding: 0.15rem 0.5rem;
+      border-radius: 99px;
+    }
+
+    .msg-attendance.no {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+
+    .msg-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+  </style>
+
+  <div class="invitation-container" x-data="weddingViewer()" x-init="initWedding('{{ slug }}')">
+    <div x-show="loading" style="padding: 10rem 2rem; text-align: center;">
+      <i class="fa-solid fa-spinner fa-spin fa-3x" style="color: var(--accent);"></i>
+      <p style="margin-top: 1.5rem; color: var(--text-muted);">Memuat Undangan Royal...</p>
+    </div>
+
+    <div x-show="!loading && active">
+      <!-- 1. Hero -->
+      <section class="hero">
+        <div class="hero-title">Walimatul Ursy</div>
+        <div class="couple-names" x-text="customer?.female_name + ' & ' + customer?.male_name">Juliana & Muhammad</div>
+        <div class="event-summary-date" x-text="formatDate(meta?.date)">SABTU, 28 OKTOBER 2026</div>
+
+        <!-- Countdown Widget -->
+        @!b2b.countdown()
+      </section>
+
+      <!-- 2. Acara Detail -->
+      <section>
+        <h2>Rincian Acara</h2>
+        <div class="accent-divider"><i class="fa-solid fa-feather-pointed"></i></div>
+
+        <!-- Akad -->
+        <div class="info-card">
+          <div class="info-icon"><i class="fa-solid fa-kaaba"></i></div>
+          <h3>Akad Nikah</h3>
+          <div class="time-lbl" x-text="formatTime(meta?.akad_date)">Pukul 09:00 WIB - Selesai</div>
+          <p x-text="meta?.location">Grand Ballroom, Hotel Luxury</p>
+          <p style="color: var(--text-muted);" x-text="meta?.address">Jalan Premium Raya No. 88, Jakarta Pusat</p>
+        </div>
+
+        <!-- Resepsi -->
+        <div class="info-card">
+          <div class="info-icon"><i class="fa-solid fa-champagne-glasses"></i></div>
+          <h3>Resepsi Pernikahan</h3>
+          <div class="time-lbl" x-text="formatTime(meta?.reception_date)">Pukul 11:00 - 13:00 WIB</div>
+          <p x-text="meta?.location">Grand Ballroom, Hotel Luxury</p>
+          <p style="color: var(--text-muted);" x-text="meta?.address">Jalan Premium Raya No. 88, Jakarta Pusat</p>
+        </div>
+      </section>
+
+      <!-- 3. Love Story -->
+      <section x-show="stories.length > 0">
+        <h2>Perjalanan Cinta Kami</h2>
+        <div class="accent-divider"><i class="fa-solid fa-heart"></i></div>
+
+        <div class="story-timeline">
+          <template x-for="story in stories">
+            <div class="story-item">
+              <div class="story-date" x-text="story.date">2021</div>
+              <div class="story-title" x-text="story.title">Awal Berjumpa</div>
+              <p style="margin: 0; color: var(--text-muted);" x-text="story.description">Kisah perjalanan kami...</p>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- 4. RSVP -->
+      <section>
+        <h2>Konfirmasi Kehadiran (RSVP)</h2>
+        <div class="accent-divider"><i class="fa-solid fa-envelope-open-text"></i></div>
+
+        @!b2b.rsvp()
+      </section>
+
+      <!-- 5. Kartu Kehadiran Digital (QR Check-in Hari H) -->
+      <section>
+        <h2>Kehadiran Hari H (Check-in)</h2>
+        <div class="accent-divider"><i class="fa-solid fa-qrcode"></i></div>
+
+        @!b2b.attendance_qr()
+      </section>
+
+      <!-- 6. Kado Digital (Amplop Digital) -->
+      <section>
+        <h2>Tanda Kasih (Kado Digital)</h2>
+        <div class="accent-divider"><i class="fa-solid fa-gift"></i></div>
+
+        @!b2b.gift_envelope()
+      </section>
+
+      <!-- 7. Buku Tamu (Guestbook Comments) -->
+      <section>
+        <h2>Ucapan & Doa Restu</h2>
+        <div class="accent-divider"><i class="fa-solid fa-comments"></i></div>
+
+        @!b2b.comments()
+      </section>
+    </div>
+
+    <!-- Error/Expired template -->
+    <div x-show="!loading && !active" style="padding: 10rem 2rem; text-align: center; color: var(--text-muted);">
+      <i class="fa-solid fa-hourglass-end fa-3x" style="color: var(--accent); margin-bottom: 2rem;"></i>
+      <h3>Undangan Tidak Aktif</h3>
+      <p>Masa aktif undangan ini telah berakhir atau tidak terdaftar.</p>
+    </div>
+  </div>
+@end

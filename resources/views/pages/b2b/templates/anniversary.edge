@@ -1,0 +1,294 @@
+@layouts.wo({ title: 'Memory Book' })
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #C71585;
+      --primary-dark: #800080;
+      --secondary: #FFF0F5;
+      --accent: #FF69B4;
+      --bg: #0b060d;
+      --text: #FDF9FB;
+      --text-muted: #BFAFC2;
+      --glass-bg: rgba(199, 21, 133, 0.08);
+      --glass-border: rgba(255, 105, 180, 0.2);
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      background-image: radial-gradient(circle at top right, rgba(199, 21, 133, 0.15), transparent 60%);
+    }
+
+    .memory-container {
+      max-width: 600px;
+      margin: 0 auto;
+      min-height: 100vh;
+      box-shadow: 0 0 100px rgba(0,0,0,0.8);
+      position: relative;
+      background: #150f19;
+      border-left: 1px solid var(--glass-border);
+      border-right: 1px solid var(--glass-border);
+    }
+
+    section {
+      padding: 4rem 2rem;
+      text-align: center;
+      position: relative;
+    }
+
+    /* Hero */
+    .hero {
+      height: 70vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 0 2rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .hero-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.1rem;
+      color: var(--accent);
+      letter-spacing: 0.3em;
+      margin-bottom: 1.5rem;
+      text-transform: uppercase;
+    }
+
+    .couple-names {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.2rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(to right, #ffffff, #FF69B4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .permanent-badge {
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: var(--accent);
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      padding: 0.4rem 1rem;
+      border-radius: 99px;
+      letter-spacing: 0.1em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* common headers */
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+
+    .accent-divider {
+      color: var(--accent);
+      font-size: 1.2rem;
+      margin: 1rem 0 2.5rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .accent-divider::before, .accent-divider::after {
+      content: '';
+      width: 50px;
+      height: 1px;
+      background: var(--glass-border);
+    }
+
+    /* Cards */
+    .info-card {
+      background: rgba(199, 21, 133, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    /* Timeline style */
+    .timeline {
+      position: relative;
+      max-width: 100%;
+      margin: 0 auto;
+      text-align: left;
+      padding: 1rem 0;
+    }
+
+    .timeline-item {
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 18px;
+      margin-bottom: 1.5rem;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .timeline-item:hover {
+      border-color: var(--glass-border);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(199, 21, 133, 0.1);
+    }
+
+    .timeline-date {
+      font-family: 'Cinzel', serif;
+      font-size: 0.85rem;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .timeline-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .timeline-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Inputs & Forms */
+    .form-input {
+      width: 100%;
+      box-sizing: border-box;
+      background: rgba(20, 10, 25, 0.8);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 0.8rem 1rem;
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      margin-bottom: 1.2rem;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(255, 105, 180, 0.2);
+    }
+
+    .btn-pink {
+      width: 100%;
+      background: linear-gradient(135deg, #FF69B4 0%, #C71585 100%);
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem;
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-pink:hover {
+      box-shadow: 0 0 20px rgba(255, 105, 180, 0.4);
+      transform: translateY(-1px);
+    }
+  </style>
+
+  <div class="memory-container" x-data="anniversaryViewer()" x-init="initAnniversary('{{ slug }}')">
+    <div x-show="loading" style="padding: 10rem 2rem; text-align: center;">
+      <i class="fa-solid fa-heart fa-beat fa-3x" style="color: var(--accent);"></i>
+      <p style="margin-top: 1.5rem; color: var(--text-muted);">Membuka Lembaran Memori...</p>
+    </div>
+
+    <div x-show="!loading && active">
+      <!-- 1. Hero Cover -->
+      <section class="hero">
+        <div class="hero-title">Memory Book</div>
+        <div class="couple-names" x-text="customer?.female_name + ' & ' + customer?.male_name">Juliana & Muhammad</div>
+        <div class="event-summary-date" x-text="formatDate(meta?.date)" style="font-family: 'Cinzel', serif; font-size: 1.1rem; border-top: 1px solid var(--glass-border); border-bottom: 1px solid var(--glass-border); padding: 0.5rem 2rem; margin-top: 2rem; letter-spacing: 0.1em;">HARI H ANNIVERSARY</div>
+        <div class="permanent-badge" style="margin-top: 2rem;">
+          <i class="fa-solid fa-infinity"></i> Link Abadi & Permanen
+        </div>
+
+        <!-- Countdown Widget -->
+        @!b2b.countdown()
+      </section>
+
+      <!-- 2. Memory Timeline -->
+      <section>
+        <h2>Lembar Kenangan Indah</h2>
+        <div class="accent-divider"><i class="fa-solid fa-heart-pulse"></i></div>
+
+        <div class="timeline">
+          <template x-for="moment in moments">
+            <div class="timeline-item">
+              <div class="timeline-date" x-text="moment.date">Tanggal Momen</div>
+              <div class="timeline-title" x-text="moment.title">Judul Kenangan</div>
+              <p class="timeline-desc" x-text="moment.description || moment.story">Pesan / cerita tentang momen indah ini.</p>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- 3. Kado Digital (Amplop Digital) -->
+      <section>
+        <h2>Tanda Kasih (Kado Digital)</h2>
+        <div class="accent-divider"><i class="fa-solid fa-gift"></i></div>
+
+        @!b2b.gift_envelope()
+      </section>
+
+      <!-- 4. Add Moment Form (Customer Interactivity) -->
+      <section>
+        <h2>Tulis Momen Baru</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2.5rem; font-size: 0.95rem;">
+          Tulis kisah perjalanan baru Anda berdua dan abadikan momen tahunan di bawah ini!
+        </p>
+        <div class="accent-divider"><i class="fa-solid fa-calendar-plus"></i></div>
+
+        <div class="info-card" style="text-align: left;">
+          <form @submit.prevent="addMoment()">
+            <div class="form-group">
+              <label class="form-label" style="display:block; margin-bottom:0.5rem; font-weight:500;">Judul Momen Kenangan</label>
+              <input class="form-input" type="text" x-model="momentForm.title" placeholder="Contoh: 1st Anniversary Trip ke Bali" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" style="display:block; margin-bottom:0.5rem; font-weight:500;">Tanggal / Waktu</label>
+              <input class="form-input" type="text" x-model="momentForm.date" placeholder="Contoh: Oktober 2027" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" style="display:block; margin-bottom:0.5rem; font-weight:500;">Cerita Indah</label>
+              <textarea class="form-input" rows="4" x-model="momentForm.description" placeholder="Ceritakan bagaimana Anda berdua menghabiskan momen anniversary tahun ini..." required></textarea>
+            </div>
+
+            <button class="btn-pink" type="submit" x-text="momentLoading ? 'Menyimpan...' : 'Abadikan Momen'" :disabled="momentLoading"></button>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <!-- Error/Expired template -->
+    <div x-show="!loading && !active" style="padding: 10rem 2rem; text-align: center; color: var(--text-muted);">
+      <i class="fa-solid fa-link-slash fa-3x" style="color: var(--accent); margin-bottom: 2rem;"></i>
+      <h3>Memory Book Tidak Ditemukan</h3>
+      <p>Halaman kenangan ini belum diaktifkan atau tidak terdaftar di sistem B2B kami.</p>
+    </div>
+  </div>
+@end

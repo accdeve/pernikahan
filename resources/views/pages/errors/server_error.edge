@@ -1,8 +1,347 @@
-<h1>
-  {{ error.code }} - Server error
-</h1>
-<p>
-  This template is rendered by the
-  <a href="http://docs.adonisjs.com/guides/exception-handling#status-pages">status pages feature</a>
-  of the global exception handler.
-</p>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ error.status || 500 }} — Kesalahan Server</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #FAF9F6;
+      font-family: 'Outfit', system-ui, sans-serif;
+      color: #111111;
+      padding: 2rem;
+      overflow-x: hidden;
+    }
+
+    .error-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+      max-width: 680px;
+      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Illustration - warning/alert icon */
+    .error-illustration {
+      width: 160px;
+      height: 160px;
+      margin-bottom: 2.5rem;
+      opacity: 0.8;
+    }
+
+    .error-illustration svg { width: 100%; height: 100%; }
+
+    .error-code {
+      font-size: 7rem;
+      font-weight: 200;
+      line-height: 1;
+      letter-spacing: -0.06em;
+      color: #111111;
+      margin-bottom: 0.75rem;
+    }
+
+    .error-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem;
+      font-weight: 500;
+      color: #111111;
+      margin-bottom: 1rem;
+    }
+
+    .error-subtitle {
+      font-size: 1rem;
+      font-weight: 300;
+      color: #6E6E6C;
+      line-height: 1.65;
+      margin-bottom: 2rem;
+      max-width: 440px;
+    }
+
+    .error-actions {
+      display: flex;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.8rem 1.75rem;
+      background-color: #111111;
+      color: #FAF9F6;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 14px rgba(17, 17, 17, 0.08);
+    }
+
+    .btn-back:hover {
+      background-color: #333333;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(17, 17, 17, 0.12);
+    }
+
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.8rem 1.75rem;
+      background: transparent;
+      color: #111111;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: 1px solid #E2E2E0;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-outline:hover {
+      border-color: #111111;
+      background: #FFFFFF;
+    }
+
+    /* --- Accordion for stack trace --- */
+    .accordion {
+      width: 100%;
+      max-width: 680px;
+      text-align: left;
+    }
+
+    .accordion-trigger {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 1rem 1.25rem;
+      background: #FFFFFF;
+      border: 1px solid #E2E2E0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #6E6E6C;
+      transition: all 0.2s ease;
+    }
+
+    .accordion-trigger:hover {
+      border-color: #111111;
+      color: #111111;
+    }
+
+    .accordion-trigger .trigger-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .accordion-trigger .chevron {
+      width: 18px;
+      height: 18px;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      flex-shrink: 0;
+    }
+
+    .accordion-trigger[aria-expanded="true"] .chevron {
+      transform: rotate(180deg);
+    }
+
+    .accordion-trigger[aria-expanded="true"] {
+      border-radius: 10px 10px 0 0;
+      border-bottom-color: transparent;
+    }
+
+    .accordion-panel {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .accordion-panel[aria-hidden="false"] {
+      grid-template-rows: 1fr;
+    }
+
+    .accordion-panel-inner {
+      overflow: hidden;
+    }
+
+    .accordion-content {
+      background: #FFFFFF;
+      border: 1px solid #E2E2E0;
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      padding: 1.25rem;
+    }
+
+    .error-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .error-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-status {
+      background: #FFEBEE;
+      color: #C62828;
+    }
+
+    .badge-info {
+      background: #F5F5F5;
+      color: #6E6E6C;
+    }
+
+    .stack-pre {
+      background: #1A1A1A;
+      color: #E8E8E6;
+      padding: 1.25rem;
+      border-radius: 8px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+
+    /* Subtle ornaments */
+    .ornament {
+      position: fixed;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(17,17,17,0.015), rgba(17,17,17,0.035));
+      pointer-events: none;
+    }
+    .ornament-1 { width: 300px; height: 300px; top: -80px; left: -60px; }
+    .ornament-2 { width: 240px; height: 240px; bottom: -60px; right: -60px; }
+
+    @media (max-width: 480px) {
+      .error-code { font-size: 5rem; }
+      .error-title { font-size: 1.35rem; }
+      .error-illustration { width: 120px; height: 120px; margin-bottom: 2rem; }
+      .stack-pre { font-size: 0.68rem; max-height: 240px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ornament ornament-1"></div>
+  <div class="ornament ornament-2"></div>
+
+  <div class="error-page">
+    <!-- Alert/Shield SVG illustration -->
+    <div class="error-illustration">
+      <svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Shield shape -->
+        <path d="M80 15 L140 40 L140 80 C140 115 115 145 80 155 C45 145 20 115 20 80 L20 40 Z" stroke="#E2E2E0" stroke-width="1.5" fill="none"/>
+        <!-- Inner shield -->
+        <path d="M80 30 L125 50 L125 78 C125 107 105 132 80 140 C55 132 35 107 35 78 L35 50 Z" stroke="#E2E2E0" stroke-width="1" fill="none" stroke-dasharray="4 4"/>
+        <!-- Exclamation mark -->
+        <line x1="80" y1="60" x2="80" y2="100" stroke="#111111" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+        <circle cx="80" cy="115" r="3" fill="#111111" opacity="0.6"/>
+      </svg>
+    </div>
+
+    <div class="error-code">{{ error.status || 500 }}</div>
+    <h1 class="error-title">Terjadi Kesalahan Server</h1>
+    <p class="error-subtitle">
+      Maaf, terjadi gangguan internal pada sistem kami. Tim teknis telah diberitahu dan sedang berupaya memperbaikinya. Silakan coba lagi dalam beberapa saat.
+    </p>
+
+    <div class="error-actions">
+      <a href="/" class="btn-back">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Kembali ke Beranda
+      </a>
+      <button onclick="location.reload()" class="btn-outline">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.65 2.35A8 8 0 1 0 16 8h-2A6 6 0 1 1 12.24 3.76" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><polyline points="13 0 13 4 9 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Muat Ulang
+      </button>
+    </div>
+
+    @if(error.stack)
+    <!-- Technical Details Accordion -->
+    <div class="accordion">
+      <button
+        class="accordion-trigger"
+        id="stack-trigger"
+        aria-expanded="false"
+        aria-controls="stack-panel"
+        onclick="toggleAccordion()"
+      >
+        <span class="trigger-label">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Detail Teknis (Stack Trace)
+        </span>
+        <svg class="chevron" viewBox="0 0 18 18" fill="none"><path d="M4.5 6.75L9 11.25L13.5 6.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <div class="accordion-panel" id="stack-panel" role="region" aria-hidden="true" aria-labelledby="stack-trigger">
+        <div class="accordion-panel-inner">
+          <div class="accordion-content">
+            <div class="error-meta">
+              <span class="error-badge badge-status">Status {{ error.status || 500 }}</span>
+              @if(error.code)
+              <span class="error-badge badge-info">{{ error.code }}</span>
+              @endif
+              @if(error.message)
+              <span class="error-badge badge-info">{{ error.message }}</span>
+              @endif
+            </div>
+            <pre class="stack-pre">{{ error.stack }}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    @endif
+  </div>
+
+  <script>
+    function toggleAccordion() {
+      const trigger = document.getElementById('stack-trigger');
+      const panel = document.getElementById('stack-panel');
+      const expanded = trigger.getAttribute('aria-expanded') === 'true';
+
+      trigger.setAttribute('aria-expanded', String(!expanded));
+      panel.setAttribute('aria-hidden', String(expanded));
+    }
+  </script>
+</body>
+</html>
