@@ -416,9 +416,9 @@ const convertToWebP = (file: File, quality = 0.8): Promise<Blob> => {
           quality
         )
       }
-      img.onerror = (err) => reject(new Error('Failed to load image file'))
+      img.onerror = () => reject(new Error('Failed to load image file'))
     }
-    reader.onerror = (err) => reject(new Error('Failed to read file'))
+    reader.onerror = () => reject(new Error('Failed to read file'))
   })
 }
 
@@ -436,7 +436,7 @@ const uploadImageToStorage = async (file: File): Promise<string> => {
   const fileName = `${timestamp}_${randomStr}.${extension}`
 
   // Upload webp blob to bucket
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from('wednity')
     .upload(fileName, webpBlob, {
       contentType: 'image/webp',
@@ -5005,7 +5005,6 @@ export default function App() {
                   )}
                 </button>
               </div>
-              </div>
             </form>
           )}
         </DialogContent>
@@ -5117,7 +5116,6 @@ export default function App() {
                     'Simpan Perubahan'
                   )}
                 </button>
-              </div>
               </div>
             </form>
           )}
