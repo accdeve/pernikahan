@@ -1,0 +1,100 @@
+{
+  "_button-6Q-GxRKD.js": {
+    "file": "button-6Q-GxRKD.js",
+    "name": "button"
+  },
+  "_label-5mtqGfYA.js": {
+    "file": "label-5mtqGfYA.js",
+    "name": "label",
+    "imports": [
+      "_button-6Q-GxRKD.js"
+    ]
+  },
+  "_shared-RYdK1kbW.js": {
+    "file": "shared-RYdK1kbW.js",
+    "name": "shared"
+  },
+  "_supabase-client-CZ6HOKmB.js": {
+    "file": "supabase-client-CZ6HOKmB.js",
+    "name": "supabase-client"
+  },
+  "resources/css/app.css": {
+    "file": "app-CZ7AUSmv.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/css/tailwind.css": {
+    "file": "tailwind-CYmm6Ilj.css",
+    "src": "resources/css/tailwind.css",
+    "isEntry": true,
+    "name": "tailwind",
+    "names": [
+      "tailwind.css"
+    ]
+  },
+  "resources/js/admin/index.tsx": {
+    "file": "index-BXLldy1S.js",
+    "name": "index",
+    "src": "resources/js/admin/index.tsx",
+    "isEntry": true,
+    "imports": [
+      "_button-6Q-GxRKD.js",
+      "_supabase-client-CZ6HOKmB.js"
+    ]
+  },
+  "resources/js/admin/login.tsx": {
+    "file": "login-CkCsFKUA.js",
+    "name": "login",
+    "src": "resources/js/admin/login.tsx",
+    "isEntry": true,
+    "imports": [
+      "_button-6Q-GxRKD.js",
+      "_label-5mtqGfYA.js"
+    ]
+  },
+  "resources/js/admin/signup.tsx": {
+    "file": "signup-B4vW9574.js",
+    "name": "signup",
+    "src": "resources/js/admin/signup.tsx",
+    "isEntry": true,
+    "imports": [
+      "_button-6Q-GxRKD.js",
+      "_label-5mtqGfYA.js"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "app-BbnUQBLG.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_supabase-client-CZ6HOKmB.js"
+    ],
+    "dynamicImports": [
+      "resources/js/themes/image_sequence.js",
+      "resources/js/themes/java_style.js"
+    ]
+  },
+  "resources/js/themes/image_sequence.js": {
+    "file": "image_sequence-DRrfdwan.js",
+    "name": "image_sequence",
+    "src": "resources/js/themes/image_sequence.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shared-RYdK1kbW.js"
+    ]
+  },
+  "resources/js/themes/java_style.js": {
+    "file": "java_style-BYUc9NI3.js",
+    "name": "java_style",
+    "src": "resources/js/themes/java_style.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shared-RYdK1kbW.js"
+    ]
+  }
+}

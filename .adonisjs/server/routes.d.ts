@@ -5,8 +5,8 @@ type ParamValue = string | number | bigint | boolean
 export type ScannedRoutes = {
   ALL: {
     'home': { paramsTuple?: []; params?: {} }
-    'admin.auth.login': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
-    'admin.auth.login.post': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.auth.login': { paramsTuple?: []; params?: {} }
+    'admin.auth.login.post': { paramsTuple?: []; params?: {} }
     'admin.signup.signup': { paramsTuple?: []; params?: {} }
     'admin.signup.signup.post': { paramsTuple?: []; params?: {} }
     'admin.panel.logout': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
@@ -24,7 +24,7 @@ export type ScannedRoutes = {
   }
   GET: {
     'home': { paramsTuple?: []; params?: {} }
-    'admin.auth.login': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.auth.login': { paramsTuple?: []; params?: {} }
     'admin.signup.signup': { paramsTuple?: []; params?: {} }
     'admin.panel.dashboard': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
     'admin.panel.customers.detail': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
@@ -32,14 +32,14 @@ export type ScannedRoutes = {
   }
   HEAD: {
     'home': { paramsTuple?: []; params?: {} }
-    'admin.auth.login': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.auth.login': { paramsTuple?: []; params?: {} }
     'admin.signup.signup': { paramsTuple?: []; params?: {} }
     'admin.panel.dashboard': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
     'admin.panel.customers.detail': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
     'invitation.show': { paramsTuple: [ParamValue,ParamValue]; params: {'slug_wo': ParamValue,'customer_id': ParamValue} }
   }
   POST: {
-    'admin.auth.login.post': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
+    'admin.auth.login.post': { paramsTuple?: []; params?: {} }
     'admin.signup.signup.post': { paramsTuple?: []; params?: {} }
     'admin.panel.logout': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }
     'admin.panel.customers.store': { paramsTuple: [ParamValue]; params: {'slug_wo': ParamValue} }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase-client.js'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs.js'
 import { AreaChart, Area, XAxis, CartesianGrid } from 'recharts'
@@ -85,6 +86,7 @@ import {
   Users,
   CheckCircle,
   XCircle,
+  AlertCircle,
   Copy,
   Menu,
   X,
@@ -100,22 +102,11 @@ import {
   ChevronRight,
 } from 'lucide-react'
 
-// Parse server side configuration injected into spa.edge
-const configEl = document.getElementById('server-config')
-const serverConfig = configEl
-  ? JSON.parse(configEl.textContent || '{}')
-  : {
-      woId: '',
-      woSlug: '',
-      woName: '',
-      woLocation: '',
-      userEmail: '',
-      accessToken: '',
-      refreshToken: '',
-    }
-
 interface Customer {
   id: string
+  wo_id?: string
+  wo_name?: string
+  wo_slug?: string
   male_name: string
   female_name: string
   email: string
@@ -125,6 +116,20 @@ interface Customer {
   style?: string
   wedding_date?: string | null
   guest_count?: number
+}
+
+interface WeddingOrganization {
+  id: string
+  name: string
+  slug: string
+  email: string
+  location: string | null
+  plan_id: string | null
+  created_at: string
+  plan?: {
+    name: string
+    price: number
+  } | null
 }
 
 interface Invitation {
@@ -285,7 +290,7 @@ function SortableGalleryRow({ photo, onEdit, onDelete, photosCount }: SortableGa
     zIndex: isDragging ? 50 : 'auto',
   }
 
-  const canDelete = photosCount > 3
+  const canDelete = true
 
   return (
     <TableRow
@@ -423,13 +428,13 @@ const convertToWebP = (file: File, quality = 0.8): Promise<Blob> => {
 }
 
 const uploadImageToStorage = async (file: File): Promise<string> => {
-  // Ensure the 'wednity' bucket exists
-  await ensureBucketExists('wednity')
+  // Ensure the 'gallery' bucket exists
+  await ensureBucketExists('gallery')
 
   // Convert image to WebP
   const webpBlob = await convertToWebP(file, 0.8)
 
-  // Generate a clean unique filename inside 'wednity' bucket
+  // Generate a clean unique filename inside 'gallery' bucket
   const extension = 'webp'
   const randomStr = Math.random().toString(36).substring(2, 10)
   const timestamp = Date.now()
@@ -437,7 +442,7 @@ const uploadImageToStorage = async (file: File): Promise<string> => {
 
   // Upload webp blob to bucket
   const { error } = await supabase.storage
-    .from('wednity')
+    .from('gallery')
     .upload(fileName, webpBlob, {
       contentType: 'image/webp',
       cacheControl: '31536000',
@@ -447,12 +452,33 @@ const uploadImageToStorage = async (file: File): Promise<string> => {
   if (error) throw error
 
   // Get public URL
-  const { data: urlData } = supabase.storage.from('wednity').getPublicUrl(fileName)
+  const { data: urlData } = supabase.storage.from('gallery').getPublicUrl(fileName)
   return urlData.publicUrl
 }
 
 export default function App() {
-  const [currentPath, setCurrentPath] = useState(window.location.pathname)
+  const { slug_wo } = useParams<{ slug_wo: string }>()
+
+  // Platform Admin state
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false)
+  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'wos' | 'clients'>('overview')
+  const [allWos, setAllWos] = useState<WeddingOrganization[]>([])
+  const [allCustomers, setAllCustomers] = useState<Customer[]>([])
+  const [plans, setPlans] = useState<any[]>([])
+  const [selectedWoIdForNewClient, setSelectedWoIdForNewClient] = useState<string>('')
+  const [globalStats, setGlobalStats] = useState({
+    totalWos: 0,
+    totalCustomers: 0,
+    activeSubscriptions: 0,
+    totalTemplates: 0,
+  })
+  const [openCreateWoModal, setOpenCreateWoModal] = useState(false)
+  const [editingWo, setEditingWo] = useState<WeddingOrganization | null>(null)
+  const [woId, setWoId] = useState<string | null>(null)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const currentPath = location.pathname
   const [activeTab, setActiveTab] = useState('metadata') // 'metadata' | 'stories' | 'gallery' | 'guests'
   const [formSection, setFormSection] = useState<
     'groom' | 'bride' | 'event' | 'gift' | 'additional'
@@ -460,20 +486,18 @@ export default function App() {
 
   // General WO Dashboard tabs state
   const [activeWoTab, setActiveWoTab] = useState<
-    'clients' | 'customers' | 'team' | 'settings' | 'billing' | 'profile'
+    'clients' | 'customers' | 'settings' | 'billing' | 'profile'
   >('clients')
   const [woProfile, setWoProfile] = useState({
-    name: serverConfig.woName || '',
-    slug: serverConfig.woSlug || '',
+    name: '',
+    slug: slug_wo || '',
     email: '',
-    location: serverConfig.woLocation || '',
+    location: '',
   })
-  const [staffList, setStaffList] = useState<any[]>([])
-  const [showAddStaffModal, setShowAddStaffModal] = useState(false)
   const [activePlan, setActivePlan] = useState<any>(null)
   const [adminUser, setAdminUser] = useState({
-    name: serverConfig.userName || 'Administrator',
-    email: serverConfig.userEmail || '',
+    name: 'Administrator',
+    email: '',
   })
 
   // App-wide state
@@ -573,32 +597,73 @@ export default function App() {
   const [hoveredTemplateIndex, setHoveredTemplateIndex] = useState<number | null>(null)
   const [rsvpRange, setRsvpRange] = useState<'7d' | '30d' | '90d'>('7d')
 
-  // Initialize client-side Supabase session using server-injected tokens
+  // Fetch org data and current user on mount
   useEffect(() => {
-    const initSession = async () => {
-      if (serverConfig.accessToken && serverConfig.refreshToken) {
-        try {
-          await supabase.auth.setSession({
-            access_token: serverConfig.accessToken,
-            refresh_token: serverConfig.refreshToken,
+    const initApp = async () => {
+      try {
+        const { data: userData } = await supabase.auth.getUser()
+        const user = userData?.user
+        
+        if (user) {
+          const userEmail = user.email?.toLowerCase()
+          const isAdmin = userEmail === 'admin@ablarsy.com' || user.user_metadata?.role === 'admin'
+          setIsPlatformAdmin(isAdmin)
+          
+          setAdminUser({
+            name: user.email?.split('@')[0] || 'Administrator',
+            email: user.email || '',
           })
-        } catch (err) {
-          console.error('Error initializing client-side Supabase session:', err)
-        }
-      }
-      setIsAuthReady(true)
-    }
-    initSession()
-  }, [])
 
-  // Listen to browser navigation changes (back/forward button)
-  useEffect(() => {
-    const handleLocationChange = () => {
-      setCurrentPath(window.location.pathname)
+          const userWoSlug = user.user_metadata?.wo_slug || user.user_metadata?.slug_wo
+
+          if (isAdmin) {
+            // Admin user - allow scoped WO workspace navigation
+          } else {
+            // Normal user
+            if (!slug_wo) {
+              if (userWoSlug) {
+                navigate(`/admin/${userWoSlug}`, { replace: true })
+              } else {
+                await supabase.auth.signOut()
+                window.location.href = '/login'
+                return
+              }
+            } else if (slug_wo !== userWoSlug) {
+              navigate(`/admin/${userWoSlug}`, { replace: true })
+            }
+          }
+
+          if (slug_wo) {
+            const { data: orgData } = await supabase
+              .from('wedding_organization')
+              .select('id, name, slug, location, email')
+              .eq('slug', slug_wo)
+              .single()
+            
+            if (orgData) {
+              setWoId(orgData.id)
+              setWoProfile({
+                name: orgData.name,
+                slug: orgData.slug,
+                email: orgData.email || '',
+                location: orgData.location || '',
+              })
+            }
+          }
+        } else {
+          window.location.href = '/login'
+          return
+        }
+      } catch (err) {
+        console.error('Error initializing app:', err)
+      } finally {
+        setIsAuthReady(true)
+      }
     }
-    window.addEventListener('popstate', handleLocationChange)
-    return () => window.removeEventListener('popstate', handleLocationChange)
-  }, [])
+    initApp()
+  }, [slug_wo])
+
+
 
   // Parse path to resolve active views and IDs
   useEffect(() => {
@@ -620,15 +685,16 @@ export default function App() {
   useEffect(() => {
     if (!isAuthReady) return
 
-    if (!selectedCustomerId) {
+    if (isPlatformAdmin && !slug_wo && !selectedCustomerId) {
+      fetchPlatformAdminData()
+    } else if (!selectedCustomerId) {
       fetchDashboardData()
       fetchWoProfile()
-      fetchStaffList()
       fetchPlanInfo()
     } else {
       fetchCoupleData(selectedCustomerId)
     }
-  }, [selectedCustomerId, isAuthReady, activeWoTab])
+  }, [selectedCustomerId, isAuthReady, activeWoTab, isPlatformAdmin, activeAdminTab, slug_wo])
 
   const fetchDashboardData = async () => {
     setLoading(true)
@@ -694,13 +760,232 @@ export default function App() {
     }
   }
 
+  const fetchPlatformAdminData = async () => {
+    setLoading(true)
+    try {
+      const { data: wosData, error: wosErr } = await supabase
+        .from('wedding_organization')
+        .select(`
+          *,
+          plan:plan_id (
+            name,
+            price
+          )
+        `)
+        .order('created_at', { ascending: false })
+      if (wosErr) throw wosErr
+      const fetchedWos = wosData || []
+      setAllWos(fetchedWos)
+
+      const { data: activePlans } = await supabase
+        .from('wo_plan')
+        .select('id')
+        .eq('status', 'active')
+      const planCount = activePlans?.length || 0
+
+      const { data: templatesData } = await supabase
+        .from('templates')
+        .select('id')
+      const templatesCount = templatesData?.length || 0
+
+      const { data: custsData, error: custsErr } = await supabase
+        .from('customers')
+        .select(`
+          *,
+          wedding_organization:wo_id (
+            name,
+            slug
+          )
+        `)
+        .order('created_at', { ascending: false })
+      if (custsErr) throw custsErr
+      const fetchedCustomers = custsData || []
+
+      const customerIds = fetchedCustomers.map((c: any) => c.id)
+      let invitationsData: any[] = []
+      let guestCountsMap: Record<string, number> = {}
+      if (customerIds.length > 0) {
+        const { data: invData } = await supabase
+          .from('invitations')
+          .select('id, customer_id, slug, style, akad_datetime, resepsi_datetime')
+          .in('customer_id', customerIds)
+        invitationsData = invData || []
+
+        const invitationIds = invitationsData.map((i: any) => i.id)
+        if (invitationIds.length > 0) {
+          const { data: guestData } = await supabase
+            .from('admin_guests')
+            .select('invitation_id, attendance, created_at')
+            .in('invitation_id', invitationIds)
+
+          if (guestData) {
+            guestData.forEach((g: any) => {
+              guestCountsMap[g.invitation_id] = (guestCountsMap[g.invitation_id] || 0) + 1
+            })
+          }
+        }
+      }
+
+      const mapped = fetchedCustomers.map((c: any) => {
+        const linkedInv = invitationsData.find((i: any) => i.customer_id === c.id)
+        return {
+          ...c,
+          wo_name: c.wedding_organization?.name || 'Unknown WO',
+          wo_slug: c.wedding_organization?.slug || '',
+          isActive: !!linkedInv,
+          slug: linkedInv?.slug || '',
+          style: linkedInv?.style || 'java_style',
+          wedding_date: linkedInv ? linkedInv.akad_datetime || linkedInv.resepsi_datetime : null,
+          guest_count: linkedInv ? guestCountsMap[linkedInv.id] || 0 : 0,
+        }
+      })
+
+      setAllCustomers(mapped)
+      setGlobalStats({
+        totalWos: fetchedWos.length,
+        totalCustomers: mapped.length,
+        activeSubscriptions: planCount,
+        totalTemplates: templatesCount,
+      })
+
+      const { data: plansList } = await supabase.from('plan').select('*')
+      if (plansList) setPlans(plansList)
+
+    } catch (err: any) {
+      console.error('Error fetching platform admin data:', err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUpdateWoDetails = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!editingWo) return
+    const formData = new FormData(e.currentTarget)
+    const name = formData.get('name') as string
+    const email = formData.get('email') as string
+    const slug = formData.get('slug') as string
+    const location = formData.get('location') as string
+    const planId = formData.get('planId') as string
+
+    try {
+      const { error } = await supabase
+        .from('wedding_organization')
+        .update({
+          name,
+          email,
+          slug,
+          location: location || null,
+          plan_id: planId || null,
+        })
+        .eq('id', editingWo.id)
+
+      if (error) throw error
+
+      setEditingWo(null)
+      setStatusAlert({ type: 'success', message: 'Detail Wedding Organizer berhasil diperbarui!' })
+      setTimeout(() => setStatusAlert(null), 3000)
+      fetchPlatformAdminData()
+    } catch (err: any) {
+      setStatusAlert({ type: 'error', message: `Gagal memperbarui WO: ${err.message}` })
+      setTimeout(() => setStatusAlert(null), 3000)
+    }
+  }
+
+  const handleDeleteWo = async (id: string) => {
+    showConfirm({
+      title: 'Hapus Wedding Organizer',
+      description: 'Apakah Anda yakin ingin menghapus WO ini? Semua data klien dan undangan terkait akan terhapus secara permanen.',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase.from('wedding_organization').delete().eq('id', id)
+          if (error) throw error
+          setStatusAlert({ type: 'success', message: 'Wedding Organizer berhasil dihapus!' })
+          setTimeout(() => setStatusAlert(null), 3000)
+          fetchPlatformAdminData()
+        } catch (err: any) {
+          setStatusAlert({ type: 'error', message: `Gagal menghapus WO: ${err.message}` })
+          setTimeout(() => setStatusAlert(null), 3000)
+        }
+      }
+    })
+  }
+
+  const handleCreateWoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const name = formData.get('name') as string
+    const email = formData.get('email') as string
+    const location = formData.get('location') as string
+    const planId = formData.get('planId') as string
+
+    try {
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      const { data: newWo, error: woError } = await supabase
+        .from('wedding_organization')
+        .insert({
+          name,
+          slug,
+          location: location || null,
+          email,
+          plan_id: planId || null,
+        })
+        .select()
+        .single()
+
+      if (woError) throw woError
+
+      if (planId) {
+        await supabase.from('wo_plan').insert({
+          wo_id: newWo.id,
+          plan_id: planId,
+          status: 'active',
+          start_date: new Date().toISOString(),
+          end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+      }
+
+      setOpenCreateWoModal(false)
+      setStatusAlert({ type: 'success', message: 'Wedding Organizer baru berhasil didaftarkan!' })
+      setTimeout(() => setStatusAlert(null), 3000)
+      fetchPlatformAdminData()
+    } catch (err: any) {
+      window.alert(`Gagal menambah WO: ${err.message}`)
+    }
+  }
+
+  const handleDeleteCustomer = async (id: string) => {
+    showConfirm({
+      title: 'Hapus Klien',
+      description: 'Apakah Anda yakin ingin menghapus klien ini beserta semua informasi undangan, kisah, galeri, dan RSVPs?',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase.from('customers').delete().eq('id', id)
+          if (error) throw error
+          setStatusAlert({ type: 'success', message: 'Klien berhasil dihapus!' })
+          setTimeout(() => setStatusAlert(null), 3000)
+          if (isPlatformAdmin) {
+            fetchPlatformAdminData()
+          } else {
+            fetchDashboardData()
+          }
+        } catch (err: any) {
+          setStatusAlert({ type: 'error', message: `Gagal menghapus klien: ${err.message}` })
+          setTimeout(() => setStatusAlert(null), 3000)
+        }
+      }
+    })
+  }
+
   const fetchWoProfile = async () => {
-    if (!serverConfig.woId) return
+    if (!woId) return
     try {
       const { data, error } = await supabase
         .from('wedding_organization')
         .select('*')
-        .eq('id', serverConfig.woId)
+        .eq('id', woId)
         .single()
       if (error) throw error
       if (data) {
@@ -716,30 +1001,13 @@ export default function App() {
     }
   }
 
-  const fetchStaffList = async () => {
-    if (!serverConfig.woId) return
-    try {
-      const { data, error } = await supabase
-        .from('wo_staff')
-        .select('*')
-        .eq('wo_id', serverConfig.woId)
-        .order('created_at', { ascending: true })
-      if (error) throw error
-      if (data) {
-        setStaffList(data)
-      }
-    } catch (err) {
-      console.error('Error fetching staff list:', err)
-    }
-  }
-
   const fetchPlanInfo = async () => {
-    if (!serverConfig.woId) return
+    if (!woId) return
     try {
       const { data: woPlans } = await supabase
         .from('wo_plan')
         .select('*, plan(*)')
-        .eq('wo_id', serverConfig.woId)
+        .eq('wo_id', woId)
         .eq('status', 'active')
         .order('end_date', { ascending: false })
 
@@ -765,7 +1033,7 @@ export default function App() {
       const { error } = await supabase
         .from('wedding_organization')
         .update({ name, location, email, slug })
-        .eq('id', serverConfig.woId)
+        .eq('id', woId)
 
       if (error) throw error
 
@@ -773,7 +1041,7 @@ export default function App() {
       setStatusAlert({ type: 'success', message: 'Profil Wedding Organizer berhasil disimpan!' })
       setTimeout(() => setStatusAlert(null), 3000)
 
-      if (slug !== serverConfig.woSlug) {
+      if (slug !== slug_wo) {
         window.location.href = `/admin/${slug}`
       }
     } catch (err: any) {
@@ -782,13 +1050,13 @@ export default function App() {
   }
 
   const handleUpgradePlan = async (planId: string) => {
-    if (!serverConfig.woId) return
+    if (!woId) return
     try {
       // 1. Expire all current plans for this WO
       await supabase
         .from('wo_plan')
         .update({ status: 'expired' })
-        .eq('wo_id', serverConfig.woId)
+        .eq('wo_id', woId)
         .eq('status', 'active')
 
       // 2. Insert new active plan
@@ -797,7 +1065,7 @@ export default function App() {
       endDate.setDate(startDate.getDate() + 30)
 
       const { error } = await supabase.from('wo_plan').insert({
-        wo_id: serverConfig.woId,
+        wo_id: woId,
         plan_id: planId,
         status: 'active',
         start_date: startDate.toISOString(),
@@ -823,53 +1091,6 @@ export default function App() {
     setShowEditProfileModal(false)
     setStatusAlert({ type: 'success', message: 'Profil Admin berhasil disimpan!' })
     setTimeout(() => setStatusAlert(null), 3000)
-  }
-
-  const handleAddStaffSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const name = formData.get('staffName') as string
-    const email = formData.get('staffEmail') as string
-    const role = formData.get('staffRole') as string
-    const userId = formData.get('staffUserId') as string
-
-    try {
-      const { error } = await supabase.from('wo_staff').insert({
-        wo_id: serverConfig.woId,
-        user_id: userId,
-        name,
-        email,
-        role,
-      })
-
-      if (error) throw error
-
-      setShowAddStaffModal(false)
-      fetchStaffList()
-      setStatusAlert({ type: 'success', message: 'Anggota tim staff baru berhasil ditambahkan!' })
-      setTimeout(() => setStatusAlert(null), 3000)
-    } catch (err: any) {
-      window.alert(`Gagal menambah staff: ${err.message}`)
-    }
-  }
-
-  const handleDeleteStaff = async (id: string) => {
-    showConfirm({
-      title: 'Hapus Staff',
-      description: 'Apakah Anda yakin ingin menghapus staff ini?',
-      destructive: true,
-      onConfirm: async () => {
-        try {
-          const { error } = await supabase.from('wo_staff').delete().eq('id', id)
-          if (error) throw error
-          fetchStaffList()
-          setStatusAlert({ type: 'success', message: 'Staff berhasil dihapus!' })
-          setTimeout(() => setStatusAlert(null), 3000)
-        } catch (err: any) {
-          setStatusAlert({ type: 'error', message: `Gagal menghapus staff: ${err.message}` })
-        }
-      },
-    })
   }
 
   const fetchCoupleData = async (customerId: string) => {
@@ -933,8 +1154,7 @@ export default function App() {
 
   // Handle SPA routing helper
   const navigateTo = (path: string) => {
-    window.history.pushState({}, '', path)
-    setCurrentPath(path)
+    navigate(path)
     setIsSidebarOpen(false)
   }
 
@@ -946,11 +1166,18 @@ export default function App() {
     const femaleName = formData.get('femaleName') as string
     const email = formData.get('email') as string
 
+    const targetWoId = isPlatformAdmin ? selectedWoIdForNewClient : woId
+    if (!targetWoId) {
+      window.alert('Harap pilih Wedding Organizer terlebih dahulu.')
+      return
+    }
+
     try {
       // 1. Insert customer
       const { data: newCust, error: custErr } = await supabase
         .from('customers')
         .insert({
+          wo_id: targetWoId,
           male_name: maleName,
           female_name: femaleName,
           email: email,
@@ -988,7 +1215,11 @@ export default function App() {
       if (invErr) throw invErr
 
       setOpenCreateModal(false)
-      fetchDashboardData()
+      if (isPlatformAdmin) {
+        fetchPlatformAdminData()
+      } else {
+        fetchDashboardData()
+      }
       setStatusAlert({ type: 'success', message: 'Inisialisasi klien pengantin baru sukses!' })
       setTimeout(() => setStatusAlert(null), 3000)
     } catch (err: any) {
@@ -1028,7 +1259,6 @@ export default function App() {
           slug: formData.get('slug'),
           bg_music_url: formData.get('bgMusicUrl'),
           style: formData.get('style'),
-          updated_at: new Date().toISOString(),
         })
         .eq('id', invitation.id)
 
@@ -1312,10 +1542,6 @@ export default function App() {
 
   // Delete photo from gallery
   const handleDeleteGallery = async (id: string) => {
-    if (galleries.length <= 3) {
-      setStatusAlert({ type: 'error', message: 'Minimal 3 foto galeri harus tersedia.' })
-      return
-    }
     showConfirm({
       title: 'Hapus Foto Galeri',
       description: 'Hapus foto dari galeri ini?',
@@ -1409,7 +1635,7 @@ export default function App() {
       const { error } = await supabase.from('admin_guests').insert({
         invitation_id: invitation.id,
         name: guestName.trim(),
-        attendance: null, // pending
+        attendance: 'ragu', // pending
         comment: null,
       })
 
@@ -1687,41 +1913,58 @@ export default function App() {
       {/* SIDEBAR                                    */}
       {/* ========================================== */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 h-screen w-64 bg-white border-r border-[#E2E2E0] flex flex-col p-5 font-sans transform transition-transform duration-200 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 h-screen bg-white border-r border-[#E2E2E0] flex flex-col p-5 font-sans transform transition-all duration-300 ease-in-out ${
+          isSidebarCollapsed ? 'w-20' : 'w-64'
+        }  ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         {/* Sidebar Responsive Header */}
-        <div className="flex justify-between items-center border-b border-[#E2E2E0] pb-4 mb-4">
+        <div className={`flex ${isSidebarCollapsed ? 'flex-col gap-3 items-center justify-center' : 'justify-between items-center'} border-b border-[#E2E2E0] pb-4 mb-4 relative`}>
           {selectedCustomer ? (
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-2.5'} min-w-0`}>
               <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111] font-semibold text-xs shrink-0">
                 {selectedCustomer.male_name ? selectedCustomer.male_name[0].toUpperCase() : 'C'}
               </div>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-sm font-semibold text-[#111111] truncate leading-tight">
-                  {selectedCustomer.male_name} & {selectedCustomer.female_name}
-                </h2>
-                <p className="text-[10px] text-[#6E6E6C] uppercase tracking-wider mt-0.5 font-sans font-medium">
-                  Workspace Klien
-                </p>
-              </div>
+              {!isSidebarCollapsed && (
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-semibold text-[#111111] truncate leading-tight">
+                    {selectedCustomer.male_name} & {selectedCustomer.female_name}
+                  </h2>
+                  <p className="text-[10px] text-[#6E6E6C] uppercase tracking-wider mt-0.5 font-sans font-medium">
+                    Workspace Klien
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-2.5'} min-w-0`}>
               <div className="w-8 h-8 rounded-full bg-[#111111] flex items-center justify-center text-white font-bold text-sm shrink-0">
-                {serverConfig.woName ? serverConfig.woName[0].toUpperCase() : 'W'}
+                {isPlatformAdmin ? 'A' : (woProfile.name ? woProfile.name[0].toUpperCase() : 'W')}
               </div>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-sm font-semibold text-[#111111] truncate leading-tight">
-                  {woProfile.name || serverConfig.woName}
-                </h2>
-                <p className="text-[10px] text-[#6E6E6C] uppercase tracking-wider mt-0.5 font-sans font-medium">
-                  Console Admin
-                </p>
-              </div>
+              {!isSidebarCollapsed && (
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-semibold text-[#111111] truncate leading-tight">
+                    {isPlatformAdmin ? 'Platform Admin' : woProfile.name}
+                  </h2>
+                  <p className="text-[10px] text-[#6E6E6C] uppercase tracking-wider mt-0.5 font-sans font-medium">
+                    Console Admin
+                  </p>
+                </div>
+              )}
             </div>
           )}
+
+          {/* Toggle Sidebar Collapse Button (Desktop Only) */}
+          <button
+            type="button"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className={`hidden md:flex items-center justify-center w-6 h-6 rounded-full border border-[#E2E2E0] bg-white text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] shadow-sm cursor-pointer transition-all ${
+              isSidebarCollapsed ? '' : 'absolute -right-8 top-1 z-50'
+            }`}
+          >
+            {isSidebarCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+          </button>
 
           <button
             type="button"
@@ -1738,16 +1981,19 @@ export default function App() {
               {/* Back to general organizer dashboard */}
               <button
                 type="button"
-                onClick={() => navigateTo(`/admin/${serverConfig.woSlug}`)}
-                className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] mb-3 rounded-xl transition-all cursor-pointer text-left w-full"
+                onClick={() => navigateTo(isPlatformAdmin ? '/admin' : `/admin/${slug_wo}`)}
+                title="Kembali ke Dashboard"
+                className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-xs font-semibold text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] mb-3 rounded-xl transition-all cursor-pointer text-left w-full`}
               >
-                <ArrowLeft size={14} />
-                Kembali ke Dashboard
+                <ArrowLeft size={14} className="shrink-0" />
+                {!isSidebarCollapsed && <span>Kembali ke Dashboard</span>}
               </button>
 
-              <span className="text-[9px] font-semibold text-[#6E6E6C] tracking-widest uppercase px-4 mb-2 block">
-                Menu Undangan
-              </span>
+              {!isSidebarCollapsed && (
+                <span className="text-[9px] font-semibold text-[#6E6E6C] tracking-widest uppercase px-4 mb-2 block">
+                  Menu Undangan
+                </span>
+              )}
 
               {/* Scoped workspace tabs */}
               <button
@@ -1756,14 +2002,15 @@ export default function App() {
                   setActiveTab('metadata')
                   setIsSidebarOpen(false)
                 }}
-                className={`flex items-center gap-3 px-4 py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
+                title="Detail Mempelai"
+                className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
                   activeTab === 'metadata'
                     ? 'text-white font-semibold bg-[#111111] shadow-sm'
                     : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
                 }`}
               >
-                <Edit3 size={18} />
-                Detail Mempelai
+                <Edit3 size={18} className="shrink-0" />
+                {!isSidebarCollapsed && <span>Detail Mempelai</span>}
               </button>
 
               <button
@@ -1772,14 +2019,15 @@ export default function App() {
                   setActiveTab('stories')
                   setIsSidebarOpen(false)
                 }}
-                className={`flex items-center gap-3 px-4 py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
+                title="Kisah Cerita"
+                className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
                   activeTab === 'stories'
                     ? 'text-white font-semibold bg-[#111111] shadow-sm'
                     : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
                 }`}
               >
-                <BookHeart size={18} />
-                Kisah Cerita
+                <BookHeart size={18} className="shrink-0" />
+                {!isSidebarCollapsed && <span>Kisah Cerita</span>}
               </button>
 
               <button
@@ -1788,14 +2036,15 @@ export default function App() {
                   setActiveTab('gallery')
                   setIsSidebarOpen(false)
                 }}
-                className={`flex items-center gap-3 px-4 py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
+                title="Galeri Foto"
+                className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
                   activeTab === 'gallery'
                     ? 'text-white font-semibold bg-[#111111] shadow-sm'
                     : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
                 }`}
               >
-                <ImageIcon size={18} />
-                Galeri Foto
+                <ImageIcon size={18} className="shrink-0" />
+                {!isSidebarCollapsed && <span>Galeri Foto</span>}
               </button>
 
               <button
@@ -1804,87 +2053,146 @@ export default function App() {
                   setActiveTab('guests')
                   setIsSidebarOpen(false)
                 }}
-                className={`flex items-center gap-3 px-4 py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
+                title="Tamu & RSVP"
+                className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
                   activeTab === 'guests'
                     ? 'text-white font-semibold bg-[#111111] shadow-sm'
                     : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
                 }`}
               >
-                <MessageSquare size={18} />
-                Tamu & RSVP
+                <MessageSquare size={18} className="shrink-0" />
+                {!isSidebarCollapsed && <span>Tamu & RSVP</span>}
               </button>
             </>
           ) : (
             <div className="w-full flex-1 flex flex-col justify-between">
               {/* TOP NAVIGATION GROUP */}
               <div className="w-full space-y-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveWoTab('clients')
-                    setIsSidebarOpen(false)
-                  }}
-                  className={`flex items-center gap-3 px-4 py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                    activeWoTab === 'clients'
-                      ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                      : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                  }`}
-                >
-                  <LayoutDashboard size={18} />
-                  Dashboard
-                </button>
+                {isPlatformAdmin && !slug_wo ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveAdminTab('overview')
+                        setIsSidebarOpen(false)
+                      }}
+                      title="Platform Overview"
+                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
+                        activeAdminTab === 'overview'
+                          ? 'text-white font-semibold bg-[#111111] shadow-sm'
+                          : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
+                      }`}
+                    >
+                      <LayoutDashboard size={18} className="shrink-0" />
+                      {!isSidebarCollapsed && <span>Platform Overview</span>}
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveWoTab('customers')
-                    setIsSidebarOpen(false)
-                  }}
-                  className={`flex items-center gap-3 px-4 py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                    activeWoTab === 'customers'
-                      ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                      : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                  }`}
-                >
-                  <Users size={18} />
-                  Daftar Klien
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveAdminTab('wos')
+                        setIsSidebarOpen(false)
+                      }}
+                      title="Daftar WO"
+                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
+                        activeAdminTab === 'wos'
+                          ? 'text-white font-semibold bg-[#111111] shadow-sm'
+                          : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
+                      }`}
+                    >
+                      <Shield size={18} className="shrink-0" />
+                      {!isSidebarCollapsed && <span>Daftar WO</span>}
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveWoTab('team')
-                    setIsSidebarOpen(false)
-                  }}
-                  className={`flex items-center gap-3 px-4 py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                    activeWoTab === 'team'
-                      ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                      : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                  }`}
-                >
-                  <Shield size={18} />
-                  Tim Staff
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveAdminTab('clients')
+                        setIsSidebarOpen(false)
+                      }}
+                      title="Daftar Klien Global"
+                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
+                        activeAdminTab === 'clients'
+                          ? 'text-white font-semibold bg-[#111111] shadow-sm'
+                          : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
+                      }`}
+                    >
+                      <Users size={18} className="shrink-0" />
+                      {!isSidebarCollapsed && <span>Daftar Klien Global</span>}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {isPlatformAdmin && slug_wo && (
+                      <button
+                        type="button"
+                        onClick={() => navigateTo('/admin')}
+                        title="Kembali ke Admin Console"
+                        className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-xs font-semibold text-amber-700 hover:text-amber-900 hover:bg-amber-50/50 mb-3 rounded-xl transition-all cursor-pointer text-left w-full border border-amber-200/40`}
+                      >
+                        <ArrowLeft size={14} className="shrink-0" />
+                        {!isSidebarCollapsed && <span>Kembali ke Admin Console</span>}
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveWoTab('clients')
+                        setIsSidebarOpen(false)
+                      }}
+                      title="Dashboard"
+                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
+                        activeWoTab === 'clients'
+                          ? 'text-white font-semibold bg-[#111111] shadow-sm'
+                          : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
+                      }`}
+                    >
+                      <LayoutDashboard size={18} className="shrink-0" />
+                      {!isSidebarCollapsed && <span>Dashboard</span>}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveWoTab('customers')
+                        setIsSidebarOpen(false)
+                      }}
+                      title="Daftar Klien"
+                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
+                        activeWoTab === 'customers'
+                          ? 'text-white font-semibold bg-[#111111] shadow-sm'
+                          : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
+                      }`}
+                    >
+                      <Users size={18} className="shrink-0" />
+                      {!isSidebarCollapsed && <span>Daftar Klien</span>}
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* BOTTOM NAVIGATION GROUP */}
               <div className="w-full space-y-1 mt-auto pt-4 border-t border-[#E2E2E0]/40">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveWoTab('settings')
-                    setSettingsSubTab('business')
-                    setIsSidebarOpen(false)
-                  }}
-                  className={`flex items-center gap-3 px-4 py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                    activeWoTab === 'settings'
-                      ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                      : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                  }`}
-                >
-                  <Settings size={18} />
-                  Pengaturan
-                </button>
+                {!isPlatformAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveWoTab('settings')
+                      setSettingsSubTab('business')
+                      setIsSidebarOpen(false)
+                    }}
+                    title="Pengaturan"
+                    className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
+                      activeWoTab === 'settings'
+                        ? 'text-white font-semibold bg-[#111111] shadow-sm'
+                        : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
+                    }`}
+                  >
+                    <Settings size={18} className="shrink-0" />
+                    {!isSidebarCollapsed && <span>Pengaturan</span>}
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -1896,20 +2204,24 @@ export default function App() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="w-full flex items-center gap-3 p-3 bg-[#FAF9F6] rounded-xl border border-[#E2E2E0] hover:border-[#111111]/30 transition-colors cursor-pointer text-left focus:outline-none"
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center p-2' : 'gap-3 p-3'} bg-[#FAF9F6] rounded-xl border border-[#E2E2E0] hover:border-[#111111]/30 transition-colors cursor-pointer text-left focus:outline-none`}
               >
                 <div className="w-8 h-8 rounded-full bg-[#111111] flex items-center justify-center text-white font-bold text-[10px] shrink-0">
-                  {serverConfig.userEmail
-                    ? serverConfig.userEmail.substring(0, 2).toUpperCase()
+                  {adminUser.email
+                    ? adminUser.email.substring(0, 2).toUpperCase()
                     : 'WO'}
                 </div>
-                <div className="flex-1 overflow-hidden min-w-0">
-                  <div className="text-[13px] font-semibold text-[#111111] truncate">
-                    {adminUser.name}
-                  </div>
-                  <div className="text-[10px] text-[#6E6E6C] truncate">Administrator</div>
-                </div>
-                <MoreVertical size={14} className="text-[#6E6E6C]/40 shrink-0" />
+                {!isSidebarCollapsed && (
+                  <>
+                    <div className="flex-1 overflow-hidden min-w-0">
+                      <div className="text-[13px] font-semibold text-[#111111] truncate">
+                        {adminUser.name}
+                      </div>
+                      <div className="text-[10px] text-[#6E6E6C] truncate">Administrator</div>
+                    </div>
+                    <MoreVertical size={14} className="text-[#6E6E6C]/40 shrink-0" />
+                  </>
+                )}
               </button>
             </DropdownMenuTrigger>
 
@@ -1917,8 +2229,8 @@ export default function App() {
               <DropdownMenuLabel className="px-2.5 py-2">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111] font-semibold text-xs shrink-0">
-                    {serverConfig.userEmail
-                      ? serverConfig.userEmail.substring(0, 2).toUpperCase()
+                    {adminUser.email
+                      ? adminUser.email.substring(0, 2).toUpperCase()
                       : 'WO'}
                   </div>
                   <div className="min-w-0">
@@ -1926,7 +2238,7 @@ export default function App() {
                       {adminUser.name}
                     </div>
                     <div className="text-[9px] text-[#6E6E6C] truncate font-mono mt-0.5">
-                      {serverConfig.userEmail}
+                      {adminUser.email}
                     </div>
                   </div>
                 </div>
@@ -1935,9 +2247,13 @@ export default function App() {
 
               <DropdownMenuItem
                 onClick={() => {
-                  setSelectedCustomerId(null)
-                  setActiveWoTab('settings')
-                  setSettingsSubTab('profile')
+                  if (isPlatformAdmin) {
+                    setShowEditProfileModal(true)
+                  } else {
+                    setSelectedCustomerId(null)
+                    setActiveWoTab('settings')
+                    setSettingsSubTab('profile')
+                  }
                 }}
                 className="flex items-center gap-2 px-2.5 py-2 text-xs text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] rounded transition-colors cursor-pointer outline-none font-medium"
               >
@@ -1959,20 +2275,19 @@ export default function App() {
 
               <DropdownMenuSeparator className="bg-[#E2E2E0] -mx-1.5 my-1" />
 
-              <DropdownMenuItem asChild>
-                <form
-                  action={`/admin/${serverConfig.woSlug}/logout`}
-                  method="POST"
-                  className="w-full m-0 p-0"
-                >
-                  <button
-                    type="submit"
-                    className="w-full flex items-center gap-2 px-2.5 py-2 text-xs text-[#e57373] hover:text-white hover:bg-[#e57373]/10 rounded transition-colors cursor-pointer text-left border-none bg-transparent outline-none font-medium"
-                  >
-                    <LogOut size={14} className="shrink-0" />
-                    Logout
-                  </button>
-                </form>
+              <DropdownMenuItem
+                onClick={async () => {
+                  try {
+                    await supabase.auth.signOut()
+                    window.location.href = '/login'
+                  } catch (err) {
+                    console.error('Logout error:', err)
+                  }
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-2 text-xs text-[#e57373] hover:text-white hover:bg-[#e57373]/90 rounded transition-colors cursor-pointer text-left font-medium"
+              >
+                <LogOut size={14} className="shrink-0" />
+                Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -1995,13 +2310,19 @@ export default function App() {
           <span className="font-semibold text-base text-[#111111] truncate max-w-[200px]">
             {selectedCustomer
               ? `${selectedCustomer.male_name} & ${selectedCustomer.female_name}`
-              : serverConfig.woName}
+              : isPlatformAdmin
+                ? activeAdminTab === 'overview'
+                  ? 'Overview'
+                  : activeAdminTab === 'wos'
+                    ? 'Daftar WO'
+                    : 'Klien Global'
+                : woProfile.name}
           </span>
           <div className="w-10 flex justify-end items-center">
             {selectedCustomerId ? (
               invitation && (
                 <a
-                  href={`/${serverConfig.woSlug}/${invitation.slug}`}
+                  href={`/${slug_wo}/${invitation.slug}`}
                   target="_blank"
                   rel="noreferrer"
                   className="p-1.5 text-[#111111] hover:bg-[#E2E2E0]/40 rounded-lg transition-colors cursor-pointer"
@@ -2010,23 +2331,26 @@ export default function App() {
                   <ExternalLink size={20} />
                 </a>
               )
-            ) : activeWoTab === 'clients' ? (
+            ) : (isPlatformAdmin && activeAdminTab === 'clients') || (!isPlatformAdmin && activeWoTab === 'clients') ? (
               <button
                 type="button"
-                onClick={() => setOpenCreateModal(true)}
+                onClick={() => {
+                  setSelectedWoIdForNewClient(allWos[0]?.id || '')
+                  setOpenCreateModal(true)
+                }}
                 className="p-1.5 text-[#111111] hover:bg-[#E2E2E0]/40 rounded-lg transition-colors cursor-pointer"
                 title="Tambah Klien"
               >
                 <UserPlus size={20} />
               </button>
-            ) : activeWoTab === 'team' ? (
+            ) : isPlatformAdmin && activeAdminTab === 'wos' ? (
               <button
                 type="button"
-                onClick={() => setShowAddStaffModal(true)}
+                onClick={() => setOpenCreateWoModal(true)}
                 className="p-1.5 text-[#111111] hover:bg-[#E2E2E0]/40 rounded-lg transition-colors cursor-pointer"
-                title="Undang Staff"
+                title="Tambah WO"
               >
-                <UserPlus size={20} />
+                <Plus size={20} />
               </button>
             ) : null}
           </div>
@@ -2037,26 +2361,24 @@ export default function App() {
           <h2 className="text-xl font-semibold text-[#111111] tracking-tight">
             {selectedCustomer
               ? `${selectedCustomer.male_name} & ${selectedCustomer.female_name}`
-              : activeWoTab === 'clients'
-                ? 'Dashboard Overview'
-                : activeWoTab === 'customers'
-                  ? 'Daftar Klien'
-                  : activeWoTab === 'team'
-                    ? 'Tim Staff'
-                    : activeWoTab === 'billing'
-                      ? 'Billing & Tagihan'
-                      : activeWoTab === 'profile'
-                        ? 'Akun Saya'
-                        : activeWoTab === 'settings'
-                          ? 'Pengaturan WO'
-                          : 'Dashboard'}
+              : isPlatformAdmin
+                ? activeAdminTab === 'overview'
+                  ? 'Platform Overview'
+                  : activeAdminTab === 'wos'
+                    ? 'Daftar Wedding Organizer'
+                    : 'Daftar Klien Global'
+                : activeWoTab === 'clients'
+                  ? 'Dashboard Overview'
+                  : activeWoTab === 'customers'
+                    ? 'Daftar Klien'
+                    : 'Dashboard'}
           </h2>
           <div className="flex items-center gap-4">
             {/* Desktop Action Buttons */}
             {selectedCustomerId ? (
               invitation && (
                 <a
-                  href={`/${serverConfig.woSlug}/${invitation.slug}`}
+                  href={`/${slug_wo}/${invitation.slug}`}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E2E2E0] hover:border-[#111111] hover:bg-[#FAF9F6] text-[#111111] font-semibold text-xs rounded-lg shadow-sm hover:shadow transition-all text-decoration-none"
@@ -2065,29 +2387,28 @@ export default function App() {
                   Lihat Undangan Publik
                 </a>
               )
-            ) : activeWoTab === 'clients' ? (
+            ) : (isPlatformAdmin && activeAdminTab === 'clients') || (!isPlatformAdmin && activeWoTab === 'clients') ? (
               <button
                 type="button"
-                onClick={() => setOpenCreateModal(true)}
+                onClick={() => {
+                  setSelectedWoIdForNewClient(allWos[0]?.id || '')
+                  setOpenCreateModal(true)
+                }}
                 className="flex items-center gap-2 px-4 py-2 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-medium text-xs rounded-lg shadow-sm hover:shadow transition-all cursor-pointer active:scale-95"
               >
                 <UserPlus size={14} />
                 Tambah Klien
               </button>
-            ) : activeWoTab === 'team' ? (
+            ) : isPlatformAdmin && activeAdminTab === 'overview' ? (
               <button
                 type="button"
-                onClick={() => setShowAddStaffModal(true)}
+                onClick={() => setOpenCreateWoModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-medium text-xs rounded-lg shadow-sm hover:shadow transition-all cursor-pointer active:scale-95"
               >
-                <UserPlus size={14} />
-                Undang Staff
+                <Plus size={14} />
+                Tambah WO Baru
               </button>
             ) : null}
-
-            <div className="w-8 h-8 rounded-full bg-[#E2E2E0] border border-[#E2E2E0] flex items-center justify-center text-[#111111] font-bold text-[10px] overflow-hidden">
-              {serverConfig.userEmail ? serverConfig.userEmail.substring(0, 2).toUpperCase() : 'WO'}
-            </div>
           </div>
         </header>
 
@@ -2109,7 +2430,456 @@ export default function App() {
               </div>
             )}
 
-            {activeWoTab === 'clients' && (
+            {isPlatformAdmin && !slug_wo ? (
+              <>
+                {/* 1. OVERVIEW VIEW */}
+                {activeAdminTab === 'overview' && (
+                  <div className="space-y-8 animate-in fade-in duration-200">
+                    {/* Bento Stats Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 flex flex-col justify-between h-40 shadow-sm">
+                        <div className="flex justify-between items-start">
+                          <span className="text-[11px] font-semibold uppercase text-[#6E6E6C] tracking-widest">
+                            Total WO Tergabung
+                          </span>
+                          <Shield size={18} className="text-[#6E6E6C]" />
+                        </div>
+                        <div>
+                          <div className="text-[42px] font-semibold leading-none text-[#111111] tracking-tight">
+                            {globalStats.totalWos}
+                          </div>
+                          <div className="text-[13px] text-[#6E6E6C] mt-1 font-medium">
+                            Wedding Organizer
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 flex flex-col justify-between h-40 shadow-sm">
+                        <div className="flex justify-between items-start">
+                          <span className="text-[11px] font-semibold uppercase text-[#6E6E6C] tracking-widest">
+                            Total Pasangan Klien
+                          </span>
+                          <Users size={18} className="text-[#6E6E6C]" />
+                        </div>
+                        <div>
+                          <div className="text-[42px] font-semibold leading-none text-[#111111] tracking-tight">
+                            {globalStats.totalCustomers}
+                          </div>
+                          <div className="text-[13px] text-[#6E6E6C] mt-1 font-medium">
+                            Mempelai terdaftar
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-[#111111] border border-transparent rounded-2xl p-6 flex flex-col justify-between h-40 shadow-sm text-white">
+                        <div className="flex justify-between items-start">
+                          <span className="text-[11px] font-semibold uppercase text-white/60 tracking-widest">
+                            Paket Langganan Aktif
+                          </span>
+                          <CreditCard size={18} className="text-white" />
+                        </div>
+                        <div>
+                          <div className="text-[42px] font-semibold leading-none text-[#f2ca50] tracking-tight">
+                            {globalStats.activeSubscriptions}
+                          </div>
+                          <div className="text-[13px] text-white/60 mt-1 font-medium">
+                            Subscription aktif
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 flex flex-col justify-between h-40 shadow-sm">
+                        <div className="flex justify-between items-start">
+                          <span className="text-[11px] font-semibold uppercase text-[#6E6E6C] tracking-widest">
+                            Katalog Desain
+                          </span>
+                          <LayoutDashboard size={18} className="text-[#6E6E6C]" />
+                        </div>
+                        <div>
+                          <div className="text-[42px] font-semibold leading-none text-[#111111] tracking-tight">
+                            {globalStats.totalTemplates}
+                          </div>
+                          <div className="text-[13px] text-[#6E6E6C] mt-1 font-medium">
+                            Pilihan tema aktif
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Chart Section */}
+                    {!loading && (
+                      <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 shadow-sm flex flex-col">
+                        <div>
+                          <h3 className="font-serif text-[#111111] text-lg font-medium mb-1">
+                            Grafik Pertumbuhan Registrasi
+                          </h3>
+                          <p className="text-xs text-[#6E6E6C] mb-6">Tren Pendaftaran WO & Klien (6 Bulan Terakhir)</p>
+
+                          <div className="h-64 w-full mt-2">
+                            {(() => {
+                              const chartData = getMonthlyRegistrationStats()
+                              
+                              const getPlatformOverviewChartData = () => {
+                                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+                                const last6Months: any[] = []
+                                const now = new Date()
+
+                                for (let i = 5; i >= 0; i--) {
+                                  const d = new Date()
+                                  d.setMonth(now.getMonth() - i)
+                                  last6Months.push({
+                                    monthName: months[d.getMonth()],
+                                    year: d.getFullYear(),
+                                    monthIndex: d.getMonth(),
+                                    wosCount: 0,
+                                    clientsCount: 0,
+                                  })
+                                }
+
+                                allWos.forEach((wo) => {
+                                  if (!wo.created_at) return
+                                  const date = new Date(wo.created_at)
+                                  const match = last6Months.find((m) => m.monthIndex === date.getMonth() && m.year === date.getFullYear())
+                                  if (match) match.wosCount++
+                                })
+
+                                allCustomers.forEach((c) => {
+                                  if (!c.created_at) return
+                                  const date = new Date(c.created_at)
+                                  const match = last6Months.find((m) => m.monthIndex === date.getMonth() && m.year === date.getFullYear())
+                                  if (match) match.clientsCount++
+                                })
+
+                                return last6Months
+                              }
+
+                              const pChartData = getPlatformOverviewChartData()
+                              const growthConfig = {
+                                wos: { label: 'Wedding Organizer', color: '#f2ca50' },
+                                clients: { label: 'Pasangan Klien', color: '#111111' },
+                              } satisfies ChartConfig
+
+                              return (
+                                <ChartContainer config={growthConfig} className="h-full w-full">
+                                  <AreaChart data={pChartData} margin={{ left: -20, right: 5, top: 10, bottom: 0 }}>
+                                    <defs>
+                                      <linearGradient id="fillWos" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#f2ca50" stopOpacity={0.4} />
+                                        <stop offset="95%" stopColor="#f2ca50" stopOpacity={0.01} />
+                                      </linearGradient>
+                                      <linearGradient id="fillClients" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#111111" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#111111" stopOpacity={0.01} />
+                                      </linearGradient>
+                                    </defs>
+                                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#E2E2E0" opacity={0.5} />
+                                    <XAxis
+                                      dataKey="monthName"
+                                      tickLine={false}
+                                      axisLine={false}
+                                      tickMargin={8}
+                                      className="text-[10px] font-semibold fill-[#6E6E6C]"
+                                    />
+                                    <ChartTooltip
+                                      cursor={false}
+                                      content={
+                                        <ChartTooltipContent
+                                          labelFormatter={(value) => `Bulan ${value}`}
+                                          indicator="dot"
+                                        />
+                                      }
+                                    />
+                                    <Area
+                                      dataKey="wosCount"
+                                      name="wos"
+                                      type="monotone"
+                                      fill="url(#fillWos)"
+                                      stroke="#f2ca50"
+                                      strokeWidth={2}
+                                      isAnimationActive={false}
+                                    />
+                                    <Area
+                                      dataKey="clientsCount"
+                                      name="clients"
+                                      type="monotone"
+                                      fill="url(#fillClients)"
+                                      stroke="#111111"
+                                      strokeWidth={2}
+                                      isAnimationActive={false}
+                                    />
+                                    <ChartLegend content={<ChartLegendContent />} />
+                                  </AreaChart>
+                                </ChartContainer>
+                              )
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 2. DAFTAR WO TABLE */}
+                {activeAdminTab === 'wos' && (
+                  <div className="bg-white border border-[#E2E2E0] rounded-2xl shadow-sm overflow-hidden flex flex-col animate-in fade-in duration-200">
+                    <div className="p-5 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 border-b border-[#E2E2E0]">
+                      <div className="relative flex-grow max-w-md">
+                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6E6E6C]" />
+                        <input
+                          type="text"
+                          placeholder="Cari Wedding Organizer..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full pl-9 pr-4 py-2 bg-[#F1F1EF] border border-transparent rounded-xl focus:outline-none focus:ring-1 focus:ring-[#111111]/10 text-xs text-[#111111] placeholder-[#6E6E6C]/60 h-10"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setOpenCreateWoModal(true)}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-semibold text-xs rounded-xl shadow-sm hover:shadow transition-all cursor-pointer h-10 shrink-0"
+                      >
+                        <Plus size={14} />
+                        <span>Tambah WO Baru</span>
+                      </button>
+                    </div>
+
+                    <div className="overflow-auto min-h-[350px]">
+                      <Table>
+                        <TableHeader className="bg-[#FAF9F6] border-b border-[#E2E2E0]">
+                          <TableRow className="border-b border-[#E2E2E0]">
+                            <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider pl-6 py-3.5">
+                              Wedding Organizer
+                            </TableHead>
+                            <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider py-3.5">
+                              Slug URL
+                            </TableHead>
+                            <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider py-3.5">
+                              Email Kontak
+                            </TableHead>
+                            <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider text-center py-3.5">
+                              Paket Layanan
+                            </TableHead>
+                            <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider text-center py-3.5">
+                              Bergabung
+                            </TableHead>
+                            <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider pr-6 py-3.5 text-right">
+                              Aksi
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody className="divide-y divide-[#E2E2E0]">
+                          {allWos.filter(wo => wo.name.toLowerCase().includes(searchQuery.toLowerCase()) || wo.slug.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
+                            allWos.filter(wo => wo.name.toLowerCase().includes(searchQuery.toLowerCase()) || wo.slug.toLowerCase().includes(searchQuery.toLowerCase())).map((wo) => (
+                              <TableRow key={wo.id} className="hover:bg-[#FAF9F6]/50 transition-colors border-b border-[#E2E2E0]">
+                                <TableCell className="pl-6 py-4">
+                                  <div>
+                                    <div className="font-bold text-[#111111] text-[14px]">{wo.name}</div>
+                                    <div className="text-[11px] text-[#6E6E6C] mt-0.5 font-medium">{wo.location || 'Lokasi tidak diset'}</div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-4 font-mono text-xs">/admin/{wo.slug}</TableCell>
+                                <TableCell className="py-4 font-mono text-xs">{wo.email}</TableCell>
+                                <TableCell className="text-center py-4">
+                                  <span className={`inline-flex px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider ${wo.plan?.name?.includes('Premium') ? 'bg-[#FFF9C4] text-[#F57F17] border border-[#FFF59D]' : 'bg-[#E2E2E0] text-[#6E6E6C]'}`}>
+                                    {wo.plan?.name || 'Free / Demo'}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-center text-xs font-semibold text-[#6E6E6C] py-4">
+                                  {new Date(wo.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </TableCell>
+                                <TableCell className="pr-6 py-4 text-right">
+                                  <div className="flex items-center justify-end gap-2.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => navigateTo(`/admin/${wo.slug}`)}
+                                      className="p-1.5 rounded-lg text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] transition-colors text-xs font-semibold flex items-center gap-1 cursor-pointer border border-[#E2E2E0]"
+                                    >
+                                      <ExternalLink size={14} />
+                                      <span>Workspace</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingWo(wo)}
+                                      className="p-1.5 rounded-lg text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] transition-colors cursor-pointer"
+                                      title="Edit WO"
+                                    >
+                                      <Edit3 size={15} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteWo(wo.id)}
+                                      className="p-1.5 rounded-lg text-[#f43f5e] hover:bg-[#fff5f5] transition-colors cursor-pointer"
+                                      title="Hapus WO"
+                                    >
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={6} className="text-center text-[#6E6E6C] py-16 text-sm">
+                                Tidak ada Wedding Organizer terdaftar.
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. DAFTAR KLIEN GLOBAL TABLE */}
+                {activeAdminTab === 'clients' && (
+                  <div className="bg-white border border-[#E2E2E0] rounded-2xl shadow-sm overflow-hidden flex flex-col animate-in fade-in duration-200">
+                    <div className="p-5 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 border-b border-[#E2E2E0]">
+                      <div className="relative flex-grow max-w-md">
+                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6E6E6C]" />
+                        <input
+                          type="text"
+                          placeholder="Cari pasangan pengantin / email..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full pl-9 pr-4 py-2 bg-[#F1F1EF] border border-transparent rounded-xl focus:outline-none focus:ring-1 focus:ring-[#111111]/10 text-xs text-[#111111] placeholder-[#6E6E6C]/60 h-10"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedWoIdForNewClient(allWos[0]?.id || '')
+                          setOpenCreateModal(true)
+                        }}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-semibold text-xs rounded-xl shadow-sm hover:shadow transition-all cursor-pointer h-10 shrink-0"
+                      >
+                        <UserPlus size={14} />
+                        <span>Tambah Klien</span>
+                      </button>
+                    </div>
+
+                    <div className="overflow-auto min-h-[350px]">
+                      <Table>
+                        <TableHeader className="bg-[#FAF9F6] border-b border-[#E2E2E0]">
+                          <TableRow className="border-b border-[#E2E2E0]">
+                            <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider pl-6 py-3.5">
+                              Pasangan Pengantin
+                            </TableHead>
+                            <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider py-3.5">
+                              Wedding Organizer
+                            </TableHead>
+                            <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider py-3.5">
+                              Email Kontak
+                            </TableHead>
+                            <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider text-center py-3.5">
+                              Tanggal Wedding
+                            </TableHead>
+                            <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider text-center py-3.5">
+                              Tamu
+                            </TableHead>
+                            <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider pr-6 py-3.5 text-right">
+                              Aksi
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody className="divide-y divide-[#E2E2E0]">
+                          {allCustomers.filter(c => `${c.male_name} ${c.female_name}`.toLowerCase().includes(searchQuery.toLowerCase()) || c.email.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
+                            allCustomers.filter(c => `${c.male_name} ${c.female_name}`.toLowerCase().includes(searchQuery.toLowerCase()) || c.email.toLowerCase().includes(searchQuery.toLowerCase())).map((cust) => (
+                              <TableRow key={cust.id} className="hover:bg-[#FAF9F6]/50 transition-colors border-b border-[#E2E2E0]">
+                                <TableCell className="pl-6 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111] font-bold text-xs shrink-0 select-none">
+                                      {cust.male_name ? cust.male_name[0].toUpperCase() : ''}
+                                      {cust.female_name ? cust.female_name[0].toUpperCase() : ''}
+                                    </div>
+                                    <div>
+                                      <div className="font-bold text-[#111111] text-[14px]">{cust.male_name} & {cust.female_name}</div>
+                                      <div className="text-[11px] text-[#6E6E6C] mt-0.5 font-medium">
+                                        Dibuat {new Date(cust.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-4">
+                                  <span
+                                    onClick={() => navigateTo(`/admin/${cust.wo_slug}`)}
+                                    className="px-2.5 py-1 text-[11px] font-bold bg-[#FFFDE7] border border-[#FFF59D] text-[#F57F17] hover:bg-[#FFF9C4] rounded-lg cursor-pointer transition-colors"
+                                  >
+                                    {cust.wo_name}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="py-4 font-mono text-xs">{cust.email}</TableCell>
+                                <TableCell className="text-center text-xs font-semibold text-[#111111] py-4">
+                                  {cust.wedding_date ? (
+                                    new Date(cust.wedding_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                                  ) : (
+                                    <span className="text-[#6E6E6C]/60 font-normal italic">Belum Diatur</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-center text-xs font-bold text-[#111111] font-mono py-4">
+                                  {cust.guest_count || 0}
+                                </TableCell>
+                                <TableCell className="pr-6 py-4 text-right">
+                                  <div className="flex items-center justify-end gap-2.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => navigateTo(`/admin/${cust.wo_slug}/customers/${cust.id}`)}
+                                      className="p-1.5 rounded-lg text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] transition-colors text-xs font-semibold flex items-center gap-1 cursor-pointer border border-[#E2E2E0]"
+                                    >
+                                      <Settings size={14} />
+                                      <span>Kelola</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteCustomer(cust.id)}
+                                      className="p-1.5 rounded-lg text-[#f43f5e] hover:bg-[#fff5f5] transition-colors cursor-pointer"
+                                      title="Hapus Klien"
+                                    >
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={6} className="text-center text-[#6E6E6C] py-16 text-sm">
+                                Tidak ada klien pengantin yang cocok.
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {isPlatformAdmin && slug_wo && (
+                  <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm animate-in fade-in slide-in-from-top duration-300">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700">
+                        <Shield className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-amber-900">Mode Platform Admin</h4>
+                        <p className="text-xs text-amber-700 mt-0.5">
+                          Anda sedang mengelola workspace untuk Wedding Organizer <span className="font-semibold text-amber-955">{woProfile.name}</span>.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => navigateTo('/admin')}
+                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-xl cursor-pointer transition-all hover:shadow-md flex items-center gap-2 active:scale-95 shrink-0"
+                    >
+                      <ArrowLeft size={13} />
+                      Kembali ke Platform Console
+                    </button>
+                  </div>
+                )}
+
+                {activeWoTab === 'clients' && (
               <>
                 {/* Bento Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -2245,7 +3015,7 @@ export default function App() {
                             <div
                               key={cust.id}
                               onClick={() =>
-                                navigateTo(`/admin/${serverConfig.woSlug}/customers/${cust.id}`)
+                                navigateTo(`/admin/${slug_wo}/customers/${cust.id}`)
                               }
                               className="p-3 border border-[#E2E2E0] rounded-xl hover:border-[#111111] transition-all cursor-pointer bg-[#FAF9F6]/30 flex items-center justify-between gap-2.5 group"
                             >
@@ -2437,7 +3207,7 @@ export default function App() {
                                   key={cust.id}
                                   className="hover:bg-[#FAF9F6]/50 transition-colors cursor-pointer border-b border-[#E2E2E0]"
                                   onClick={() =>
-                                    navigateTo(`/admin/${serverConfig.woSlug}/customers/${cust.id}`)
+                                    navigateTo(`/admin/${slug_wo}/customers/${cust.id}`)
                                   }
                                 >
                                   <TableCell className="pl-6 py-4">
@@ -2506,7 +3276,7 @@ export default function App() {
 
                                       {cust.isActive ? (
                                         <a
-                                          href={`/${serverConfig.woSlug}/${cust.slug}`}
+                                          href={`/${slug_wo}/${cust.slug}`}
                                           target="_blank"
                                           rel="noreferrer"
                                           className="p-1.5 rounded-lg text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] transition-colors"
@@ -2890,75 +3660,6 @@ export default function App() {
                       </div>
                     </CardContent>
                   </Card>
-                </div>
-              </div>
-            )}
-
-            {/* ========================================== */}
-            {/* TEAM TAB VIEW                              */}
-            {/* ========================================== */}
-            {activeWoTab === 'team' && (
-              <div className="bg-white border border-[#E2E2E0] rounded-2xl overflow-hidden shadow-sm animate-in fade-in duration-200">
-                {/* Grid Header */}
-                <div className="grid grid-cols-12 px-6 py-4 bg-[#FAF9F6] border-b border-[#E2E2E0] text-[11px] font-semibold uppercase text-[#6E6E6C] tracking-widest items-center">
-                  <div className="col-span-8 sm:col-span-5">Anggota Tim</div>
-                  <div className="col-span-3 text-center hidden sm:block">Hak Akses</div>
-                  <div className="col-span-2 text-center hidden sm:block">Status</div>
-                  <div className="col-span-4 sm:col-span-2 text-right">Aksi</div>
-                </div>
-                {/* Grid Rows */}
-                <div className="divide-y divide-[#E2E2E0]">
-                  {staffList.length > 0 ? (
-                    staffList.map((member) => (
-                      <div
-                        key={member.id}
-                        className="grid grid-cols-12 px-6 py-5 items-center hover:bg-[#FAF9F6] hover:translate-x-1 transition-all duration-200 cursor-default group"
-                      >
-                        <div className="col-span-8 sm:col-span-5 flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111] font-bold text-xs shrink-0">
-                            {member.name ? member.name.substring(0, 2).toUpperCase() : 'ST'}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-[15px] font-bold text-[#111111] truncate">
-                              {member.name}
-                            </div>
-                            <div className="text-[13px] text-[#6E6E6C] font-medium truncate">
-                              {member.email}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="col-span-3 text-center hidden sm:block">
-                          <span className="inline-flex px-3 py-1 bg-[#F1F1EF] text-[#111111] text-[11px] font-semibold rounded-full uppercase tracking-wider">
-                            {member.role}
-                          </span>
-                        </div>
-                        <div className="col-span-2 justify-center items-center gap-2 hidden sm:flex">
-                          <span className="w-2 h-2 rounded-full bg-[#111111]" />
-                          <span className="text-[13px] font-medium text-[#111111]">Active</span>
-                        </div>
-                        <div className="col-span-4 sm:col-span-2 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteStaff(member.id)}
-                            disabled={member.email === serverConfig.userEmail}
-                            className="p-2 rounded-full hover:bg-[#FFEBEE] text-[#6E6E6C] hover:text-[#C62828] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="px-6 py-16 text-center text-[#6E6E6C] text-sm">
-                      Tidak ada anggota tim terdaftar.
-                    </div>
-                  )}
-                </div>
-                {/* Grid Footer */}
-                <div className="p-6 border-t border-[#E2E2E0] bg-[#FAF9F6]">
-                  <span className="text-[13px] font-medium text-[#6E6E6C]">
-                    {staffList.length} anggota terdaftar
-                  </span>
                 </div>
               </div>
             )}
@@ -3501,6 +4202,8 @@ export default function App() {
                 )}
               </div>
             )}
+          </>
+        )}
 
             {/* Edit Profile Modal */}
             {showEditProfileModal && (
@@ -3569,115 +4272,6 @@ export default function App() {
               </div>
             )}
 
-            {/* ========================================== */}
-            {/* ADD STAFF MODAL                            */}
-            {/* ========================================== */}
-            {showAddStaffModal && (
-              <div className="fixed inset-0 bg-black/30 backdrop-blur-[4px] flex items-center justify-center z-50 transition-all">
-                <div className="bg-white border border-[#E2E2E0] rounded-2xl p-8 w-full max-w-md shadow-xl transition-all">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-serif text-[#111111] text-xl font-medium">
-                      Tambah Anggota Tim
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setShowAddStaffModal(false)}
-                      className="bg-transparent border-none text-[#6E6E6C] hover:text-[#111111] cursor-pointer flex items-center"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-
-                  <div className="p-3 mb-4 rounded-lg bg-[#FFF3E0] border border-[#FFE0B2] text-[#E65100] text-xs leading-relaxed font-sans">
-                    <strong>Catatan Penting:</strong> Anggota tim harus sudah terdaftar di sistem
-                    Auth. Silakan masukkan User ID (UUID) dari akun mereka agar terhubung dengan
-                    organisasi WO Anda.
-                  </div>
-
-                  <form onSubmit={handleAddStaffSubmit} className="space-y-4">
-                    <div>
-                      <label
-                        htmlFor="staffName"
-                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
-                      >
-                        Nama Lengkap Staff
-                      </label>
-                      <input
-                        type="text"
-                        id="staffName"
-                        name="staffName"
-                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] text-sm"
-                        placeholder="Contoh: Rina Amalia"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="staffEmail"
-                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
-                      >
-                        Email Staff
-                      </label>
-                      <input
-                        type="email"
-                        id="staffEmail"
-                        name="staffEmail"
-                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] text-sm"
-                        placeholder="rina@example.com"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="staffRole"
-                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
-                      >
-                        Role / Hak Akses
-                      </label>
-                      <select
-                        id="staffRole"
-                        name="staffRole"
-                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] text-sm bg-white"
-                        style={{ height: '38px' }}
-                        required
-                      >
-                        <option value="editor">Editor (Kelola Klien & Undangan)</option>
-                        <option value="admin">Admin (Akses Penuh)</option>
-                        <option value="viewer">Viewer (Hanya Lihat)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="staffUserId"
-                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
-                      >
-                        Supabase User ID (UUID)
-                      </label>
-                      <input
-                        type="text"
-                        id="staffUserId"
-                        name="staffUserId"
-                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] text-sm font-mono"
-                        placeholder="e.g. fc9724c9-58bd-41a5-b59d-224c650b5dfe"
-                        required
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="flex items-center justify-center gap-2 w-full py-3 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-semibold text-sm rounded-lg transition-colors cursor-pointer mt-6"
-                    >
-                      <Save size={16} />
-                      Simpan Anggota Staff
-                    </button>
-                  </form>
-                </div>
-              </div>
-            )}
-
             {/* Create Client Modal */}
             {openCreateModal && (
               <div className="fixed inset-0 bg-black/30 backdrop-blur-[4px] flex items-center justify-center z-50 transition-all">
@@ -3696,6 +4290,32 @@ export default function App() {
                   </div>
 
                   <form onSubmit={handleCreateCustomerSubmit} className="space-y-4">
+                    {isPlatformAdmin && (
+                      <div>
+                        <label
+                          htmlFor="selectedWoIdForNewClient"
+                          className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                        >
+                          Wedding Organizer Pemilik
+                        </label>
+                        <select
+                          id="selectedWoIdForNewClient"
+                          value={selectedWoIdForNewClient}
+                          onChange={(e) => setSelectedWoIdForNewClient(e.target.value)}
+                          className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 text-sm bg-white"
+                          style={{ height: '38px' }}
+                          required
+                        >
+                          <option value="">Pilih Wedding Organizer...</option>
+                          {allWos.map((wo) => (
+                            <option key={wo.id} value={wo.id}>
+                              {wo.name} ({wo.slug})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     <div>
                       <label
                         htmlFor="maleName"
@@ -3758,12 +4378,260 @@ export default function App() {
                 </div>
               </div>
             )}
+
+            {/* Create WO Modal */}
+            {openCreateWoModal && (
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-[4px] flex items-center justify-center z-50 transition-all">
+                <div className="bg-white border border-[#E2E2E0] rounded-2xl p-8 w-full max-w-md shadow-xl transition-all animate-in fade-in zoom-in-95 duration-200">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-serif text-[#111111] text-xl font-medium flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-amber-500" />
+                      Daftarkan WO Baru
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setOpenCreateWoModal(false)}
+                      className="bg-transparent border-none text-[#6E6E6C] hover:text-[#111111] cursor-pointer flex items-center"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleCreateWoSubmit} className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="woName"
+                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                      >
+                        Nama Wedding Organizer
+                      </label>
+                      <input
+                        type="text"
+                        id="woName"
+                        name="name"
+                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
+                        placeholder="Contoh: Royal Wedding Organizer"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="woEmail"
+                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                      >
+                        Email Kontak WO
+                      </label>
+                      <input
+                        type="email"
+                        id="woEmail"
+                        name="email"
+                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
+                        placeholder="wo@example.com"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="woLocation"
+                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                      >
+                        Lokasi / Kota
+                      </label>
+                      <input
+                        type="text"
+                        id="woLocation"
+                        name="location"
+                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
+                        placeholder="Contoh: Jakarta"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="woPlan"
+                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                      >
+                        Paket Langganan
+                      </label>
+                      <select
+                        id="woPlan"
+                        name="planId"
+                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 text-sm bg-white"
+                        style={{ height: '38px' }}
+                      >
+                        <option value="">Tanpa Paket / Free</option>
+                        {plans.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} (Rp {p.price?.toLocaleString('id-ID') || 0})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="flex items-center justify-center gap-2 w-full py-3 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-semibold text-sm rounded-lg transition-colors cursor-pointer mt-6"
+                    >
+                      <Save size={16} />
+                      Daftarkan WO
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Edit WO Modal */}
+            {editingWo && (
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-[4px] flex items-center justify-center z-50 transition-all">
+                <div className="bg-white border border-[#E2E2E0] rounded-2xl p-8 w-full max-w-md shadow-xl transition-all animate-in fade-in zoom-in-95 duration-200">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-serif text-[#111111] text-xl font-medium flex items-center gap-2">
+                      <Edit3 className="w-5 h-5 text-amber-500" />
+                      Ubah Detail WO
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setEditingWo(null)}
+                      className="bg-transparent border-none text-[#6E6E6C] hover:text-[#111111] cursor-pointer flex items-center"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleUpdateWoDetails} className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="editWoName"
+                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                      >
+                        Nama Wedding Organizer
+                      </label>
+                      <input
+                        type="text"
+                        id="editWoName"
+                        name="name"
+                        defaultValue={editingWo.name}
+                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="editWoSlug"
+                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                      >
+                        Slug URL WO
+                      </label>
+                      <input
+                        type="text"
+                        id="editWoSlug"
+                        name="slug"
+                        defaultValue={editingWo.slug}
+                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm font-mono"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="editWoEmail"
+                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                      >
+                        Email Kontak WO
+                      </label>
+                      <input
+                        type="email"
+                        id="editWoEmail"
+                        name="email"
+                        defaultValue={editingWo.email}
+                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="editWoLocation"
+                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                      >
+                        Lokasi / Kota
+                      </label>
+                      <input
+                        type="text"
+                        id="editWoLocation"
+                        name="location"
+                        defaultValue={editingWo.location || ''}
+                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="editWoPlan"
+                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                      >
+                        Paket Langganan
+                      </label>
+                      <select
+                        id="editWoPlan"
+                        name="planId"
+                        defaultValue={editingWo.plan_id || ''}
+                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 text-sm bg-white"
+                        style={{ height: '38px' }}
+                      >
+                        <option value="">Tanpa Paket / Free</option>
+                        {plans.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} (Rp {p.price?.toLocaleString('id-ID') || 0})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="flex items-center justify-center gap-2 w-full py-3 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-semibold text-sm rounded-lg transition-colors cursor-pointer mt-6"
+                    >
+                      <Save size={16} />
+                      Simpan Perubahan
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           // ==========================================
           // CLIENT SCOPED WORKSPACE VIEW (Tabs UI)
           // ==========================================
           <div className="px-4 sm:px-6 md:px-8 py-5 md:py-8 max-w-[1400px] mx-auto w-full">
+            {isPlatformAdmin && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm animate-in fade-in slide-in-from-top duration-300">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700">
+                    <Shield className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-amber-900">Mode Platform Admin</h4>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      Anda sedang mengelola klien <span className="font-semibold text-amber-950">{selectedCustomer?.male_name} & {selectedCustomer?.female_name}</span> secara langsung.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigateTo('/admin')}
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-xl cursor-pointer transition-all hover:shadow-md flex items-center gap-2 active:scale-95 shrink-0"
+                >
+                  <ArrowLeft size={13} />
+                  Kembali ke Platform Console
+                </button>
+              </div>
+            )}
+
             {/* Alert Messages */}
             {statusAlert && (
               <div
@@ -3843,9 +4711,9 @@ export default function App() {
 
                       {/* Form Content */}
                       <div className="p-6 md:p-8 flex-grow">
-                        <Tabs value={formSection} className="w-full">
+                        <div className="w-full">
                           {/* Mempelai Pria */}
-                          <TabsContent value="groom" className="space-y-6">
+                          <div className={formSection === 'groom' ? "space-y-6" : "hidden"}>
                             <div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
@@ -3901,10 +4769,10 @@ export default function App() {
                                 </div>
                               </div>
                             </div>
-                          </TabsContent>
+                          </div>
 
                           {/* Mempelai Wanita */}
-                          <TabsContent value="bride" className="space-y-6">
+                          <div className={formSection === 'bride' ? "space-y-6" : "hidden"}>
                             <div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
@@ -3960,10 +4828,10 @@ export default function App() {
                                 </div>
                               </div>
                             </div>
-                          </TabsContent>
+                          </div>
 
                           {/* Waktu & Lokasi */}
-                          <TabsContent value="event" className="space-y-6">
+                          <div className={formSection === 'event' ? "space-y-6" : "hidden"}>
                             <div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
@@ -4041,10 +4909,10 @@ export default function App() {
                                 </div>
                               </div>
                             </div>
-                          </TabsContent>
+                          </div>
 
                           {/* Tanda Kasih Digital */}
-                          <TabsContent value="gift" className="space-y-6">
+                          <div className={formSection === 'gift' ? "space-y-6" : "hidden"}>
                             <div>
                               <h3 className="text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-widest mb-5">
                                 Kado Digital / Rekening Bank
@@ -4136,10 +5004,10 @@ export default function App() {
                                 </div>
                               </div>
                             </div>
-                          </TabsContent>
+                          </div>
 
                           {/* Pengaturan Tambahan */}
-                          <TabsContent value="additional" className="space-y-6">
+                          <div className={formSection === 'additional' ? "space-y-6" : "hidden"}>
                             <div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
@@ -4189,8 +5057,8 @@ export default function App() {
                                 </div>
                               </div>
                             </div>
-                          </TabsContent>
-                        </Tabs>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Save changes footer */}
@@ -4527,6 +5395,14 @@ export default function App() {
                           Semua foto pre-wedding pasangan pengantin yang dipajang (Gunakan
                           drag-and-drop untuk menyusun urutan)
                         </p>
+                        {galleries.length > 0 && galleries.length < 3 && (
+                          <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2 shadow-sm animate-pulse">
+                            <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                            <div>
+                              <span className="font-semibold">Jumlah Foto Belum Valid:</span> Galeri foto harus kosong (0 foto) atau memiliki minimal 3 foto agar tampil sempurna di undangan. Saat ini terdapat {galleries.length} foto.
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="overflow-auto max-h-[600px]">
@@ -4733,7 +5609,7 @@ export default function App() {
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        const url = `${window.location.origin}/${serverConfig.woSlug}/${invitation ? invitation.slug : selectedCustomer?.id}?to=${encodeURIComponent(guest.name)}`
+                                        const url = `${window.location.origin}/${slug_wo}/${invitation ? invitation.slug : selectedCustomer?.id}?to=${encodeURIComponent(guest.name)}`
                                         navigator.clipboard.writeText(url).then(() => {
                                           setShowCopyToast(true)
                                           setTimeout(() => setShowCopyToast(false), 2000)

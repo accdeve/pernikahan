@@ -1,0 +1,86 @@
+{
+  "active_plan": "/Users/nine/Documents/GitHub/pernikahan/.sisyphus/plans/cleanup-pernikahan.md",
+  "started_at": "2026-06-02T04:52:21.838Z",
+  "session_ids": [
+    "ses_179530d6dffefEAomCvycbTKI5",
+    "ses_1794f0d85ffeTom57AYs9He8b8",
+    "ses_1794ef873ffeZ18k9IxibkQytj",
+    "ses_1794ee8d5ffel6HVZtPiWIwZT6",
+    "ses_1794edbf3ffeoHmbx4dfZuQl17",
+    "ses_1794ecaa4ffeTyNWAs6ZOaTzd1",
+    "ses_1794b581cffelaPKzkSH28MS99",
+    "ses_179482f1bffeUG0w1EMD0UpQwg",
+    "ses_178f78ba5ffemxeSWnna1xzKny",
+    "ses_178f7739cffeXuhdf7gKZDZDIh"
+  ],
+  "session_origins": {
+    "ses_179530d6dffefEAomCvycbTKI5": "direct",
+    "ses_1794f0d85ffeTom57AYs9He8b8": "appended",
+    "ses_1794ef873ffeZ18k9IxibkQytj": "appended",
+    "ses_1794ee8d5ffel6HVZtPiWIwZT6": "appended",
+    "ses_1794edbf3ffeoHmbx4dfZuQl17": "appended",
+    "ses_1794ecaa4ffeTyNWAs6ZOaTzd1": "appended",
+    "ses_1794b581cffelaPKzkSH28MS99": "appended",
+    "ses_179482f1bffeUG0w1EMD0UpQwg": "appended",
+    "ses_178f78ba5ffemxeSWnna1xzKny": "appended",
+    "ses_178f7739cffeXuhdf7gKZDZDIh": "appended"
+  },
+  "plan_name": "cleanup-pernikahan",
+  "agent": "atlas",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "**Remove app/ Directory (Controllers, Middleware, Models, Validators)**",
+      "session_id": "ses_179521ff2ffe7rz08v0pkzK3Ln",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-06-02T04:54:59.155Z"
+    },
+    "todo:10": {
+      "task_key": "todo:10",
+      "task_label": "10",
+      "task_title": "**Set Up React Router (Public + Admin Routes)**",
+      "session_id": "ses_1794b581cffelaPKzkSH28MS99",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-06-02T05:00:47.070Z"
+    },
+    "todo:15": {
+      "task_key": "todo:15",
+      "task_label": "15",
+      "task_title": "**Convert Login Form to Supabase Auth PKCE**",
+      "session_id": "ses_17943ffbaffexEEA1fZj42Drmv",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-06-02T05:38:48.813Z"
+    },
+    "todo:16": {
+      "task_key": "todo:16",
+      "task_label": "16",
+      "task_title": "**Create Supabase Edge Function for Signup**",
+      "session_id": "ses_17927f2c2ffeZiGMjqOxl9gJzt",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-06-02T05:44:38.350Z"
+    },
+    "todo:18": {
+      "task_key": "todo:18",
+      "task_label": "18",
+      "task_title": "**Create React Components for java_style Theme (7 sections)**",
+      "session_id": "ses_1791abc00ffe2L9qhUvN4eSkeV",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-06-02T06:11:40.040Z"
+    },
+    "todo:21": {
+      "task_key": "todo:21",
+      "task_label": "21",
+      "task_title": "**Port image_sequence.js GSAP to React Hooks**",
+      "session_id": "ses_17909f231ffexgoMTpUCsFFu3W",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-06-02T06:13:48.464Z"
+    }
+  }
+}

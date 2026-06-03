@@ -6,15 +6,12 @@ tmp/
 .env.test
 .env.example
 README.md
-tests/
 database/*.sqlite3
 npm-debug.log
 yarn-error.log
 .editorconfig
 .prettierignore
 eslint.config.js
-tsconfig.json
-vite.config.ts
 tailwind.config.js
 components.json
 srs/

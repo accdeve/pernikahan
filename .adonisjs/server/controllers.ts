@@ -3,9 +3,4 @@
  * DO NOT EDIT manually
  */
 
-export const controllers = {
-  AdminAuth: () => import('#controllers/admin_auth_controller'),
-  Admin: () => import('#controllers/admin_controller'),
-  B2B: () => import('#controllers/b2b_controller'),
-  Invitation: () => import('#controllers/invitation_controller'),
-}
+export const controllers = {}
