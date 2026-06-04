@@ -71,12 +71,54 @@ export function dashboardHandler() {
 
       // 4. Fetch Customers list
       await this.fetchCustomers()
+
+      // 5. Start inactivity guard
+      this.startInactivityGuard()
+    },
+
+    startInactivityGuard() {
+      const TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
+      const STORAGE_KEY = 'b2b_last_activity'
+
+      localStorage.setItem(STORAGE_KEY, Date.now().toString())
+
+      const updateActivity = () => {
+        localStorage.setItem(STORAGE_KEY, Date.now().toString())
+      }
+
+      let throttleTimeout = null
+      const handleUserActivity = () => {
+        if (throttleTimeout) return
+        throttleTimeout = setTimeout(() => {
+          updateActivity()
+          throttleTimeout = null
+        }, 5000)
+      }
+
+      const events = ['mousemove', 'keydown', 'click', 'scroll', 'mousedown', 'touchstart']
+      events.forEach(event => window.addEventListener(event, handleUserActivity))
+
+      this.inactivityInterval = setInterval(async () => {
+        const lastActivity = localStorage.getItem(STORAGE_KEY)
+        if (lastActivity) {
+          const diff = Date.now() - parseInt(lastActivity, 10)
+          if (diff > TIMEOUT_MS) {
+            console.warn('B2B Session expired due to inactivity.')
+            clearInterval(this.inactivityInterval)
+            events.forEach(event => window.removeEventListener(event, handleUserActivity))
+            await window.supabase.auth.signOut()
+            window.location.href = '/b2b/login?expired=true'
+          }
+        }
+      }, 10000)
     },
 
     async fetchCustomers() {
+      if (!this.wo || !this.wo.id) return
       const { data: custData, error } = await window.supabase
         .from('customers')
         .select('*')
+        .eq('wo_id', this.wo.id)
         .order('created_at', { ascending: false })
 
       if (error) {

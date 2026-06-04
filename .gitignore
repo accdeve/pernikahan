@@ -9,6 +9,8 @@ tmp/*
 .env.local
 .env.production.local
 .env.development.local
+google/
+docs/
 
 # Frontend assets compiled code
 public/assets

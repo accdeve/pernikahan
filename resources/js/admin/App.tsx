@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { Toaster, toast } from 'sonner'
 import { supabase } from '../lib/supabase-client.js'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs.js'
 import { AreaChart, Area, XAxis, CartesianGrid } from 'recharts'
@@ -15,10 +16,13 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '../co
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select.js'
+import { Combobox } from '../components/ui/combobox.js'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -456,6 +460,63 @@ const uploadImageToStorage = async (file: File): Promise<string> => {
   return urlData.publicUrl
 }
 
+const bankOptions = [
+  {
+    label: "State-Owned Banks",
+    options: [
+      { label: "Bank Mandiri", value: "Bank Mandiri" },
+      { label: "BNI", value: "BNI" },
+      { label: "BRI", value: "BRI" },
+      { label: "BTN", value: "BTN" },
+      { label: "BSI (Bank Syariah Indonesia)", value: "BSI" }
+    ]
+  },
+  {
+    label: "Private Banks",
+    options: [
+      { label: "BCA", value: "BCA" },
+      { label: "CIMB Niaga", value: "CIMB Niaga" },
+      { label: "Danamon", value: "Danamon" },
+      { label: "Permata", value: "Permata" },
+      { label: "OCBC NISP", value: "OCBC NISP" },
+      { label: "Panin", value: "Panin" },
+      { label: "Mega", value: "Mega" },
+      { label: "Sinarmas", value: "Sinarmas" }
+    ]
+  },
+  {
+    label: "Digital Banks",
+    options: [
+      { label: "Bank Jago", value: "Jago" },
+      { label: "Blu by BCA Digital", value: "Blu by BCA" },
+      { label: "SeaBank", value: "SeaBank" },
+      { label: "Jenius (BTPN)", value: "Jenius (BTPN)" },
+      { label: "Neo Commerce", value: "Neo Commerce" },
+      { label: "Allo Bank", value: "Allo Bank" }
+    ]
+  }
+];
+
+const walletOptions = [
+  {
+    label: "Popular",
+    options: [
+      { label: "GoPay", value: "GoPay" },
+      { label: "OVO", value: "OVO" },
+      { label: "DANA", value: "DANA" },
+      { label: "ShopeePay", value: "ShopeePay" },
+      { label: "LinkAja", value: "LinkAja" }
+    ]
+  },
+  {
+    label: "Others",
+    options: [
+      { label: "PayPal", value: "PayPal" },
+      { label: "QRIS (Universal)", value: "QRIS" }
+    ]
+  }
+];
+
 export default function App() {
   const { slug_wo } = useParams<{ slug_wo: string }>()
 
@@ -484,10 +545,12 @@ export default function App() {
     'groom' | 'bride' | 'event' | 'gift' | 'additional'
   >('groom')
 
-  // General WO Dashboard tabs state
-  const [activeWoTab, setActiveWoTab] = useState<
-    'clients' | 'customers' | 'settings' | 'billing' | 'profile'
-  >('clients')
+  // General WO Dashboard tabs state (Synced with URL search params)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeWoTab = (searchParams.get('tab') || 'clients') as 'clients' | 'customers' | 'settings' | 'billing' | 'profile'
+  const setActiveWoTab = (tab: string) => {
+    setSearchParams({ tab })
+  }
   const [woProfile, setWoProfile] = useState({
     name: '',
     slug: slug_wo || '',
@@ -498,7 +561,10 @@ export default function App() {
   const [adminUser, setAdminUser] = useState({
     name: 'Administrator',
     email: '',
+    phone: '',
+    avatarUrl: '',
   })
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
 
   // App-wide state
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -507,6 +573,12 @@ export default function App() {
   const [totalStats, setTotalStats] = useState({ total: 0, published: 0, draft: 0 })
   const [globalGuests, setGlobalGuests] = useState<any[]>([])
 
+  // Points Billing States
+  const [pointsBalance, setPointsBalance] = useState<number>(0)
+  const [topupHistory, setTopupHistory] = useState<any[]>([])
+  const [pointUsage, setPointUsage] = useState<any[]>([])
+  const [loadingBilling, setLoadingBilling] = useState(false)
+
   // Selected Couple States
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
@@ -514,6 +586,64 @@ export default function App() {
   const [stories, setStories] = useState<Story[]>([])
   const [editingStory, setEditingStory] = useState<Story | null>(null)
   const [editingGallery, setEditingGallery] = useState<Gallery | null>(null)
+
+  const [paymentMethods, setPaymentMethods] = useState<Array<{
+    type: 'bank' | 'wallet'
+    name: string
+    number: string
+    holder: string
+  }>>([])
+
+  useEffect(() => {
+    if (invitation) {
+      const methods: Array<{
+        type: 'bank' | 'wallet'
+        name: string
+        number: string
+        holder: string
+      }> = []
+      if (invitation.bank_name || invitation.bank_account_number || invitation.bank_account_holder) {
+        methods.push({
+          type: 'bank',
+          name: invitation.bank_name || '',
+          number: invitation.bank_account_number || '',
+          holder: invitation.bank_account_holder || '',
+        })
+      }
+      if (invitation.wallet_name || invitation.wallet_number || invitation.wallet_holder) {
+        methods.push({
+          type: 'wallet',
+          name: invitation.wallet_name || '',
+          number: invitation.wallet_number || '',
+          holder: invitation.wallet_holder || '',
+        })
+      }
+      setPaymentMethods(methods)
+    } else {
+      setPaymentMethods([])
+    }
+  }, [invitation])
+
+  const handleAddPaymentMethod = () => {
+    if (paymentMethods.length >= 2) return
+    setPaymentMethods([
+      ...paymentMethods,
+      { type: 'bank', name: '', number: '', holder: '' }
+    ])
+  }
+
+  const handleRemovePaymentMethod = (index: number) => {
+    setPaymentMethods(paymentMethods.filter((_, i) => i !== index))
+  }
+
+  const handleUpdatePaymentMethod = (index: number, field: 'type' | 'name' | 'number' | 'holder', value: string) => {
+    const updated = [...paymentMethods]
+    updated[index] = {
+      ...updated[index],
+      [field]: value
+    }
+    setPaymentMethods(updated)
+  }
 
   // Image Upload Toggles & Loaders
   const [storyImageType, setStoryImageType] = useState<'url' | 'upload'>('url')
@@ -546,6 +676,13 @@ export default function App() {
     type: 'success' | 'error'
     message: string
   } | null>(null)
+
+  // Custom premium animated toast state
+  const [toastInfo, setToastInfo] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
+  const [toastAnimationClass, setToastAnimationClass] = useState('')
 
   // Client-side authentication state
   const [isAuthReady, setIsAuthReady] = useState(false)
@@ -589,6 +726,9 @@ export default function App() {
     'profile'
   )
   const [showEditProfileModal, setShowEditProfileModal] = useState(false)
+  const [shouldDeleteAvatar, setShouldDeleteAvatar] = useState(false)
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [emailSummaries, setEmailSummaries] = useState(true)
   const [criticalAlerts, setCriticalAlerts] = useState(false)
   const [deploymentStatus, setDeploymentStatus] = useState(true)
@@ -604,17 +744,72 @@ export default function App() {
         const { data: userData } = await supabase.auth.getUser()
         const user = userData?.user
         
-        if (user) {
-          const userEmail = user.email?.toLowerCase()
+        const hasHash = window.location.hash.includes('access_token') || window.location.hash.includes('id_token')
+        const hasCode = window.location.search.includes('code=')
+
+        if (!user) {
+          if (hasHash || hasCode) {
+            // Wait for PKCE / OAuth redirect exchange to complete
+            return
+          }
+          window.location.href = '/login'
+          return
+        }
+
+        const userEmail = user.email?.toLowerCase()
           const isAdmin = userEmail === 'admin@ablarsy.com' || user.user_metadata?.role === 'admin'
           setIsPlatformAdmin(isAdmin)
           
+          // Fetch user profile from database
+          const { data: profiles } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('id', user.id)
+          
+          const profile = profiles && profiles.length > 0 ? profiles[0] : null
+          
+          const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture
+          const googleName = user.user_metadata?.full_name || user.user_metadata?.name
+
           setAdminUser({
-            name: user.email?.split('@')[0] || 'Administrator',
+            name: profile?.name || googleName || user.email?.split('@')[0] || 'Administrator',
             email: user.email || '',
+            phone: profile?.phone || '',
+            avatarUrl: profile?.avatar_url || googleAvatar || '',
           })
 
-          const userWoSlug = user.user_metadata?.wo_slug || user.user_metadata?.slug_wo
+          let userWoSlug = user.user_metadata?.wo_slug || user.user_metadata?.slug_wo
+
+          if (!userWoSlug && !isAdmin && userEmail) {
+            // 1. Force refresh session to get latest metadata from auth database (e.g. after registration otp verification)
+            const { data: refreshData } = await supabase.auth.refreshSession()
+            if (refreshData?.user) {
+              userWoSlug = refreshData.user.user_metadata?.wo_slug || refreshData.user.user_metadata?.slug_wo
+            }
+            
+            // 2. Fallback: Check if user's email matches a wedding organization's email
+            if (!userWoSlug) {
+              const { data: org } = await supabase
+                .from('wedding_organization')
+                .select('slug')
+                .eq('email', userEmail)
+                .maybeSingle()
+
+              if (org) {
+                userWoSlug = org.slug
+                // Update user metadata in Supabase Auth so it is cached/persisted for subsequent logins
+                const { data: updatedUserData } = await supabase.auth.updateUser({
+                  data: {
+                    wo_slug: org.slug,
+                    role: 'admin'
+                  }
+                })
+                if (updatedUserData?.user) {
+                  userWoSlug = updatedUserData.user.user_metadata?.wo_slug || updatedUserData.user.user_metadata?.slug_wo
+                }
+              }
+            }
+          }
 
           if (isAdmin) {
             // Admin user - allow scoped WO workspace navigation
@@ -624,8 +819,7 @@ export default function App() {
               if (userWoSlug) {
                 navigate(`/admin/${userWoSlug}`, { replace: true })
               } else {
-                await supabase.auth.signOut()
-                window.location.href = '/login'
+                window.location.href = `/signup?email=${encodeURIComponent(userEmail)}&provider=google`
                 return
               }
             } else if (slug_wo !== userWoSlug) {
@@ -650,10 +844,6 @@ export default function App() {
               })
             }
           }
-        } else {
-          window.location.href = '/login'
-          return
-        }
       } catch (err) {
         console.error('Error initializing app:', err)
       } finally {
@@ -662,6 +852,70 @@ export default function App() {
     }
     initApp()
   }, [slug_wo])
+
+  // Listen to auth state changes to handle OAuth redirect session load
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        const hasHash = window.location.hash.includes('access_token') || window.location.hash.includes('id_token')
+        const hasCode = window.location.search.includes('code=')
+        if (hasHash || hasCode) {
+          // Clean up the URL and reload
+          window.location.href = window.location.origin + window.location.pathname
+        }
+      }
+    })
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  // Inactivity timeout guard (30 minutes)
+  useEffect(() => {
+    const TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
+    const STORAGE_KEY = 'admin_last_activity'
+
+    // Set initial activity timestamp on load
+    localStorage.setItem(STORAGE_KEY, Date.now().toString())
+
+    const updateActivity = () => {
+      localStorage.setItem(STORAGE_KEY, Date.now().toString())
+    }
+
+    // Add listeners with throttling
+    let throttleTimeout: any = null
+    const handleUserActivity = () => {
+      if (throttleTimeout) return
+      throttleTimeout = setTimeout(() => {
+        updateActivity()
+        throttleTimeout = null
+      }, 5000) // Throttle to once every 5 seconds
+    }
+
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'mousedown', 'touchstart']
+    events.forEach(event => window.addEventListener(event, handleUserActivity))
+
+    // Interval to check for inactivity
+    const interval = setInterval(async () => {
+      const lastActivity = localStorage.getItem(STORAGE_KEY)
+      if (lastActivity) {
+        const diff = Date.now() - parseInt(lastActivity, 10)
+        if (diff > TIMEOUT_MS) {
+          console.warn('Session expired due to inactivity.')
+          clearInterval(interval)
+          // Log out
+          await supabase.auth.signOut()
+          window.location.href = '/login?expired=true'
+        }
+      }
+    }, 10000) // Check every 10 seconds
+
+    return () => {
+      events.forEach(event => window.removeEventListener(event, handleUserActivity))
+      clearInterval(interval)
+      if (throttleTimeout) clearTimeout(throttleTimeout)
+    }
+  }, [])
 
 
 
@@ -681,6 +935,33 @@ export default function App() {
     }
   }, [currentPath])
 
+  // Toast close helper
+  const closeToast = () => {
+    setToastAnimationClass('animate-toast-out')
+    setTimeout(() => {
+      setToastInfo(null)
+    }, 250) // matching our transition duration (250ms)
+  }
+
+  // Toast listener for retrofitted statusAlert state
+  useEffect(() => {
+    if (statusAlert) {
+      setToastInfo(statusAlert)
+      setToastAnimationClass('animate-toast-in')
+      
+      // Auto close after 3 seconds
+      const timer = setTimeout(() => {
+        setToastAnimationClass('animate-toast-out')
+        setTimeout(() => {
+          setToastInfo(null)
+        }, 250)
+      }, 3000)
+      
+      setStatusAlert(null)
+      return () => clearTimeout(timer)
+    }
+  }, [statusAlert])
+
   // Fetch WO couples/dashboard stats
   useEffect(() => {
     if (!isAuthReady) return
@@ -691,18 +972,85 @@ export default function App() {
       fetchDashboardData()
       fetchWoProfile()
       fetchPlanInfo()
+      if (activeWoTab === 'billing' || settingsSubTab === 'billing') {
+        fetchBillingData()
+      }
     } else {
       fetchCoupleData(selectedCustomerId)
     }
-  }, [selectedCustomerId, isAuthReady, activeWoTab, isPlatformAdmin, activeAdminTab, slug_wo])
+  }, [selectedCustomerId, isAuthReady, activeWoTab, settingsSubTab, isPlatformAdmin, activeAdminTab, slug_wo, woId])
+
+  const fetchBillingData = async () => {
+    if (!woId) return
+    setLoadingBilling(true)
+    try {
+      const { data: woData, error: woError } = await supabase
+        .from('wedding_organization')
+        .select('points_balance')
+        .eq('id', woId)
+        .single()
+      if (woError) throw woError
+      setPointsBalance(woData?.points_balance || 0)
+
+      const { data: topupData, error: topupError } = await supabase
+        .from('wo_topup_history')
+        .select('*')
+        .eq('wo_id', woId)
+        .order('created_at', { ascending: false })
+      if (topupError) throw topupError
+      setTopupHistory(topupData || [])
+
+      const { data: usageData, error: usageError } = await supabase
+        .from('wo_point_usage')
+        .select('*')
+        .eq('wo_id', woId)
+        .order('created_at', { ascending: false })
+      if (usageError) throw usageError
+      setPointUsage(usageData || [])
+    } catch (err: any) {
+      console.error('Error fetching billing data:', err)
+    } finally {
+      setLoadingBilling(false)
+    }
+  }
+
+  const handleTopUpPoint = async (points: number, price: number, method: string) => {
+    if (!woId) return
+    try {
+      const { error: insertError } = await supabase.from('wo_topup_history').insert({
+        wo_id: woId,
+        points_added: points,
+        amount_paid: price,
+        payment_method: method,
+        status: 'completed',
+      })
+      if (insertError) throw insertError
+
+      const { error: balanceError } = await supabase
+        .from('wedding_organization')
+        .update({ points_balance: pointsBalance + points })
+        .eq('id', woId)
+      if (balanceError) throw balanceError
+
+      setStatusAlert({ type: 'success', message: `Top up ${points} Poin berhasil dilakukan!` })
+      fetchBillingData()
+    } catch (err: any) {
+      setStatusAlert({ type: 'error', message: `Gagal melakukan top up: ${err.message}` })
+    }
+  }
 
   const fetchDashboardData = async () => {
+    if (!woId) {
+      setCustomers([])
+      return
+    }
     setLoading(true)
     try {
-      // 1. Fetch customers
+      // 1. Fetch customers filtered by the logged-in organization's ID
       const { data: custData, error: custErr } = await supabase
         .from('customers')
         .select('*')
+        .eq('wo_id', woId)
         .order('created_at', { ascending: false })
 
       if (custErr) throw custErr
@@ -894,8 +1242,8 @@ export default function App() {
 
   const handleDeleteWo = async (id: string) => {
     showConfirm({
-      title: 'Hapus Wedding Organizer',
-      description: 'Apakah Anda yakin ingin menghapus WO ini? Semua data klien dan undangan terkait akan terhapus secara permanen.',
+      title: 'Apakah Anda yakin?',
+      description: 'Tindakan ini tidak dapat dibatalkan. Organisasi beserta semua data klien dan undangan terkait akan dihapus secara permanen.',
       destructive: true,
       onConfirm: async () => {
         try {
@@ -957,22 +1305,31 @@ export default function App() {
 
   const handleDeleteCustomer = async (id: string) => {
     showConfirm({
-      title: 'Hapus Klien',
-      description: 'Apakah Anda yakin ingin menghapus klien ini beserta semua informasi undangan, kisah, galeri, dan RSVPs?',
+      title: 'Apakah Anda yakin?',
+      description: 'Tindakan ini tidak dapat dibatalkan. Seluruh data klien ini akan dihapus secara permanen.',
       destructive: true,
       onConfirm: async () => {
         try {
-          const { error } = await supabase.from('customers').delete().eq('id', id)
+          let query = supabase.from('customers').delete().eq('id', id)
+          if (!isPlatformAdmin && woId) {
+            query = query.eq('wo_id', woId)
+          }
+          const { error } = await query
           if (error) throw error
-          setStatusAlert({ type: 'success', message: 'Klien berhasil dihapus!' })
+          setStatusAlert({ type: 'success', message: 'Data klien berhasil dihapus secara permanen.' })
           setTimeout(() => setStatusAlert(null), 3000)
+          
+          if (selectedCustomerId === id) {
+            navigateTo(isPlatformAdmin && !slug_wo ? '/admin' : `/admin/${slug_wo || ''}`)
+          }
+
           if (isPlatformAdmin) {
             fetchPlatformAdminData()
           } else {
             fetchDashboardData()
           }
         } catch (err: any) {
-          setStatusAlert({ type: 'error', message: `Gagal menghapus klien: ${err.message}` })
+          setStatusAlert({ type: 'error', message: `Gagal menghapus data klien: ${err.message}` })
           setTimeout(() => setStatusAlert(null), 3000)
         }
       }
@@ -1027,15 +1384,55 @@ export default function App() {
     const name = formData.get('woName') as string
     const location = formData.get('woLocation') as string
     const email = formData.get('woEmail') as string
-    const slug = formData.get('woSlug') as string
+    let slug = formData.get('woSlug') as string
+
+    // Validate and clean slug
+    slug = slug.trim().toLowerCase()
+    slug = slug.replace(/\s+/g, '-') // convert spaces to '-'
+    slug = slug.replace(/[^a-z0-9-]/g, '') // remove characters that are not alphanumeric or '-'
+    slug = slug.replace(/-+/g, '-') // collapse multiple hyphens
+    slug = slug.replace(/^-|-$/g, '') // remove leading/trailing hyphens
+
+    if (!slug) {
+      setStatusAlert({ type: 'error', message: 'Slug URL tidak boleh kosong atau hanya berisi karakter khusus.' })
+      return
+    }
+
+    if (slug.length < 3) {
+      setStatusAlert({ type: 'error', message: 'Slug URL minimal harus 3 karakter.' })
+      return
+    }
 
     try {
+      // Check if slug is already taken by another organization
+      const { data: existingOrg, error: checkError } = await supabase
+        .from('wedding_organization')
+        .select('id')
+        .eq('slug', slug)
+        .neq('id', woId)
+        .maybeSingle()
+
+      if (checkError) throw checkError
+      if (existingOrg) {
+        setStatusAlert({ type: 'error', message: 'Slug URL ini sudah digunakan oleh organisasi lain. Silakan pilih yang lain.' })
+        return
+      }
+
       const { error } = await supabase
         .from('wedding_organization')
         .update({ name, location, email, slug })
         .eq('id', woId)
 
       if (error) throw error
+
+      // Update user metadata in Supabase Auth so it is cached/persisted
+      const { error: authErr } = await supabase.auth.updateUser({
+        data: {
+          wo_slug: slug,
+          slug_wo: slug
+        }
+      })
+      if (authErr) throw authErr
 
       setWoProfile({ name, location, email, slug })
       setStatusAlert({ type: 'success', message: 'Profil Wedding Organizer berhasil disimpan!' })
@@ -1083,25 +1480,167 @@ export default function App() {
     }
   }
 
-  const handleUpdateAdminProfile = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleUpdateAdminProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    const name = formData.get('adminName') as string
-    setAdminUser((prev) => ({ ...prev, name }))
-    setShowEditProfileModal(false)
-    setStatusAlert({ type: 'success', message: 'Profil Admin berhasil disimpan!' })
-    setTimeout(() => setStatusAlert(null), 3000)
+    setIsSavingProfile(true)
+    try {
+      const { data: userData } = await supabase.auth.getUser()
+      const user = userData?.user
+      if (!user) throw new Error('User tidak ditemukan')
+      const name = formData.get('adminName') as string
+      const phone = formData.get('adminPhone') as string
+      const avatarFile = formData.get('adminAvatar') as File | null
+
+      let avatarUrl = adminUser.avatarUrl
+
+      if (shouldDeleteAvatar) {
+        // Delete old avatar image if exists
+        if (adminUser.avatarUrl) {
+          try {
+            const match = adminUser.avatarUrl.match(/\/gallery\/([^?#]+)/)
+            if (match && match[1]) {
+              const oldFilename = decodeURIComponent(match[1])
+              await supabase.storage.from('gallery').remove([oldFilename])
+            }
+          } catch (storageErr) {
+            console.error('Gagal menghapus file lama dari storage:', storageErr)
+          }
+        }
+        avatarUrl = ''
+        setShouldDeleteAvatar(false)
+      } else if (avatarFile && avatarFile.size > 0) {
+        // Upload new avatar image
+        avatarUrl = await uploadImageToStorage(avatarFile)
+
+        // Delete old avatar image if exists
+        if (adminUser.avatarUrl) {
+          try {
+            const match = adminUser.avatarUrl.match(/\/gallery\/([^?#]+)/)
+            if (match && match[1]) {
+              const oldFilename = decodeURIComponent(match[1])
+              await supabase.storage.from('gallery').remove([oldFilename])
+            }
+          } catch (storageErr) {
+            console.error('Gagal menghapus file lama dari storage:', storageErr)
+          }
+        }
+      }
+
+      // Upsert into user_profiles
+      const { error: dbErr } = await supabase
+        .from('user_profiles')
+        .upsert({
+          id: user.id,
+          name,
+          phone,
+          avatar_url: avatarUrl,
+          updated_at: new Date().toISOString(),
+        })
+
+      if (dbErr) throw dbErr
+
+      setAdminUser({
+        name,
+        email: user.email || '',
+        phone: phone || '',
+        avatarUrl: avatarUrl || '',
+      })
+
+      setShowEditProfileModal(false)
+      setStatusAlert({ type: 'success', message: 'Profil Admin berhasil disimpan!' })
+      setTimeout(() => setStatusAlert(null), 3000)
+    } catch (err: any) {
+      setStatusAlert({ type: 'error', message: `Gagal memperbarui profil: ${err.message}` })
+      setTimeout(() => setStatusAlert(null), 3000)
+    } finally {
+      setIsSavingProfile(false)
+    }
+  }
+
+  const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const oldPassword = formData.get('oldPassword') as string
+    const newPassword = formData.get('newPassword') as string
+    const confirmPassword = formData.get('confirmPassword') as string
+
+    if (!oldPassword) {
+      setStatusAlert({ type: 'error', message: 'Silakan masukkan kata sandi lama Anda.' })
+      setTimeout(() => setStatusAlert(null), 3000)
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setStatusAlert({ type: 'error', message: 'Sandi baru harus minimal 6 karakter.' })
+      setTimeout(() => setStatusAlert(null), 3000)
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setStatusAlert({ type: 'error', message: 'Konfirmasi sandi tidak cocok.' })
+      setTimeout(() => setStatusAlert(null), 3000)
+      return
+    }
+
+    setIsChangingPassword(true)
+    try {
+      const { data: userData } = await supabase.auth.getUser()
+      const user = userData?.user
+      if (!user) throw new Error('User tidak ditemukan')
+
+      // Verify old password by signing in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email || '',
+        password: oldPassword,
+      })
+      if (signInError) {
+        throw new Error('Kata sandi lama salah.')
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+
+      setShowChangePasswordModal(false)
+      setStatusAlert({ type: 'success', message: 'Kata sandi berhasil diperbarui!' })
+      setTimeout(() => setStatusAlert(null), 3000)
+    } catch (err: any) {
+      setStatusAlert({ type: 'error', message: `Gagal memperbarui sandi: ${err.message}` })
+      setTimeout(() => setStatusAlert(null), 3000)
+    } finally {
+      setIsChangingPassword(false)
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    if (!adminUser.email) return
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(adminUser.email, {
+        redirectTo: `${window.location.origin}/login`,
+      })
+      if (error) throw error
+      setStatusAlert({ type: 'success', message: `Link atur ulang kata sandi telah dikirim ke ${adminUser.email}!` })
+      setTimeout(() => setStatusAlert(null), 4000)
+    } catch (err: any) {
+      setStatusAlert({ type: 'error', message: `Gagal mengirim email reset: ${err.message}` })
+      setTimeout(() => setStatusAlert(null), 4000)
+    }
   }
 
   const fetchCoupleData = async (customerId: string) => {
     setLoading(true)
     try {
       // 1. Fetch couple metadata
-      const { data: cust, error: custErr } = await supabase
+      let query = supabase
         .from('customers')
         .select('*')
         .eq('id', customerId)
-        .single()
+
+      if (!isPlatformAdmin && woId) {
+        query = query.eq('wo_id', woId)
+      }
+
+      const { data: cust, error: custErr } = await query.single()
 
       if (custErr) throw custErr
       setSelectedCustomer(cust)
@@ -1379,8 +1918,8 @@ export default function App() {
       return
     }
     showConfirm({
-      title: 'Hapus Momen Kisah',
-      description: 'Apakah Anda yakin ingin menghapus momen kisah ini?',
+      title: 'Apakah Anda yakin?',
+      description: 'Tindakan ini tidak dapat dibatalkan. Momen kisah ini akan dihapus secara permanen.',
       destructive: true,
       onConfirm: async () => {
         try {
@@ -1543,8 +2082,8 @@ export default function App() {
   // Delete photo from gallery
   const handleDeleteGallery = async (id: string) => {
     showConfirm({
-      title: 'Hapus Foto Galeri',
-      description: 'Hapus foto dari galeri ini?',
+      title: 'Apakah Anda yakin?',
+      description: 'Tindakan ini tidak dapat dibatalkan. Foto ini akan dihapus secara permanen dari galeri.',
       destructive: true,
       onConfirm: async () => {
         try {
@@ -1602,8 +2141,8 @@ export default function App() {
   // Delete RSVP Guest
   const handleDeleteGuest = async (id: string) => {
     showConfirm({
-      title: 'Hapus Konfirmasi RSVP',
-      description: 'Apakah Anda yakin ingin menghapus konfirmasi RSVP dari tamu ini?',
+      title: 'Apakah Anda yakin?',
+      description: 'Tindakan ini tidak dapat dibatalkan. Konfirmasi kehadiran tamu ini akan dihapus secara permanen.',
       destructive: true,
       onConfirm: async () => {
         try {
@@ -1899,6 +2438,17 @@ export default function App() {
     return pages
   }
 
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#FAF9F6]">
+        <div className="flex flex-col items-center gap-4">
+          <span className="animate-spin rounded-full h-8 w-8 border-4 border-[#111111] border-t-transparent"></span>
+          <p className="text-sm font-medium text-[#6E6E6C] font-serif tracking-wide">Memuat Sesi...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#FAF9F6] relative">
       {/* Sidebar Mobile Overlay Backdrop */}
@@ -1913,59 +2463,45 @@ export default function App() {
       {/* SIDEBAR                                    */}
       {/* ========================================== */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 h-screen bg-white border-r border-[#E2E2E0] flex flex-col p-5 font-sans transform transition-all duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 h-screen bg-white border-r border-[#E2E2E0] flex flex-col p-5 font-sans transition-all duration-300 ease-in-out ${
           isSidebarCollapsed ? 'w-20' : 'w-64'
-        }  ${
+        } ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        {/* Sidebar Responsive Header */}
-        <div className={`flex ${isSidebarCollapsed ? 'flex-col gap-3 items-center justify-center' : 'justify-between items-center'} border-b border-[#E2E2E0] pb-4 mb-4 relative`}>
-          {selectedCustomer ? (
-            <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-2.5'} min-w-0`}>
-              <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111] font-semibold text-xs shrink-0">
-                {selectedCustomer.male_name ? selectedCustomer.male_name[0].toUpperCase() : 'C'}
-              </div>
-              {!isSidebarCollapsed && (
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-sm font-semibold text-[#111111] truncate leading-tight">
-                    {selectedCustomer.male_name} & {selectedCustomer.female_name}
-                  </h2>
-                  <p className="text-[10px] text-[#6E6E6C] uppercase tracking-wider mt-0.5 font-sans font-medium">
-                    Workspace Klien
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-2.5'} min-w-0`}>
-              <div className="w-8 h-8 rounded-full bg-[#111111] flex items-center justify-center text-white font-bold text-sm shrink-0">
-                {isPlatformAdmin ? 'A' : (woProfile.name ? woProfile.name[0].toUpperCase() : 'W')}
-              </div>
-              {!isSidebarCollapsed && (
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-sm font-semibold text-[#111111] truncate leading-tight">
-                    {isPlatformAdmin ? 'Platform Admin' : woProfile.name}
-                  </h2>
-                  <p className="text-[10px] text-[#6E6E6C] uppercase tracking-wider mt-0.5 font-sans font-medium">
-                    Console Admin
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+        {/* Sidebar Header & Toggle */}
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#E2E2E0] relative min-h-[45px]">
+          <div className="flex flex-col min-w-0">
+            {/* Brand Logo Text */}
+            <span className="text-2xl font-bold tracking-tight text-[#111111] font-serif transition-all duration-300 select-none">
+              {isSidebarCollapsed ? 'W.' : 'Wednity.'}
+            </span>
 
-          {/* Toggle Sidebar Collapse Button (Desktop Only) */}
+            {/* Subtitle with Smooth Fade & Slide */}
+            <div className={`overflow-hidden transition-all duration-300 origin-left flex flex-col ${
+              isSidebarCollapsed 
+                ? 'opacity-0 max-w-0 max-h-0 pointer-events-none scale-95 mt-0' 
+                : 'opacity-100 max-w-[180px] scale-100 mt-0.5'
+            }`}>
+              <p className="text-[10px] text-[#6E6E6C] uppercase tracking-wider font-sans font-semibold truncate leading-none">
+                {selectedCustomer 
+                  ? `${selectedCustomer.male_name} & ${selectedCustomer.female_name}`
+                  : (isPlatformAdmin ? 'CONSOLE ADMIN' : woProfile.name)}
+              </p>
+            </div>
+          </div>
+
+          {/* Toggle Sidebar Collapse Button (Desktop Only) - Floating on the border line */}
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className={`hidden md:flex items-center justify-center w-6 h-6 rounded-full border border-[#E2E2E0] bg-white text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] shadow-sm cursor-pointer transition-all ${
-              isSidebarCollapsed ? '' : 'absolute -right-8 top-1 z-50'
-            }`}
+            className="hidden md:flex items-center justify-center w-6 h-6 rounded-full border border-[#E2E2E0] bg-white text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] shadow-sm hover:shadow active:scale-95 transition-all duration-300 cursor-pointer absolute -right-8 top-1.5 z-50"
+            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             {isSidebarCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
           </button>
 
+          {/* Close button for mobile sidebar */}
           <button
             type="button"
             onClick={() => setIsSidebarOpen(false)}
@@ -1975,94 +2511,73 @@ export default function App() {
           </button>
         </div>
 
-        <nav className="flex flex-col gap-1 flex-1">
+        {/* Sidebar Navigation */}
+        <nav className="flex flex-col gap-1 flex-1 overflow-y-auto no-scrollbar">
           {selectedCustomer ? (
             <>
-              {/* Back to general organizer dashboard */}
               <button
                 type="button"
-                onClick={() => navigateTo(isPlatformAdmin ? '/admin' : `/admin/${slug_wo}`)}
+                onClick={() => {
+                  if (window.history.state && window.history.state.idx > 0) {
+                    navigate(-1)
+                  } else {
+                    navigateTo(slug_wo ? `/admin/${slug_wo}?tab=customers` : '/admin')
+                  }
+                }}
                 title="Kembali ke Dashboard"
-                className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-xs font-semibold text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] mb-3 rounded-xl transition-all cursor-pointer text-left w-full`}
+                className={`flex items-center w-full py-2.5 rounded-xl transition-all duration-300 group cursor-pointer text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] mb-3 ${
+                  isSidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                }`}
               >
-                <ArrowLeft size={14} className="shrink-0" />
-                {!isSidebarCollapsed && <span>Kembali ke Dashboard</span>}
+                <ArrowLeft size={16} className="shrink-0 transition-transform duration-300 group-hover:-translate-x-0.5" />
+                <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 origin-left text-xs font-semibold ${
+                  isSidebarCollapsed ? 'opacity-0 max-w-0 ml-0 pointer-events-none' : 'opacity-100 max-w-[160px] ml-3'
+                }`}>
+                  Kembali ke Dashboard
+                </span>
               </button>
 
-              {!isSidebarCollapsed && (
-                <span className="text-[9px] font-semibold text-[#6E6E6C] tracking-widest uppercase px-4 mb-2 block">
-                  Menu Undangan
-                </span>
-              )}
+              <span className={`text-[9px] font-semibold text-[#6E6E6C] tracking-widest uppercase mb-2 block transition-all duration-300 ${
+                isSidebarCollapsed ? 'opacity-0 max-h-0 overflow-hidden pointer-events-none' : 'opacity-100 max-h-4 px-4'
+              }`}>
+                Menu Undangan
+              </span>
 
               {/* Scoped workspace tabs */}
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('metadata')
-                  setIsSidebarOpen(false)
-                }}
-                title="Detail Mempelai"
-                className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                  activeTab === 'metadata'
-                    ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                    : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                }`}
-              >
-                <Edit3 size={18} className="shrink-0" />
-                {!isSidebarCollapsed && <span>Detail Mempelai</span>}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('stories')
-                  setIsSidebarOpen(false)
-                }}
-                title="Kisah Cerita"
-                className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                  activeTab === 'stories'
-                    ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                    : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                }`}
-              >
-                <BookHeart size={18} className="shrink-0" />
-                {!isSidebarCollapsed && <span>Kisah Cerita</span>}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('gallery')
-                  setIsSidebarOpen(false)
-                }}
-                title="Galeri Foto"
-                className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                  activeTab === 'gallery'
-                    ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                    : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                }`}
-              >
-                <ImageIcon size={18} className="shrink-0" />
-                {!isSidebarCollapsed && <span>Galeri Foto</span>}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('guests')
-                  setIsSidebarOpen(false)
-                }}
-                title="Tamu & RSVP"
-                className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                  activeTab === 'guests'
-                    ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                    : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                }`}
-              >
-                <MessageSquare size={18} className="shrink-0" />
-                {!isSidebarCollapsed && <span>Tamu & RSVP</span>}
-              </button>
+              {[
+                { id: 'metadata', label: 'Detail Mempelai', icon: Edit3 },
+                { id: 'stories', label: 'Kisah Cerita', icon: BookHeart },
+                { id: 'gallery', label: 'Galeri Foto', icon: ImageIcon },
+                { id: 'guests', label: 'Tamu & RSVP', icon: MessageSquare }
+              ].map((item) => {
+                const IconComponent = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab(item.id)
+                      setIsSidebarOpen(false)
+                    }}
+                    title={item.label}
+                    className={`flex items-center w-full py-2.5 rounded-xl transition-all duration-300 group cursor-pointer text-left ${
+                      isSidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                    } ${
+                      isActive
+                        ? 'text-white font-semibold bg-[#111111] shadow-sm'
+                        : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
+                    }`}
+                  >
+                    <IconComponent size={18} className="shrink-0 transition-transform duration-300 group-hover:scale-105" />
+                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 origin-left text-[13px] ${
+                      isSidebarCollapsed ? 'opacity-0 max-w-0 ml-0 pointer-events-none' : 'opacity-100 max-w-[160px] ml-3'
+                    }`}>
+                      {item.label}
+                    </span>
+                  </button>
+                )
+              })}
             </>
           ) : (
             <div className="w-full flex-1 flex flex-col justify-between">
@@ -2070,56 +2585,39 @@ export default function App() {
               <div className="w-full space-y-1">
                 {isPlatformAdmin && !slug_wo ? (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveAdminTab('overview')
-                        setIsSidebarOpen(false)
-                      }}
-                      title="Platform Overview"
-                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                        activeAdminTab === 'overview'
-                          ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                          : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                      }`}
-                    >
-                      <LayoutDashboard size={18} className="shrink-0" />
-                      {!isSidebarCollapsed && <span>Platform Overview</span>}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveAdminTab('wos')
-                        setIsSidebarOpen(false)
-                      }}
-                      title="Daftar WO"
-                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                        activeAdminTab === 'wos'
-                          ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                          : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                      }`}
-                    >
-                      <Shield size={18} className="shrink-0" />
-                      {!isSidebarCollapsed && <span>Daftar WO</span>}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveAdminTab('clients')
-                        setIsSidebarOpen(false)
-                      }}
-                      title="Daftar Klien Global"
-                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                        activeAdminTab === 'clients'
-                          ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                          : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                      }`}
-                    >
-                      <Users size={18} className="shrink-0" />
-                      {!isSidebarCollapsed && <span>Daftar Klien Global</span>}
-                    </button>
+                    {[
+                      { id: 'overview', label: 'Platform Overview', icon: LayoutDashboard },
+                      { id: 'wos', label: 'Daftar Organisasi', icon: Shield },
+                      { id: 'clients', label: 'Daftar Klien Global', icon: Users }
+                    ].map((item) => {
+                      const IconComponent = item.icon;
+                      const isActive = activeAdminTab === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveAdminTab(item.id)
+                            setIsSidebarOpen(false)
+                          }}
+                          title={item.label}
+                          className={`flex items-center w-full py-2.5 rounded-xl transition-all duration-300 group cursor-pointer text-left ${
+                            isSidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                          } ${
+                            isActive
+                              ? 'text-white font-semibold bg-[#111111] shadow-sm'
+                              : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
+                          }`}
+                        >
+                          <IconComponent size={18} className="shrink-0 transition-transform duration-300 group-hover:scale-105" />
+                          <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 origin-left text-[13px] ${
+                            isSidebarCollapsed ? 'opacity-0 max-w-0 ml-0 pointer-events-none' : 'opacity-100 max-w-[160px] ml-3'
+                          }`}>
+                            {item.label}
+                          </span>
+                        </button>
+                      )
+                    })}
                   </>
                 ) : (
                   <>
@@ -2128,110 +2626,104 @@ export default function App() {
                         type="button"
                         onClick={() => navigateTo('/admin')}
                         title="Kembali ke Admin Console"
-                        className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-xs font-semibold text-amber-700 hover:text-amber-900 hover:bg-amber-50/50 mb-3 rounded-xl transition-all cursor-pointer text-left w-full border border-amber-200/40`}
+                        className={`flex items-center w-full py-2.5 rounded-xl transition-all duration-300 group cursor-pointer text-left text-amber-700 hover:text-amber-900 hover:bg-amber-50/50 mb-3 border border-amber-200/40 ${
+                          isSidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                        }`}
                       >
-                        <ArrowLeft size={14} className="shrink-0" />
-                        {!isSidebarCollapsed && <span>Kembali ke Admin Console</span>}
+                        <ArrowLeft size={14} className="shrink-0 transition-transform duration-300 group-hover:-translate-x-0.5" />
+                        <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 origin-left text-xs font-semibold ${
+                          isSidebarCollapsed ? 'opacity-0 max-w-0 ml-0 pointer-events-none' : 'opacity-100 max-w-[160px] ml-3'
+                        }`}>
+                          Kembali ke Admin Console
+                        </span>
                       </button>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveWoTab('clients')
-                        setIsSidebarOpen(false)
-                      }}
-                      title="Dashboard"
-                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                        activeWoTab === 'clients'
-                          ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                          : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                      }`}
-                    >
-                      <LayoutDashboard size={18} className="shrink-0" />
-                      {!isSidebarCollapsed && <span>Dashboard</span>}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveWoTab('customers')
-                        setIsSidebarOpen(false)
-                      }}
-                      title="Daftar Klien"
-                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                        activeWoTab === 'customers'
-                          ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                          : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                      }`}
-                    >
-                      <Users size={18} className="shrink-0" />
-                      {!isSidebarCollapsed && <span>Daftar Klien</span>}
-                    </button>
+                    {[
+                      { id: 'clients', label: 'Dashboard', icon: LayoutDashboard, tabType: 'activeWoTab' },
+                      { id: 'customers', label: 'Daftar Klien', icon: Users, tabType: 'activeWoTab' }
+                    ].map((item) => {
+                      const IconComponent = item.icon;
+                      const isActive = activeWoTab === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveWoTab(item.id)
+                            setIsSidebarOpen(false)
+                          }}
+                          title={item.label}
+                          className={`flex items-center w-full py-2.5 rounded-xl transition-all duration-300 group cursor-pointer text-left ${
+                            isSidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                          } ${
+                            isActive
+                              ? 'text-white font-semibold bg-[#111111] shadow-sm'
+                              : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
+                          }`}
+                        >
+                          <IconComponent size={18} className="shrink-0 transition-transform duration-300 group-hover:scale-105" />
+                          <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 origin-left text-[13px] ${
+                            isSidebarCollapsed ? 'opacity-0 max-w-0 ml-0 pointer-events-none' : 'opacity-100 max-w-[160px] ml-3'
+                          }`}>
+                            {item.label}
+                          </span>
+                        </button>
+                      )
+                    })}
                   </>
                 )}
               </div>
 
-              {/* BOTTOM NAVIGATION GROUP */}
-              <div className="w-full space-y-1 mt-auto pt-4 border-t border-[#E2E2E0]/40">
-                {!isPlatformAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveWoTab('settings')
-                      setSettingsSubTab('business')
-                      setIsSidebarOpen(false)
-                    }}
-                    title="Pengaturan"
-                    className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 text-[13px] text-left w-full transition-all duration-200 rounded-xl ${
-                      activeWoTab === 'settings'
-                        ? 'text-white font-semibold bg-[#111111] shadow-sm'
-                        : 'text-[#6E6E6C] hover:bg-[#FAF9F6] hover:text-[#111111]'
-                    }`}
-                  >
-                    <Settings size={18} className="shrink-0" />
-                    {!isSidebarCollapsed && <span>Pengaturan</span>}
-                  </button>
-                )}
-              </div>
+              {/* Removed BOTTOM NAVIGATION GROUP for Pengaturan */}
             </div>
           )}
         </nav>
 
         {/* Sidebar Footer / User Profile & Logout */}
-        <div className="mt-auto px-1">
+        <div className="mt-auto pt-4 border-t border-[#E2E2E0]/40">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center p-2' : 'gap-3 p-3'} bg-[#FAF9F6] rounded-xl border border-[#E2E2E0] hover:border-[#111111]/30 transition-colors cursor-pointer text-left focus:outline-none`}
+                className={`w-full flex items-center bg-[#FAF9F6] rounded-xl border border-[#E2E2E0] hover:border-[#111111]/30 transition-all duration-300 cursor-pointer text-left focus:outline-none ${
+                  isSidebarCollapsed ? 'justify-center p-2' : 'gap-3 p-3'
+                }`}
               >
-                <div className="w-8 h-8 rounded-full bg-[#111111] flex items-center justify-center text-white font-bold text-[10px] shrink-0">
-                  {adminUser.email
-                    ? adminUser.email.substring(0, 2).toUpperCase()
-                    : 'WO'}
+                <div className="w-8 h-8 rounded-full bg-[#111111] flex items-center justify-center text-white font-bold text-[10px] shrink-0 transition-transform duration-300 hover:scale-105 overflow-hidden">
+                  {adminUser.avatarUrl ? (
+                    <img src={adminUser.avatarUrl} alt={adminUser.name} className="w-full h-full object-cover" />
+                  ) : (
+                    adminUser.email
+                      ? adminUser.email.substring(0, 2).toUpperCase()
+                      : 'WO'
+                  )}
                 </div>
-                {!isSidebarCollapsed && (
-                  <>
-                    <div className="flex-1 overflow-hidden min-w-0">
-                      <div className="text-[13px] font-semibold text-[#111111] truncate">
-                        {adminUser.name}
-                      </div>
-                      <div className="text-[10px] text-[#6E6E6C] truncate">Administrator</div>
+                <div className={`flex-1 overflow-hidden min-w-0 transition-all duration-300 flex items-center justify-between ${
+                  isSidebarCollapsed ? 'opacity-0 max-w-0 ml-0 pointer-events-none' : 'opacity-100 max-w-[160px] ml-1'
+                }`}>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] font-semibold text-[#111111] truncate">
+                      {adminUser.name}
                     </div>
-                    <MoreVertical size={14} className="text-[#6E6E6C]/40 shrink-0" />
-                  </>
-                )}
+                    <div className="text-[10px] text-[#6E6E6C] truncate">Administrator</div>
+                  </div>
+                  <MoreVertical size={14} className="text-[#6E6E6C]/40 shrink-0 ml-1.5" />
+                </div>
               </button>
             </DropdownMenuTrigger>
-
+ 
             <DropdownMenuContent className="w-56 bg-white border border-[#E2E2E0] text-[#111111] rounded-lg p-1.5 shadow-xl origin-[--radix-dropdown-menu-content-transform-origin]">
               <DropdownMenuLabel className="px-2.5 py-2">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111] font-semibold text-xs shrink-0">
-                    {adminUser.email
-                      ? adminUser.email.substring(0, 2).toUpperCase()
-                      : 'WO'}
+                  <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111] font-semibold text-xs shrink-0 overflow-hidden">
+                    {adminUser.avatarUrl ? (
+                      <img src={adminUser.avatarUrl} alt={adminUser.name} className="w-full h-full object-cover" />
+                    ) : (
+                      adminUser.email
+                        ? adminUser.email.substring(0, 2).toUpperCase()
+                        : 'WO'
+                    )}
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-semibold text-[#111111] truncate">
@@ -2247,10 +2739,10 @@ export default function App() {
 
               <DropdownMenuItem
                 onClick={() => {
-                  if (isPlatformAdmin) {
-                    setShowEditProfileModal(true)
+                  setSelectedCustomerId(null)
+                  if (isPlatformAdmin && !slug_wo) {
+                    setActiveAdminTab('settings')
                   } else {
-                    setSelectedCustomerId(null)
                     setActiveWoTab('settings')
                     setSettingsSubTab('profile')
                   }
@@ -2272,6 +2764,20 @@ export default function App() {
                 <CreditCard size={14} className="shrink-0" />
                 Billing / Tagihan
               </DropdownMenuItem>
+
+              {!isPlatformAdmin && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedCustomerId(null)
+                    setActiveWoTab('settings')
+                    setSettingsSubTab('business')
+                  }}
+                  className="flex items-center gap-2 px-2.5 py-2 text-xs text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] rounded transition-colors cursor-pointer outline-none font-medium"
+                >
+                  <Settings size={14} className="shrink-0" />
+                  Pengaturan
+                </DropdownMenuItem>
+              )}
 
               <DropdownMenuSeparator className="bg-[#E2E2E0] -mx-1.5 my-1" />
 
@@ -2297,7 +2803,7 @@ export default function App() {
       {/* ========================================== */}
       {/* MAIN CONTENT AREA                          */}
       {/* ========================================== */}
-      <main className="md:pl-64 min-h-screen flex flex-col font-sans relative">
+      <main className={`transition-all duration-300 ${isSidebarCollapsed ? 'md:pl-20' : 'md:pl-64'} min-h-screen flex flex-col font-sans relative`}>
         {/* Mobile Top Navbar Header */}
         <div className="flex items-center justify-between md:hidden border-b border-[#E2E2E0] px-4 py-3 bg-[#FAF9F6]/80 backdrop-blur-xl sticky top-0 z-40">
           <button
@@ -2314,7 +2820,7 @@ export default function App() {
                 ? activeAdminTab === 'overview'
                   ? 'Overview'
                   : activeAdminTab === 'wos'
-                    ? 'Daftar WO'
+                    ? 'Daftar Organisasi'
                     : 'Klien Global'
                 : woProfile.name}
           </span>
@@ -2406,7 +2912,7 @@ export default function App() {
                 className="flex items-center gap-2 px-4 py-2 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-medium text-xs rounded-lg shadow-sm hover:shadow transition-all cursor-pointer active:scale-95"
               >
                 <Plus size={14} />
-                Tambah WO Baru
+                Tambah Organisasi Baru
               </button>
             ) : null}
           </div>
@@ -2417,18 +2923,7 @@ export default function App() {
         {/* ========================================== */}
         {!selectedCustomerId ? (
           <div className="px-4 sm:px-6 md:px-8 py-5 md:py-8 w-full max-w-full">
-            {/* Alert Messages */}
-            {statusAlert && (
-              <div
-                className={`p-4 mb-6 rounded-lg text-sm font-medium border text-center ${
-                  statusAlert.type === 'success'
-                    ? 'bg-[#E8F5E9] border-[#A5D6A7] text-[#2E7D32]'
-                    : 'bg-[#FFEBEE] border-[#FFCDD2] text-[#C62828]'
-                }`}
-              >
-                {statusAlert.message}
-              </div>
-            )}
+
 
             {isPlatformAdmin && !slug_wo ? (
               <>
@@ -2440,7 +2935,7 @@ export default function App() {
                       <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 flex flex-col justify-between h-40 shadow-sm">
                         <div className="flex justify-between items-start">
                           <span className="text-[11px] font-semibold uppercase text-[#6E6E6C] tracking-widest">
-                            Total WO Tergabung
+                            Total Organisasi Terdaftar
                           </span>
                           <Shield size={18} className="text-[#6E6E6C]" />
                         </div>
@@ -2449,7 +2944,7 @@ export default function App() {
                             {globalStats.totalWos}
                           </div>
                           <div className="text-[13px] text-[#6E6E6C] mt-1 font-medium">
-                            Wedding Organizer
+                            Mitra Organisasi
                           </div>
                         </div>
                       </div>
@@ -2513,7 +3008,7 @@ export default function App() {
                           <h3 className="font-serif text-[#111111] text-lg font-medium mb-1">
                             Grafik Pertumbuhan Registrasi
                           </h3>
-                          <p className="text-xs text-[#6E6E6C] mb-6">Tren Pendaftaran WO & Klien (6 Bulan Terakhir)</p>
+                          <p className="text-xs text-[#6E6E6C] mb-6">Tren Pendaftaran Mitra & Klien (6 Bulan Terakhir)</p>
 
                           <div className="h-64 w-full mt-2">
                             {(() => {
@@ -2627,7 +3122,7 @@ export default function App() {
                         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6E6E6C]" />
                         <input
                           type="text"
-                          placeholder="Cari Wedding Organizer..."
+                          placeholder="Cari Organisasi..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           className="w-full pl-9 pr-4 py-2 bg-[#F1F1EF] border border-transparent rounded-xl focus:outline-none focus:ring-1 focus:ring-[#111111]/10 text-xs text-[#111111] placeholder-[#6E6E6C]/60 h-10"
@@ -2639,7 +3134,7 @@ export default function App() {
                         className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-semibold text-xs rounded-xl shadow-sm hover:shadow transition-all cursor-pointer h-10 shrink-0"
                       >
                         <Plus size={14} />
-                        <span>Tambah WO Baru</span>
+                        <span>Tambah Organisasi Baru</span>
                       </button>
                     </div>
 
@@ -2648,7 +3143,7 @@ export default function App() {
                         <TableHeader className="bg-[#FAF9F6] border-b border-[#E2E2E0]">
                           <TableRow className="border-b border-[#E2E2E0]">
                             <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider pl-6 py-3.5">
-                              Wedding Organizer
+                              Nama Organisasi
                             </TableHead>
                             <TableHead className="text-xs font-semibold text-[#6E6E6C] uppercase tracking-wider py-3.5">
                               Slug URL
@@ -2701,7 +3196,7 @@ export default function App() {
                                       type="button"
                                       onClick={() => setEditingWo(wo)}
                                       className="p-1.5 rounded-lg text-[#6E6E6C] hover:text-[#111111] hover:bg-[#FAF9F6] transition-colors cursor-pointer"
-                                      title="Edit WO"
+                                      title="Edit Organisasi"
                                     >
                                       <Edit3 size={15} />
                                     </button>
@@ -2709,7 +3204,7 @@ export default function App() {
                                       type="button"
                                       onClick={() => handleDeleteWo(wo.id)}
                                       className="p-1.5 rounded-lg text-[#f43f5e] hover:bg-[#fff5f5] transition-colors cursor-pointer"
-                                      title="Hapus WO"
+                                      title="Hapus Organisasi"
                                     >
                                       <Trash2 size={15} />
                                     </button>
@@ -2720,7 +3215,7 @@ export default function App() {
                           ) : (
                             <TableRow>
                               <TableCell colSpan={6} className="text-center text-[#6E6E6C] py-16 text-sm">
-                                Tidak ada Wedding Organizer terdaftar.
+                                Tidak ada organisasi terdaftar.
                               </TableCell>
                             </TableRow>
                           )}
@@ -2850,6 +3345,110 @@ export default function App() {
                         </TableBody>
                       </Table>
                     </div>
+                  </div>
+                )}
+
+                {/* 4. PLATFORM ADMIN ACCOUNT SETTINGS */}
+                {activeAdminTab === 'settings' && (
+                  <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-200">
+                    {/* Personal Identity Section */}
+                    <section>
+                      <h3 className="text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-widest mb-4">
+                        Personal Identity
+                      </h3>
+                      <div className="bg-white border border-[#E2E2E0] rounded-2xl shadow-sm overflow-hidden">
+                        {/* Upper profile header */}
+                        <div className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 border-b border-[#E2E2E0]/60">
+                          <div className="flex items-center gap-5">
+                            <div className="w-16 h-16 rounded-full bg-[#111111] text-white flex items-center justify-center font-bold text-xl select-none shadow-sm overflow-hidden">
+                              {adminUser.avatarUrl ? (
+                                <img src={adminUser.avatarUrl} alt={adminUser.name} className="w-full h-full object-cover" />
+                              ) : (
+                                adminUser.email ? adminUser.email.substring(0, 2).toUpperCase() : 'AD'
+                              )}
+                            </div>
+                            <div>
+                              <h4 className="text-lg font-bold text-[#111111]">{adminUser.name}</h4>
+                              <p className="text-xs text-[#6E6E6C] mt-0.5 font-medium">Owner / Administrator</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowEditProfileModal(true)}
+                            className="px-4 py-2.5 bg-[#111111] hover:bg-[#333333] text-white font-semibold text-xs rounded-xl cursor-pointer transition-all active:scale-95 shrink-0 shadow-sm"
+                          >
+                            Edit Profile
+                          </button>
+                        </div>
+
+                        {/* Lower profile details grid */}
+                        <div className="p-6 bg-[#FAF9F6]/30 grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-1.5">
+                            <span className="text-[10px] font-semibold text-[#6E6E6C] uppercase tracking-wider block">Primary Email</span>
+                            <div className="text-xs font-mono text-[#111111] bg-white border border-[#E2E2E0] px-4 py-3 rounded-xl shadow-sm">
+                              {adminUser.email}
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <span className="text-[10px] font-semibold text-[#6E6E6C] uppercase tracking-wider block">Work Phone</span>
+                            <div className={`text-xs bg-white border border-[#E2E2E0] px-4 py-3 rounded-xl shadow-sm ${adminUser.phone ? 'text-[#111111] font-mono' : 'text-[#6E6E6C]/60 italic'}`}>
+                              {adminUser.phone || 'Belum dikonfigurasi'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* Security Protocol Card */}
+                    <section>
+                      <h3 className="text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-widest mb-4">
+                        Security Protocol
+                      </h3>
+                      <div className="bg-white border border-[#E2E2E0] rounded-2xl shadow-sm overflow-hidden divide-y divide-[#E2E2E0]/60">
+                        {/* Change Password */}
+                        <button
+                          type="button"
+                          onClick={() => setShowChangePasswordModal(true)}
+                          className="w-full p-6 flex items-center justify-between hover:bg-[#FAF9F6]/50 transition-all duration-300 text-left cursor-pointer border-none bg-transparent group"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111]">
+                              <Settings size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-[#111111]">
+                                Ubah Kata Sandi Utama
+                              </h4>
+                              <p className="text-xs text-[#6E6E6C] mt-0.5">
+                                Perbarui kata sandi utama akun Anda
+                              </p>
+                            </div>
+                          </div>
+                          <ChevronRight size={16} className="text-[#6E6E6C]/60 transition-transform duration-300 group-hover:translate-x-1" />
+                        </button>
+
+                        {/* Active Sessions */}
+                        <div className="p-6 flex items-center justify-between gap-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111]">
+                              <CreditCard size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-[#111111]">Active Sessions</h4>
+                              <p className="text-xs text-[#6E6E6C] mt-0.5">
+                                1 device currently logged in
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="px-3.5 py-2 bg-transparent border border-[#E2E2E0] hover:bg-[#FAF9F6] text-[#111111] font-semibold text-xs rounded-xl shadow-sm transition-colors cursor-pointer"
+                          >
+                            Manage
+                          </button>
+                        </div>
+                      </div>
+                    </section>
                   </div>
                 )}
               </>
@@ -3287,6 +3886,15 @@ export default function App() {
                                       ) : (
                                         <div className="w-8 h-8" />
                                       )}
+
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteCustomer(cust.id)}
+                                        className="p-1.5 rounded-lg text-[#f43f5e] hover:bg-[#fff5f5] hover:text-[#e11d48] transition-colors cursor-pointer"
+                                        title="Hapus Klien"
+                                      >
+                                        <Trash2 size={15} />
+                                      </button>
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -3295,9 +3903,53 @@ export default function App() {
                               <TableRow>
                                 <TableCell
                                   colSpan={6}
-                                  className="text-center text-[#6E6E6C] py-16 text-sm"
+                                  className="py-16 text-center select-none"
                                 >
-                                  Tidak ada klien yang cocok dengan filter pencarian.
+                                  {customers.length === 0 ? (
+                                    <div className="max-w-md mx-auto flex flex-col items-center justify-center p-6 text-center">
+                                      <div className="w-16 h-16 rounded-2xl bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#6E6E6C] mb-5 shadow-sm group-hover:scale-105 transition-transform duration-300">
+                                        <Users size={32} className="stroke-[1.5]" />
+                                      </div>
+                                      <h3 className="text-base font-semibold text-[#111111] mb-2 tracking-tight">
+                                        Mulai Kelola Klien Baru
+                                      </h3>
+                                      <p className="text-xs text-[#6E6E6C] mb-6 leading-relaxed max-w-sm mx-auto">
+                                        Anda belum memiliki klien terdaftar. Tambahkan klien atau pasangan pengantin pertama Anda untuk mulai membuat website undangan pernikahan yang premium.
+                                      </p>
+                                      <button
+                                        type="button"
+                                        onClick={() => setOpenCreateModal(true)}
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#111111] hover:bg-[#2A2A28] text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow transition-all duration-300 transform active:scale-95 cursor-pointer"
+                                      >
+                                        <Plus size={14} />
+                                        <span>Tambah Klien Pertama</span>
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="max-w-md mx-auto flex flex-col items-center justify-center p-6 text-center">
+                                      <div className="w-14 h-14 rounded-2xl bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#6E6E6C] mb-4">
+                                        <Search size={24} className="stroke-[1.5]" />
+                                      </div>
+                                      <h3 className="text-sm font-semibold text-[#111111] mb-1.5">
+                                        Pencarian Tidak Ditemukan
+                                      </h3>
+                                      <p className="text-xs text-[#6E6E6C] mb-5 max-w-[280px] mx-auto leading-relaxed">
+                                        Tidak ada klien yang cocok dengan kata kunci "{searchQuery}" atau filter tanggal yang dipilih.
+                                      </p>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSearchQuery('')
+                                          setDateFilter('all')
+                                          setCurrentPage(1)
+                                        }}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#E2E2E0] bg-white hover:bg-[#FAF9F6] text-[#6E6E6C] hover:text-[#111111] text-xs font-semibold rounded-lg shadow-sm transition-all duration-200 cursor-pointer"
+                                      >
+                                        <X size={12} />
+                                        <span>Reset Filter & Pencarian</span>
+                                      </button>
+                                    </div>
+                                  )}
                                 </TableCell>
                               </TableRow>
                             )}
@@ -3690,7 +4342,7 @@ export default function App() {
                         : 'text-[#6E6E6C] hover:text-[#111111]'
                     }`}
                   >
-                    Pengaturan WO
+                    Profil Organisasi
                   </button>
                   <button
                     type="button"
@@ -3705,134 +4357,52 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* TAB CONTENT: PROFILE (Akun Saya) */}
                 {settingsSubTab === 'profile' && (
                   <div className="space-y-8 animate-in fade-in duration-200">
-                    {/* Personal Identity Card */}
+                    {/* Personal Identity Section */}
                     <section>
                       <h3 className="text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-widest mb-4">
                         Personal Identity
                       </h3>
-                      <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-                        <div className="flex items-center gap-5">
-                          <div className="w-16 h-16 rounded-full bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111] font-bold text-lg select-none">
-                            {adminUser.email ? adminUser.email.substring(0, 2).toUpperCase() : 'AD'}
-                          </div>
-                          <div>
-                            <h4 className="text-lg font-bold text-[#111111]">{adminUser.name}</h4>
-                            <p className="text-xs text-[#6E6E6C] mt-0.5">Owner / Administrator</p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setShowEditProfileModal(true)}
-                          className="px-4 py-2 bg-transparent border border-[#E2E2E0] hover:bg-[#FAF9F6] text-[#111111] font-semibold text-xs rounded-xl cursor-pointer transition-all active:scale-95 shrink-0"
-                        >
-                          Edit Profile
-                        </button>
-                      </div>
-                      <div className="bg-white border border-[#E2E2E0] rounded-2xl mt-4 overflow-hidden divide-y divide-[#E2E2E0] shadow-sm">
-                        <div className="p-4 flex justify-between items-center text-xs">
-                          <span className="font-semibold text-[#6E6E6C]">Primary Email</span>
-                          <span className="text-[#111111] font-mono">{adminUser.email}</span>
-                        </div>
-                        <div className="p-4 flex justify-between items-center text-xs">
-                          <span className="font-semibold text-[#6E6E6C]">Work Phone</span>
-                          <span className="text-[#6E6E6C]/60 italic">Belum dikonfigurasi</span>
-                        </div>
-                      </div>
-                    </section>
-
-                    {/* Preference Logic Card */}
-                    <section>
-                      <h3 className="text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-widest mb-4">
-                        Preference Logic
-                      </h3>
-                      <div className="bg-white border border-[#E2E2E0] rounded-2xl overflow-hidden divide-y divide-[#E2E2E0] shadow-sm">
-                        {/* Email Summaries Row */}
-                        <div className="p-5 flex items-center justify-between gap-6">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111]">
-                              <MessageSquare size={16} />
+                      <div className="bg-white border border-[#E2E2E0] rounded-2xl shadow-sm overflow-hidden">
+                        {/* Upper profile header */}
+                        <div className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 border-b border-[#E2E2E0]/60">
+                          <div className="flex items-center gap-5">
+                            <div className="w-16 h-16 rounded-full bg-[#111111] text-white flex items-center justify-center font-bold text-xl select-none shadow-sm overflow-hidden">
+                              {adminUser.avatarUrl ? (
+                                <img src={adminUser.avatarUrl} alt={adminUser.name} className="w-full h-full object-cover" />
+                              ) : (
+                                adminUser.email ? adminUser.email.substring(0, 2).toUpperCase() : 'AD'
+                              )}
                             </div>
                             <div>
-                              <h4 className="text-sm font-bold text-[#111111]">Email Summaries</h4>
-                              <p className="text-xs text-[#6E6E6C] mt-0.5">
-                                Daily technical digest of system events
-                              </p>
+                              <h4 className="text-lg font-bold text-[#111111]">{adminUser.name}</h4>
+                              <p className="text-xs text-[#6E6E6C] mt-0.5 font-medium">Owner / Administrator</p>
                             </div>
                           </div>
                           <button
                             type="button"
-                            onClick={() => setEmailSummaries(!emailSummaries)}
-                            className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none shrink-0 ${
-                              emailSummaries ? 'bg-[#111111]' : 'bg-[#E2E2E0]'
-                            }`}
+                            onClick={() => setShowEditProfileModal(true)}
+                            className="px-4 py-2.5 bg-[#111111] hover:bg-[#333333] text-white font-semibold text-xs rounded-xl cursor-pointer transition-all active:scale-95 shrink-0 shadow-sm"
                           >
-                            <span
-                              className={`w-5 h-5 rounded-full bg-white absolute top-0.5 shadow-sm transition-transform ${
-                                emailSummaries ? 'left-5.5' : 'left-0.5'
-                              }`}
-                            />
+                            Edit Profile
                           </button>
                         </div>
 
-                        {/* Critical Alerts Row */}
-                        <div className="p-5 flex items-center justify-between gap-6">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111]">
-                              <Shield size={16} />
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-bold text-[#111111]">Critical Alerts</h4>
-                              <p className="text-xs text-[#6E6E6C] mt-0.5">
-                                Immediate SMS for infrastructure failures
-                              </p>
+                        {/* Lower profile details grid */}
+                        <div className="p-6 bg-[#FAF9F6]/30 grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-1.5">
+                            <span className="text-[10px] font-semibold text-[#6E6E6C] uppercase tracking-wider block">Primary Email</span>
+                            <div className="text-xs font-mono text-[#111111] bg-white border border-[#E2E2E0] px-4 py-3 rounded-xl shadow-sm">
+                              {adminUser.email}
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => setCriticalAlerts(!criticalAlerts)}
-                            className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none shrink-0 ${
-                              criticalAlerts ? 'bg-[#111111]' : 'bg-[#E2E2E0]'
-                            }`}
-                          >
-                            <span
-                              className={`w-5 h-5 rounded-full bg-white absolute top-0.5 shadow-sm transition-transform ${
-                                criticalAlerts ? 'left-5.5' : 'left-0.5'
-                              }`}
-                            />
-                          </button>
-                        </div>
-
-                        {/* Deployment Status Row */}
-                        <div className="p-5 flex items-center justify-between gap-6">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111]">
-                              <Settings size={16} />
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-bold text-[#111111]">
-                                Deployment Status
-                              </h4>
-                              <p className="text-xs text-[#6E6E6C] mt-0.5">
-                                Browser notifications for CI/CD pipelines
-                              </p>
+                          <div className="space-y-1.5">
+                            <span className="text-[10px] font-semibold text-[#6E6E6C] uppercase tracking-wider block">Work Phone</span>
+                            <div className={`text-xs bg-white border border-[#E2E2E0] px-4 py-3 rounded-xl shadow-sm ${adminUser.phone ? 'text-[#111111] font-mono' : 'text-[#6E6E6C]/60 italic'}`}>
+                              {adminUser.phone || 'Belum dikonfigurasi'}
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => setDeploymentStatus(!deploymentStatus)}
-                            className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none shrink-0 ${
-                              deploymentStatus ? 'bg-[#111111]' : 'bg-[#E2E2E0]'
-                            }`}
-                          >
-                            <span
-                              className={`w-5 h-5 rounded-full bg-white absolute top-0.5 shadow-sm transition-transform ${
-                                deploymentStatus ? 'left-5.5' : 'left-0.5'
-                              }`}
-                            />
-                          </button>
                         </div>
                       </div>
                     </section>
@@ -3842,16 +4412,12 @@ export default function App() {
                       <h3 className="text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-widest mb-4">
                         Security Protocol
                       </h3>
-                      <div className="bg-white border border-[#E2E2E0] rounded-2xl overflow-hidden divide-y divide-[#E2E2E0] shadow-sm">
+                      <div className="bg-white border border-[#E2E2E0] rounded-2xl shadow-sm overflow-hidden divide-y divide-[#E2E2E0]/60">
                         {/* Change Password */}
                         <button
                           type="button"
-                          onClick={() =>
-                            alert(
-                              'Fitur ubah password dapat diakses melalui setelan akun Supabase Auth.'
-                            )
-                          }
-                          className="w-full p-5 flex items-center justify-between hover:bg-[#FAF9F6]/50 transition-colors text-left cursor-pointer border-none bg-transparent"
+                          onClick={() => setShowChangePasswordModal(true)}
+                          className="w-full p-6 flex items-center justify-between hover:bg-[#FAF9F6]/50 transition-all duration-300 text-left cursor-pointer border-none bg-transparent group"
                         >
                           <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111]">
@@ -3859,44 +4425,18 @@ export default function App() {
                             </div>
                             <div>
                               <h4 className="text-sm font-bold text-[#111111]">
-                                Change Master Password
+                                Ubah Kata Sandi Utama
                               </h4>
                               <p className="text-xs text-[#6E6E6C] mt-0.5">
-                                Perbarui kata sandi utama akun WO Anda
+                                Perbarui kata sandi utama akun Anda
                               </p>
                             </div>
                           </div>
-                          <ChevronRight size={16} className="text-[#6E6E6C]/60" />
-                        </button>
-
-                        {/* Two Factor Auth */}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            alert(
-                              'Fitur autentikasi 2-faktor memerlukan integrasi Google Authenticator.'
-                            )
-                          }
-                          className="w-full p-5 flex items-center justify-between hover:bg-[#FAF9F6]/50 transition-colors text-left cursor-pointer border-none bg-transparent"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111]">
-                              <Shield size={16} />
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-bold text-[#111111]">
-                                Two-Factor Authentication
-                              </h4>
-                              <p className="text-xs text-[#6E6E6C] mt-0.5">
-                                Tambahkan keamanan ekstra untuk login staff
-                              </p>
-                            </div>
-                          </div>
-                          <ChevronRight size={16} className="text-[#6E6E6C]/60" />
+                          <ChevronRight size={16} className="text-[#6E6E6C]/60 transition-transform duration-300 group-hover:translate-x-1" />
                         </button>
 
                         {/* Active Sessions */}
-                        <div className="p-5 flex items-center justify-between gap-6">
+                        <div className="p-6 flex items-center justify-between gap-6">
                           <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#E2E2E0] flex items-center justify-center text-[#111111]">
                               <CreditCard size={16} />
@@ -3910,7 +4450,7 @@ export default function App() {
                           </div>
                           <button
                             type="button"
-                            className="px-3 py-1.5 bg-transparent border border-[#E2E2E0] hover:bg-[#FAF9F6] text-[#111111] font-semibold text-xs rounded-lg cursor-pointer"
+                            className="px-3.5 py-2 bg-transparent border border-[#E2E2E0] hover:bg-[#FAF9F6] text-[#111111] font-semibold text-xs rounded-xl shadow-sm transition-colors cursor-pointer"
                           >
                             Manage
                           </button>
@@ -3920,20 +4460,20 @@ export default function App() {
 
                     {/* Deactivate Account */}
                     <section>
-                      <div className="bg-[#FFEBEE] border border-[#FFCDD2] rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                      <div className="bg-[#FFEBEE] border border-[#FFCDD2] rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 shadow-sm">
                         <div>
-                          <h4 className="text-sm font-bold text-[#C62828]">Deactivate Account</h4>
+                          <h4 className="text-sm font-bold text-[#C62828]">Nonaktifkan Akun</h4>
                           <p className="text-xs text-[#C62828]/80 mt-0.5">
-                            Permanently remove all administrative access and logs.
+                            Hapus semua akses administratif secara permanen.
                           </p>
                         </div>
                         <button
                           type="button"
                           onClick={() => {
                             showConfirm({
-                              title: 'Nonaktifkan Akun',
+                              title: 'Apakah Anda yakin?',
                               description:
-                                'Apakah Anda yakin ingin menonaktifkan akun WO ini? Tindakan ini permanen.',
+                                'Tindakan ini tidak dapat dibatalkan. Akun Anda akan dinonaktifkan secara permanen.',
                               destructive: true,
                               onConfirm: () => {
                                 setStatusAlert({
@@ -3943,9 +4483,9 @@ export default function App() {
                               },
                             })
                           }}
-                          className="px-4 py-2 bg-[#C62828] hover:bg-[#B71C1C] text-white font-semibold text-xs rounded-xl cursor-pointer transition-all active:scale-95 shrink-0"
+                          className="px-4 py-2.5 bg-[#C62828] hover:bg-[#B71C1C] text-white font-semibold text-xs rounded-xl cursor-pointer transition-all active:scale-95 shrink-0 shadow-sm"
                         >
-                          Deactivate
+                          Nonaktifkan
                         </button>
                       </div>
                     </section>
@@ -3969,7 +4509,7 @@ export default function App() {
                             htmlFor="woNameInput"
                             className="block text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-wider mb-2"
                           >
-                            Nama Wedding Organizer
+                            Nama Organisasi
                           </label>
                           <input
                             type="text"
@@ -3985,7 +4525,7 @@ export default function App() {
                             htmlFor="woEmailInput"
                             className="block text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-wider mb-2"
                           >
-                            Email Resmi WO
+                            Email Resmi Organisasi
                           </label>
                           <input
                             type="email"
@@ -4026,13 +4566,27 @@ export default function App() {
                             htmlFor="woSlugInput"
                             className="block text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-wider mb-2"
                           >
-                            URL Slug WO
+                            Slug URL Organisasi
                           </label>
                           <input
                             type="text"
                             id="woSlugInput"
                             name="woSlug"
                             defaultValue={woProfile.slug}
+                            onChange={(e) => {
+                              let value = e.target.value
+                              value = value.toLowerCase().replace(/[^a-z0-9\s-]/g, '')
+                              value = value.replace(/\s+/g, '-')
+                              e.target.value = value
+                            }}
+                            onBlur={(e) => {
+                              let value = e.target.value
+                              value = value.trim().toLowerCase()
+                              value = value.replace(/[^a-z0-9-]/g, '')
+                              value = value.replace(/-+/g, '-')
+                              value = value.replace(/^-|-$/g, '')
+                              e.target.value = value
+                            }}
                             className="w-full px-4 py-3 border border-[#E2E2E0] rounded-xl focus:outline-none focus:border-[#111111] focus:ring-1 focus:ring-[#111111] text-xs font-mono transition-colors"
                             required
                           />
@@ -4108,7 +4662,7 @@ export default function App() {
                             Tidak Ada Paket Aktif
                           </h4>
                           <p className="text-xs text-[#6E6E6C] mt-1 max-w-md mx-auto">
-                            WO Anda menggunakan akses gratis percobaan. Pilih paket di bawah untuk
+                            Organisasi Anda menggunakan akses gratis percobaan. Pilih paket di bawah untuk
                             meningkatkan layanan.
                           </p>
                         </div>
@@ -4126,7 +4680,7 @@ export default function App() {
                           <div>
                             <h4 className="text-base font-bold text-[#111111]">Basic Plan</h4>
                             <p className="text-xs text-[#6E6E6C] mt-1">
-                              Untuk WO perorangan yang baru memulai
+                              Untuk bisnis perorangan yang baru memulai
                             </p>
                             <div className="my-5">
                               <span className="text-2xl font-bold text-[#111111]">Rp 500rb</span>
@@ -4205,301 +4759,210 @@ export default function App() {
           </>
         )}
 
-            {/* Edit Profile Modal */}
-            {showEditProfileModal && (
-              <div className="fixed inset-0 bg-black/30 backdrop-blur-[4px] flex items-center justify-center z-50 transition-all">
-                <div className="bg-white border border-[#E2E2E0] rounded-2xl p-8 w-full max-w-md shadow-xl transition-all">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-serif text-[#111111] text-xl font-medium">
-                      Edit Profil Admin
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setShowEditProfileModal(false)}
-                      className="bg-transparent border-none text-[#6E6E6C] hover:text-[#111111] cursor-pointer flex items-center"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-
-                  <form onSubmit={handleUpdateAdminProfile} className="space-y-4">
-                    <div>
-                      <label
-                        htmlFor="adminNameInput"
-                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
-                      >
-                        Nama Lengkap
-                      </label>
-                      <input
-                        type="text"
-                        id="adminNameInput"
-                        name="adminName"
-                        defaultValue={adminUser.name}
-                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] text-sm"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-[#6E6E6C] mb-1.5 uppercase tracking-wider">
-                        Email Utama
-                      </label>
-                      <input
-                        type="email"
-                        disabled
-                        value={adminUser.email}
-                        className="w-full px-4 py-2 border border-[#E2E2E0] bg-[#FAF9F6] text-[#6E6E6C] rounded-lg cursor-not-allowed text-sm"
-                      />
-                    </div>
-
-                    <div className="pt-4 flex justify-end gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setShowEditProfileModal(false)}
-                        className="px-4 py-2 bg-transparent border border-[#E2E2E0] hover:bg-[#FAF9F6] text-[#6E6E6C] text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-                      >
-                        Batal
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-[#111111] hover:bg-[#333333] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer active:scale-95"
-                      >
-                        Simpan Perubahan
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
 
             {/* Create Client Modal */}
-            {openCreateModal && (
-              <div className="fixed inset-0 bg-black/30 backdrop-blur-[4px] flex items-center justify-center z-50 transition-all">
-                <div className="bg-white border border-[#E2E2E0] rounded-2xl p-8 w-full max-w-md shadow-xl transition-all">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-serif text-[#111111] text-xl font-medium">
-                      Tambah Klien Baru
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setOpenCreateModal(false)}
-                      className="bg-transparent border-none text-[#6E6E6C] hover:text-[#111111] cursor-pointer flex items-center"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
+            <Dialog open={openCreateModal} onOpenChange={setOpenCreateModal}>
+              <DialogContent className="rounded-2xl border-[#E2E2E0] bg-white max-w-md p-8">
+                <DialogHeader className="mb-6">
+                  <DialogTitle className="font-serif text-[#111111] text-xl font-medium">
+                    Tambah Klien Baru
+                  </DialogTitle>
+                </DialogHeader>
 
-                  <form onSubmit={handleCreateCustomerSubmit} className="space-y-4">
-                    {isPlatformAdmin && (
-                      <div>
-                        <label
-                          htmlFor="selectedWoIdForNewClient"
-                          className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
-                        >
-                          Wedding Organizer Pemilik
-                        </label>
-                        <select
-                          id="selectedWoIdForNewClient"
-                          value={selectedWoIdForNewClient}
-                          onChange={(e) => setSelectedWoIdForNewClient(e.target.value)}
-                          className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 text-sm bg-white"
-                          style={{ height: '38px' }}
-                          required
-                        >
-                          <option value="">Pilih Wedding Organizer...</option>
-                          {allWos.map((wo) => (
-                            <option key={wo.id} value={wo.id}>
-                              {wo.name} ({wo.slug})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
+                <form onSubmit={handleCreateCustomerSubmit} className="space-y-4">
+                  {isPlatformAdmin && (
                     <div>
                       <label
-                        htmlFor="maleName"
+                        htmlFor="selectedWoIdForNewClient"
                         className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
                       >
-                        Nama Pengantin Pria
-                      </label>
-                      <input
-                        type="text"
-                        id="maleName"
-                        name="maleName"
-                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
-                        placeholder="Contoh: Muhammad"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="femaleName"
-                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
-                      >
-                        Nama Pengantin Wanita
-                      </label>
-                      <input
-                        type="text"
-                        id="femaleName"
-                        name="femaleName"
-                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
-                        placeholder="Contoh: Juliana"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="email"
-                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
-                      >
-                        Email Kontak Klien
-                      </label>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
-                        placeholder="klien@example.com"
-                        required
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="flex items-center justify-center gap-2 w-full py-3 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-semibold text-sm rounded-lg transition-colors cursor-pointer mt-6"
-                    >
-                      <Save size={16} />
-                      Inisialisasi & Simpan Klien
-                    </button>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* Create WO Modal */}
-            {openCreateWoModal && (
-              <div className="fixed inset-0 bg-black/30 backdrop-blur-[4px] flex items-center justify-center z-50 transition-all">
-                <div className="bg-white border border-[#E2E2E0] rounded-2xl p-8 w-full max-w-md shadow-xl transition-all animate-in fade-in zoom-in-95 duration-200">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-serif text-[#111111] text-xl font-medium flex items-center gap-2">
-                      <Shield className="w-5 h-5 text-amber-500" />
-                      Daftarkan WO Baru
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setOpenCreateWoModal(false)}
-                      className="bg-transparent border-none text-[#6E6E6C] hover:text-[#111111] cursor-pointer flex items-center"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-
-                  <form onSubmit={handleCreateWoSubmit} className="space-y-4">
-                    <div>
-                      <label
-                        htmlFor="woName"
-                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
-                      >
-                        Nama Wedding Organizer
-                      </label>
-                      <input
-                        type="text"
-                        id="woName"
-                        name="name"
-                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
-                        placeholder="Contoh: Royal Wedding Organizer"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="woEmail"
-                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
-                      >
-                        Email Kontak WO
-                      </label>
-                      <input
-                        type="email"
-                        id="woEmail"
-                        name="email"
-                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
-                        placeholder="wo@example.com"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="woLocation"
-                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
-                      >
-                        Lokasi / Kota
-                      </label>
-                      <input
-                        type="text"
-                        id="woLocation"
-                        name="location"
-                        className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
-                        placeholder="Contoh: Jakarta"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="woPlan"
-                        className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
-                      >
-                        Paket Langganan
+                        Wedding Organizer Pemilik
                       </label>
                       <select
-                        id="woPlan"
-                        name="planId"
+                        id="selectedWoIdForNewClient"
+                        value={selectedWoIdForNewClient}
+                        onChange={(e) => setSelectedWoIdForNewClient(e.target.value)}
                         className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 text-sm bg-white"
                         style={{ height: '38px' }}
+                        required
                       >
-                        <option value="">Tanpa Paket / Free</option>
-                        {plans.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name} (Rp {p.price?.toLocaleString('id-ID') || 0})
+                        <option value="">Pilih Wedding Organizer...</option>
+                        {allWos.map((wo) => (
+                          <option key={wo.id} value={wo.id}>
+                            {wo.name} ({wo.slug})
                           </option>
                         ))}
                       </select>
                     </div>
+                  )}
 
-                    <button
-                      type="submit"
-                      className="flex items-center justify-center gap-2 w-full py-3 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-semibold text-sm rounded-lg transition-colors cursor-pointer mt-6"
+                  <div>
+                    <label
+                      htmlFor="maleName"
+                      className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
                     >
-                      <Save size={16} />
-                      Daftarkan WO
-                    </button>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* Edit WO Modal */}
-            {editingWo && (
-              <div className="fixed inset-0 bg-black/30 backdrop-blur-[4px] flex items-center justify-center z-50 transition-all">
-                <div className="bg-white border border-[#E2E2E0] rounded-2xl p-8 w-full max-w-md shadow-xl transition-all animate-in fade-in zoom-in-95 duration-200">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-serif text-[#111111] text-xl font-medium flex items-center gap-2">
-                      <Edit3 className="w-5 h-5 text-amber-500" />
-                      Ubah Detail WO
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setEditingWo(null)}
-                      className="bg-transparent border-none text-[#6E6E6C] hover:text-[#111111] cursor-pointer flex items-center"
-                    >
-                      <X size={18} />
-                    </button>
+                      Nama Pengantin Pria
+                    </label>
+                    <input
+                      type="text"
+                      id="maleName"
+                      name="maleName"
+                      className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
+                      placeholder="Contoh: Muhammad"
+                      required
+                    />
                   </div>
 
+                  <div>
+                    <label
+                      htmlFor="femaleName"
+                      className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                    >
+                      Nama Pengantin Wanita
+                    </label>
+                    <input
+                      type="text"
+                      id="femaleName"
+                      name="femaleName"
+                      className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
+                      placeholder="Contoh: Juliana"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                    >
+                      Email Kontak Klien
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
+                      placeholder="klien@example.com"
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-semibold text-sm rounded-lg transition-colors cursor-pointer mt-6"
+                  >
+                    <Save size={16} />
+                    Inisialisasi & Simpan Klien
+                  </button>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Create WO Modal */}
+            <Dialog open={openCreateWoModal} onOpenChange={setOpenCreateWoModal}>
+              <DialogContent className="rounded-2xl border-[#E2E2E0] bg-white max-w-md p-8">
+                <DialogHeader className="mb-6">
+                  <DialogTitle className="font-serif text-[#111111] text-xl font-medium flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-amber-500" />
+                    Daftarkan WO Baru
+                  </DialogTitle>
+                </DialogHeader>
+
+                <form onSubmit={handleCreateWoSubmit} className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="woName"
+                      className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                    >
+                      Nama Wedding Organizer
+                    </label>
+                    <input
+                      type="text"
+                      id="woName"
+                      name="name"
+                      className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
+                      placeholder="Contoh: Royal Wedding Organizer"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="woEmail"
+                      className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                    >
+                      Email Kontak WO
+                    </label>
+                    <input
+                      type="email"
+                      id="woEmail"
+                      name="email"
+                      className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
+                      placeholder="wo@example.com"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="woLocation"
+                      className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                    >
+                      Lokasi / Kota
+                    </label>
+                    <input
+                      type="text"
+                      id="woLocation"
+                      name="location"
+                      className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 transition-all text-sm"
+                      placeholder="Contoh: Jakarta"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="woPlan"
+                      className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+                    >
+                      Paket Langganan
+                    </label>
+                    <select
+                      id="woPlan"
+                      name="planId"
+                      className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] focus:ring-2 focus:ring-[#111111]/5 text-sm bg-white"
+                      style={{ height: '38px' }}
+                    >
+                      <option value="">Tanpa Paket / Free</option>
+                      {plans.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} (Rp {p.price?.toLocaleString('id-ID') || 0})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-[#111111] hover:bg-[#333333] text-[#FAF9F6] font-semibold text-sm rounded-lg transition-colors cursor-pointer mt-6"
+                  >
+                    <Save size={16} />
+                    Daftarkan WO
+                  </button>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Edit WO Modal */}
+            <Dialog open={editingWo !== null} onOpenChange={(open) => { if (!open) setEditingWo(null); }}>
+              <DialogContent className="rounded-2xl border-[#E2E2E0] bg-white max-w-md p-8">
+                <DialogHeader className="mb-6">
+                  <DialogTitle className="font-serif text-[#111111] text-xl font-medium flex items-center gap-2">
+                    <Edit3 className="w-5 h-5 text-amber-500" />
+                    Ubah Detail WO
+                  </DialogTitle>
+                </DialogHeader>
+
+                {editingWo && (
                   <form onSubmit={handleUpdateWoDetails} className="space-y-4">
                     <div>
                       <label
@@ -4599,9 +5062,9 @@ export default function App() {
                       Simpan Perubahan
                     </button>
                   </form>
-                </div>
-              </div>
-            )}
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         ) : (
           // ==========================================
@@ -4621,9 +5084,15 @@ export default function App() {
                     </p>
                   </div>
                 </div>
-                <button
+                 <button
                   type="button"
-                  onClick={() => navigateTo('/admin')}
+                  onClick={() => {
+                    if (window.history.state && window.history.state.idx > 0) {
+                      navigate(-1)
+                    } else {
+                      navigateTo('/admin')
+                    }
+                  }}
                   className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-xl cursor-pointer transition-all hover:shadow-md flex items-center gap-2 active:scale-95 shrink-0"
                 >
                   <ArrowLeft size={13} />
@@ -4632,18 +5101,9 @@ export default function App() {
               </div>
             )}
 
-            {/* Alert Messages */}
-            {statusAlert && (
-              <div
-                className={`p-4 mb-8 rounded-lg text-sm font-medium border text-center ${
-                  statusAlert.type === 'success'
-                    ? 'bg-[#E8F5E9] border-[#A5D6A7] text-[#2E7D32]'
-                    : 'bg-[#FFEBEE] border-[#FFCDD2] text-[#C62828]'
-                }`}
-              >
-                {statusAlert.message}
-              </div>
-            )}
+
+
+
 
             {loading ? (
               <div className="text-center py-24 text-[#6E6E6C] font-medium animate-pulse">
@@ -4911,98 +5371,170 @@ export default function App() {
                             </div>
                           </div>
 
-                          {/* Tanda Kasih Digital */}
+
+                           {/* Tanda Kasih Digital */}
                           <div className={formSection === 'gift' ? "space-y-6" : "hidden"}>
                             <div>
-                              <h3 className="text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-widest mb-5">
-                                Kado Digital / Rekening Bank
-                              </h3>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                              <div className="flex items-start md:items-center justify-between mb-6 gap-4 flex-col md:flex-row">
                                 <div>
-                                  <label className="block text-[10px] font-semibold text-[#111111] mb-1.5 uppercase tracking-wider">
-                                    Nama Bank
-                                  </label>
-                                  <input
-                                    type="text"
-                                    name="bankName"
-                                    defaultValue={invitation?.bank_name || ''}
-                                    placeholder="Contoh: BCA / Bank Mandiri"
-                                    className="w-full px-4 py-2.5 bg-[#FAF9F6] border border-[#E2E2E0] rounded-xl focus:outline-none focus:border-[#111111] focus:bg-white text-sm transition-all placeholder-[#6E6E6C]/50"
-                                  />
+                                  <h3 className="text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-widest">
+                                    Payment Methods
+                                  </h3>
+                                  <p className="text-xs text-[#6E6E6C] mt-1 leading-relaxed">
+                                    Configure up to 2 receiving accounts for digital gifts from your guests.
+                                  </p>
                                 </div>
-                                <div>
-                                  <label className="block text-[10px] font-semibold text-[#111111] mb-1.5 uppercase tracking-wider">
-                                    Nomor Rekening
-                                  </label>
-                                  <input
-                                    type="text"
-                                    name="bankAccountNumber"
-                                    defaultValue={invitation?.bank_account_number || ''}
-                                    placeholder="Contoh: 8098273618"
-                                    className="w-full px-4 py-2.5 bg-[#FAF9F6] border border-[#E2E2E0] rounded-xl focus:outline-none focus:border-[#111111] focus:bg-white text-sm transition-all placeholder-[#6E6E6C]/50"
-                                  />
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-                                <div>
-                                  <label className="block text-[10px] font-semibold text-[#111111] mb-1.5 uppercase tracking-wider">
-                                    Nama Pemilik Rekening
-                                  </label>
-                                  <input
-                                    type="text"
-                                    name="bankAccountHolder"
-                                    defaultValue={invitation?.bank_account_holder || ''}
-                                    placeholder="Contoh: Muhammad Pratama"
-                                    className="w-full px-4 py-2.5 bg-[#FAF9F6] border border-[#E2E2E0] rounded-xl focus:outline-none focus:border-[#111111] focus:bg-white text-sm transition-all placeholder-[#6E6E6C]/50"
-                                  />
-                                </div>
+                                {paymentMethods.length < 2 && (
+                                  <button
+                                    type="button"
+                                    onClick={handleAddPaymentMethod}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#111111] hover:bg-[#333333] text-white text-xs font-semibold rounded-xl transition-all active:scale-95 cursor-pointer shadow-sm shrink-0"
+                                  >
+                                    <Plus size={12} />
+                                    <span>Add Method</span>
+                                  </button>
+                                )}
                               </div>
 
-                              <div className="mt-8 pt-6 border-t border-[#E2E2E0]/50">
-                                <h3 className="text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-widest mb-5">
-                                  Akun Dompet Digital / E-Wallet
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                  <div>
-                                    <label className="block text-[10px] font-semibold text-[#111111] mb-1.5 uppercase tracking-wider">
-                                      Nama E-Wallet
-                                    </label>
-                                    <input
-                                      type="text"
-                                      name="walletName"
-                                      defaultValue={invitation?.wallet_name || ''}
-                                      placeholder="Contoh: GoPay / OVO"
-                                      className="w-full px-4 py-2.5 bg-[#FAF9F6] border border-[#E2E2E0] rounded-xl focus:outline-none focus:border-[#111111] focus:bg-white text-sm transition-all placeholder-[#6E6E6C]/50"
-                                    />
+                              {/* Hidden form fields for compatibility with handleUpdateMetadata */}
+                              <input type="hidden" name="bankName" value={paymentMethods[0]?.name || ''} />
+                              <input type="hidden" name="bankAccountNumber" value={paymentMethods[0]?.number || ''} />
+                              <input type="hidden" name="bankAccountHolder" value={paymentMethods[0]?.holder || ''} />
+                              <input type="hidden" name="walletName" value={paymentMethods[1]?.name || ''} />
+                              <input type="hidden" name="walletNumber" value={paymentMethods[1]?.number || ''} />
+                              <input type="hidden" name="walletHolder" value={paymentMethods[1]?.holder || ''} />
+
+                              {paymentMethods.length === 0 ? (
+                                <div 
+                                  onClick={handleAddPaymentMethod}
+                                  className="border-2 border-dashed border-[#E2E2E0] hover:border-[#111111]/30 bg-[#FAF9F6]/30 hover:bg-[#FAF9F6]/60 rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 group"
+                                >
+                                  <div className="w-12 h-12 rounded-xl bg-white border border-[#E2E2E0] flex items-center justify-center text-[#6E6E6C] mx-auto mb-4 group-hover:scale-105 transition-transform">
+                                    <CreditCard size={20} className="stroke-[1.5]" />
                                   </div>
-                                  <div>
-                                    <label className="block text-[10px] font-semibold text-[#111111] mb-1.5 uppercase tracking-wider">
-                                      Nomor E-Wallet / Akun
-                                    </label>
-                                    <input
-                                      type="text"
-                                      name="walletNumber"
-                                      defaultValue={invitation?.wallet_number || ''}
-                                      placeholder="Contoh: 08123456789"
-                                      className="w-full px-4 py-2.5 bg-[#FAF9F6] border border-[#E2E2E0] rounded-xl focus:outline-none focus:border-[#111111] focus:bg-white text-sm transition-all placeholder-[#6E6E6C]/50"
-                                    />
-                                  </div>
+                                  <span className="block text-sm font-semibold text-[#111111] mb-1">
+                                    No Payment Methods Configured
+                                  </span>
+                                  <span className="block text-xs text-[#6E6E6C] max-w-xs mx-auto leading-relaxed">
+                                    Click here to add a bank transfer or digital wallet as a receiving account.
+                                  </span>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-                                  <div>
-                                    <label className="block text-[10px] font-semibold text-[#111111] mb-1.5 uppercase tracking-wider">
-                                      Nama Pemilik Akun E-Wallet
-                                    </label>
-                                    <input
-                                      type="text"
-                                      name="walletHolder"
-                                      defaultValue={invitation?.wallet_holder || ''}
-                                      placeholder="Contoh: Juliana Saputri"
-                                      className="w-full px-4 py-2.5 bg-[#FAF9F6] border border-[#E2E2E0] rounded-xl focus:outline-none focus:border-[#111111] focus:bg-white text-sm transition-all placeholder-[#6E6E6C]/50"
-                                    />
-                                  </div>
+                              ) : (
+                                <div className="grid grid-cols-1 gap-5">
+                                  {paymentMethods.map((method, index) => (
+                                    <div 
+                                      key={index} 
+                                      className="border border-[#E2E2E0] bg-white rounded-2xl overflow-hidden shadow-sm transition-all duration-300"
+                                    >
+                                      {/* Card Header */}
+                                      <div className="flex items-center justify-between px-6 py-3.5 bg-[#FAF9F6] border-b border-[#E2E2E0]">
+                                        <div className="flex items-center gap-2.5">
+                                          <div className="w-7 h-7 rounded-lg bg-white border border-[#E2E2E0] flex items-center justify-center">
+                                            {method.type === 'bank' ? (
+                                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#111111]">
+                                                <rect x="1" y="20" width="22" height="2" rx="1" />
+                                                <path d="M12 2L2 8h20L12 2z" />
+                                                <path d="M4 8v12" /><path d="M8 8v12" /><path d="M12 8v12" /><path d="M16 8v12" /><path d="M20 8v12" />
+                                              </svg>
+                                            ) : (
+                                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#111111]">
+                                                <rect x="2" y="5" width="20" height="14" rx="2" />
+                                                <line x1="2" y1="10" x2="22" y2="10" />
+                                              </svg>
+                                            )}
+                                          </div>
+                                          <span className="text-[10px] font-bold text-[#111111] uppercase tracking-wider">
+                                            {method.type === 'bank' ? 'Bank Transfer' : 'Digital Wallet'} · #{index + 1}
+                                          </span>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemovePaymentMethod(index)}
+                                          className="p-1.5 text-[#6E6E6C] hover:text-[#EF4444] hover:bg-white border border-transparent hover:border-red-200 rounded-lg transition-all cursor-pointer"
+                                          title="Remove"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      </div>
+
+                                      {/* Card Body */}
+                                      <div className="p-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                          <div>
+                                            <label className="block text-[10px] font-semibold text-[#111111] mb-1.5 uppercase tracking-wider">
+                                              Channel Type
+                                            </label>
+                                            <Select
+                                              value={method.type}
+                                              onValueChange={(val) => handleUpdatePaymentMethod(index, 'type', val)}
+                                            >
+                                              <SelectTrigger className="w-full h-10 bg-[#FAF9F6] border-[#E2E2E0] rounded-xl text-[16px] md:text-sm focus:ring-0 focus:ring-offset-0 focus:border-[#111111] transition-all cursor-pointer">
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                              <SelectContent className="rounded-xl border border-[#E2E2E0] bg-white shadow-md">
+                                                <SelectItem value="bank" className="text-sm cursor-pointer">Bank Transfer</SelectItem>
+                                                <SelectItem value="wallet" className="text-sm cursor-pointer">Digital Wallet (E-Wallet)</SelectItem>
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+
+                                          <div>
+                                            <label className="block text-[10px] font-semibold text-[#111111] mb-1.5 uppercase tracking-wider">
+                                              {method.type === 'bank' ? 'Bank Provider' : 'Wallet Provider'}
+                                            </label>
+                                            <Combobox
+                                              options={method.type === 'bank' ? bankOptions : walletOptions}
+                                              value={method.name}
+                                              onValueChange={(val) => handleUpdatePaymentMethod(index, 'name', val)}
+                                              placeholder={method.type === 'bank' ? 'Select bank...' : 'Select wallet...'}
+                                              searchPlaceholder={method.type === 'bank' ? 'Search bank...' : 'Search wallet...'}
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                                          <div>
+                                            <label className="block text-[10px] font-semibold text-[#111111] mb-1.5 uppercase tracking-wider">
+                                              {method.type === 'bank' ? 'Account Number' : 'Phone / Account ID'}
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={method.number}
+                                              onChange={(e) => handleUpdatePaymentMethod(index, 'number', e.target.value)}
+                                              placeholder={method.type === 'bank' ? 'e.g. 8098273618' : 'e.g. 08123456789'}
+                                              className="w-full px-4 py-2.5 bg-[#FAF9F6] border border-[#E2E2E0] rounded-xl focus:outline-none focus:border-[#111111] focus:bg-white text-[16px] md:text-sm transition-all placeholder-[#6E6E6C]/50"
+                                            />
+                                          </div>
+
+                                          <div>
+                                            <label className="block text-[10px] font-semibold text-[#111111] mb-1.5 uppercase tracking-wider">
+                                              Account Holder Name
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={method.holder}
+                                              onChange={(e) => handleUpdatePaymentMethod(index, 'holder', e.target.value)}
+                                              placeholder="Full name as registered"
+                                              className="w-full px-4 py-2.5 bg-[#FAF9F6] border border-[#E2E2E0] rounded-xl focus:outline-none focus:border-[#111111] focus:bg-white text-[16px] md:text-sm transition-all placeholder-[#6E6E6C]/50"
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+
+                                  {paymentMethods.length < 2 && (
+                                    <button
+                                      type="button"
+                                      onClick={handleAddPaymentMethod}
+                                      className="border border-dashed border-[#E2E2E0] hover:border-[#111111]/30 bg-[#FAF9F6]/10 hover:bg-[#FAF9F6]/40 rounded-2xl py-4 flex items-center justify-center gap-2 text-xs font-semibold text-[#6E6E6C] hover:text-[#111111] transition-all duration-200 cursor-pointer"
+                                    >
+                                      <Plus size={14} />
+                                      <span>Add Another Payment Method</span>
+                                    </button>
+                                  )}
                                 </div>
-                              </div>
+                              )}
                             </div>
                           </div>
 
@@ -5054,6 +5586,30 @@ export default function App() {
                                       Aeterna Editorial (Modern Scroll Animation)
                                     </option>
                                   </select>
+                                </div>
+                              </div>
+
+                              {/* Danger Zone */}
+                              <div className="mt-8 pt-8 border-t border-[#E2E2E0]/80">
+                                <h5 className="text-xs font-bold text-red-600 uppercase tracking-wider mb-2">
+                                  Zona Bahaya
+                                </h5>
+                                <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                  <div className="space-y-1">
+                                    <p className="text-xs font-bold text-[#111111]">
+                                      Hapus Klien Ini
+                                    </p>
+                                    <p className="text-[11px] text-[#6E6E6C]">
+                                      Setelah dihapus, seluruh data klien ini termasuk undangan, kisah cinta, galeri pre-wedding, dan konfirmasi kehadiran (RSVP) akan dihapus secara permanen dan tidak dapat dipulihkan.
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteCustomer(selectedCustomerId!)}
+                                    className="px-4 py-2 bg-[#C62828] hover:bg-[#B71C1C] text-white font-bold text-xs rounded-xl cursor-pointer transition-colors active:scale-95 shrink-0"
+                                  >
+                                    Hapus Klien Permanen
+                                  </button>
                                 </div>
                               </div>
                             </div>
@@ -5997,6 +6553,272 @@ export default function App() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Profile Modal */}
+      <Dialog open={showEditProfileModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowEditProfileModal(false);
+          setShouldDeleteAvatar(false);
+        }
+      }}>
+        <DialogContent className="rounded-2xl border-[#E2E2E0] bg-white max-w-md p-8">
+          <DialogHeader className="mb-6">
+            <DialogTitle className="font-serif text-[#111111] text-xl font-medium">
+              Edit Profil
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleUpdateAdminProfile} className="space-y-4">
+            {/* Profile Photo Upload */}
+            <div className="flex items-center gap-4 py-2 border-b border-[#E2E2E0]/60 mb-4">
+              <div className="relative w-16 h-16 rounded-full bg-[#111111] text-white flex items-center justify-center font-bold text-xl select-none shadow-sm overflow-hidden shrink-0">
+                {adminUser.avatarUrl && !shouldDeleteAvatar ? (
+                  <img src={adminUser.avatarUrl} alt={adminUser.name} className="w-full h-full object-cover" />
+                ) : (
+                  adminUser.email ? adminUser.email.substring(0, 2).toUpperCase() : 'AD'
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <label className="block text-[10px] font-semibold text-[#111111] uppercase tracking-wider mb-1">
+                  Foto Profil
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    name="adminAvatar"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setShouldDeleteAvatar(false);
+                      }
+                    }}
+                    className="block w-full text-xs text-[#6E6E6C] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#111111] file:text-white hover:file:bg-[#333333] file:cursor-pointer transition-colors"
+                  />
+                  {adminUser.avatarUrl && !shouldDeleteAvatar && (
+                    <button
+                      type="button"
+                      onClick={() => setShouldDeleteAvatar(true)}
+                      className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-semibold border border-red-200 transition-colors cursor-pointer shrink-0"
+                      title="Hapus foto profil"
+                    >
+                      Hapus
+                    </button>
+                  )}
+                  {shouldDeleteAvatar && (
+                    <button
+                      type="button"
+                      onClick={() => setShouldDeleteAvatar(false)}
+                      className="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 text-[#111111] rounded-lg text-xs font-semibold border border-[#E2E2E0] transition-colors cursor-pointer shrink-0"
+                    >
+                      Batal Hapus
+                    </button>
+                  )}
+                </div>
+                <p className="text-[9px] text-[#6E6E6C] mt-1">Format: JPG, PNG, WebP. Maks 10MB.</p>
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="adminNameInput"
+                className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+              >
+                Nama Lengkap
+              </label>
+              <input
+                type="text"
+                id="adminNameInput"
+                name="adminName"
+                defaultValue={adminUser.name}
+                className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] text-sm"
+                required
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="adminPhoneInput"
+                className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+              >
+                No. Telepon / WhatsApp
+              </label>
+              <input
+                type="tel"
+                id="adminPhoneInput"
+                name="adminPhone"
+                defaultValue={adminUser.phone}
+                placeholder="Contoh: 081234567890"
+                className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#6E6E6C] mb-1.5 uppercase tracking-wider">
+                Email Utama
+              </label>
+              <input
+                type="email"
+                disabled
+                value={adminUser.email}
+                className="w-full px-4 py-2 border border-[#E2E2E0] bg-[#FAF9F6] text-[#6E6E6C] rounded-lg cursor-not-allowed text-sm"
+              />
+            </div>
+
+            <div className="pt-4 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowEditProfileModal(false)}
+                disabled={isSavingProfile}
+                className="px-4 py-2 bg-transparent border border-[#E2E2E0] hover:bg-[#FAF9F6] text-[#6E6E6C] text-xs font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isSavingProfile}
+                className="px-4 py-2 bg-[#111111] hover:bg-[#333333] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer active:scale-95 disabled:opacity-55 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+              >
+                {isSavingProfile ? (
+                  <>
+                    <span className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent mr-0.5"></span>
+                    Menyimpan...
+                  </>
+                ) : (
+                  'Simpan Perubahan'
+                )}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Modal */}
+      <Dialog open={showChangePasswordModal} onOpenChange={setShowChangePasswordModal}>
+        <DialogContent className="rounded-2xl border-[#E2E2E0] bg-white max-w-md p-8">
+          <DialogHeader className="mb-6">
+            <DialogTitle className="font-serif text-[#111111] text-xl font-medium">
+              Ubah Kata Sandi Utama
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <label
+                  htmlFor="oldPasswordInput"
+                  className="block text-xs font-semibold text-[#111111] uppercase tracking-wider"
+                >
+                  Kata Sandi Lama
+                </label>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-[11px] text-[#6E6E6C] hover:text-[#111111] underline cursor-pointer bg-transparent border-none p-0 transition-colors"
+                >
+                  Lupa kata sandi?
+                </button>
+              </div>
+              <input
+                type="password"
+                id="oldPasswordInput"
+                name="oldPassword"
+                placeholder="Masukkan kata sandi lama Anda"
+                className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] text-sm"
+                required
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="newPasswordInput"
+                className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+              >
+                Kata Sandi Baru
+              </label>
+              <input
+                type="password"
+                id="newPasswordInput"
+                name="newPassword"
+                placeholder="Minimal 6 karakter"
+                className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] text-sm"
+                required
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="confirmPasswordInput"
+                className="block text-xs font-semibold text-[#111111] mb-1.5 uppercase tracking-wider"
+              >
+                Konfirmasi Kata Sandi Baru
+              </label>
+              <input
+                type="password"
+                id="confirmPasswordInput"
+                name="confirmPassword"
+                placeholder="Ulangi kata sandi baru"
+                className="w-full px-4 py-2 border border-[#E2E2E0] rounded-lg focus:outline-none focus:border-[#111111] text-sm"
+                required
+              />
+            </div>
+
+            <div className="pt-4 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowChangePasswordModal(false)}
+                disabled={isChangingPassword}
+                className="px-4 py-2 bg-transparent border border-[#E2E2E0] hover:bg-[#FAF9F6] text-[#6E6E6C] text-xs font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isChangingPassword}
+                className="px-4 py-2 bg-[#111111] hover:bg-[#333333] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer active:scale-95 disabled:opacity-55 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+              >
+                {isChangingPassword ? (
+                  <>
+                    <span className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent mr-0.5"></span>
+                    Memperbarui...
+                  </>
+                ) : (
+                  'Ubah Kata Sandi'
+                )}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Premium Glassmorphic Toast Notification Overlay */}
+      {toastInfo && (
+        <div className={`fixed bottom-6 right-6 z-[9999] ${toastAnimationClass}`}>
+          <div className="flex items-center gap-3 bg-[#111111]/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.24)] pl-4.5 pr-11 py-3.5 max-w-sm relative select-none">
+            {toastInfo.type === 'success' ? (
+              <div className="w-5 h-5 rounded-full bg-[#4ADE80]/15 flex items-center justify-center shrink-0">
+                <CheckCircle size={14} className="text-[#4ADE80]" />
+              </div>
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-[#F87171]/15 flex items-center justify-center shrink-0">
+                <XCircle size={14} className="text-[#F87171]" />
+              </div>
+            )}
+
+            <p className="text-xs font-semibold text-white/95 leading-normal tracking-tight">
+              {toastInfo.message}
+            </p>
+
+            <button
+              type="button"
+              onClick={closeToast}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-transparent hover:bg-white/10 border-none text-white/40 hover:text-white transition-all cursor-pointer flex items-center justify-center active:scale-90"
+              title="Tutup"
+            >
+              <X size={13} className="stroke-[2.5]" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

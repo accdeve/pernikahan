@@ -1,0 +1,21 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${ANON_KEY}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: ["npx", "vite", "--host", "0.0.0.0", "--force"]
+    depends_on:
+      kong:
+        condition: service_healthy
+      redis:
+        condition: service_started

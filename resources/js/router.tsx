@@ -27,15 +27,22 @@ const router = createBrowserRouter([
   {
     path: '/login',
     async lazy() {
-      const { LoginPage } = await import('./pages/admin/LoginPage')
-      return { element: <LoginPage /> }
+      const { AuthPage } = await import('./pages/admin/AuthPage')
+      return { element: <AuthPage mode="login" /> }
     },
   },
   {
     path: '/signup',
     async lazy() {
-      const { SignupPage } = await import('./pages/admin/SignupPage')
-      return { element: <SignupPage /> }
+      const { AuthPage } = await import('./pages/admin/AuthPage')
+      return { element: <AuthPage mode="signup" /> }
+    },
+  },
+  {
+    path: '/otp',
+    async lazy() {
+      const { AuthPage } = await import('./pages/admin/AuthPage')
+      return { element: <AuthPage mode="otp" /> }
     },
   },
 

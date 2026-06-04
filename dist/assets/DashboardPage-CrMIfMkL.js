@@ -1,0 +1,1 @@
+import{j as e}from"./index-EmWrVjxO.js";import{A as r}from"./App-CWYoOCe6.js";import"./supabase-client-By9RvFOV.js";import"./button-DGzOILaK.js";function m(){return e.jsxDEV(r,{},void 0,!1,{fileName:"/Users/nine/Documents/GitHub/wednity/resources/js/pages/admin/DashboardPage.tsx",lineNumber:5,columnNumber:10},this)}export{m as DashboardPage};

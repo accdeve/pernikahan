@@ -16,6 +16,17 @@ export default defineConfig({
       '@': resolve(__dirname, 'resources/js'),
     },
   },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      '@dnd-kit/core',
+      '@dnd-kit/sortable',
+      '@dnd-kit/utilities',
+      '@dnd-kit/modifiers',
+      '@dnd-kit/accessibility',
+    ],
+  },
   server: {
     watch: {
       ignored: ['**/supabase/**', '**/tmp/**'],

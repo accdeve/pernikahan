@@ -1,1 +1,0 @@
-import{j as e}from"./index-KIodDfQz.js";import{A as r}from"./App-Vq_VI_do.js";import"./supabase-client-DqYnJoqy.js";import"./button-CkoAyvWy.js";import"./card-CljWshxR.js";function t(){return e.jsxDEV(r,{},void 0,!1,{fileName:"/Users/nine/Documents/GitHub/pernikahan/resources/js/pages/admin/DashboardPage.tsx",lineNumber:5,columnNumber:10},this)}export{t as DashboardPage};
