@@ -4,7 +4,7 @@
  * Setiap request pake koneksi HTTP baru (no keep-alive)
  * karena Studio punya masalah dengan connection reuse.
  */
-const MCP_URL = 'http://localhost:8000/mcp';
+const MCP_URL = 'https://mac-mini-2.tailf2f971.ts.net:8443/mcp';
 
 import { createInterface } from 'node:readline';
 

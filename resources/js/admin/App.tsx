@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation, useSearchParams } from 'react-rout
 import { Toaster, toast } from 'sonner'
 import { supabase } from '../lib/supabase-client.js'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs.js'
-import { AreaChart, Area, XAxis, CartesianGrid } from 'recharts'
+import { AreaChart, Area, XAxis, CartesianGrid, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import {
   ChartContainer,
   ChartTooltip,
@@ -97,6 +97,7 @@ import {
   Settings,
   User,
   CreditCard,
+  TrendingDown,
   MoreVertical,
   GripVertical,
   Shield,
@@ -230,24 +231,23 @@ function SortableStoryRow({ story, onEdit, onDelete, storiesCount }: SortableSto
           <span className="w-4 text-right pr-1">{story.sort_order}</span>
         </div>
       </TableCell>
+      <TableCell className="py-2">
+        {story.image_url ? (
+          <img
+            src={story.image_url}
+            alt={story.title || ''}
+            className="w-20 h-14 object-cover rounded-lg border border-[#E2E2E0]"
+          />
+        ) : (
+          <div className="w-20 h-14 bg-[#FAF9F6] border border-[#E2E2E0] rounded-lg flex items-center justify-center text-[10px] text-[#6E6E6C]/45 font-semibold">
+            No Image
+          </div>
+        )}
+      </TableCell>
       <TableCell className="font-bold text-[#111111]">{story.milestone_date}</TableCell>
       <TableCell className="font-semibold text-[#111111]">{story.title}</TableCell>
       <TableCell className="text-xs text-[#6E6E6C] leading-relaxed max-w-xs truncate">
         {story.description}
-      </TableCell>
-      <TableCell className="text-center">
-        {story.image_url ? (
-          <a
-            href={story.image_url}
-            target="_blank"
-            rel="noreferrer"
-            className="text-xs font-semibold text-[#111111] underline hover:text-[#111111]/80 transition-colors"
-          >
-            Lihat
-          </a>
-        ) : (
-          <span className="text-xs text-[#6E6E6C]/40 font-medium">-</span>
-        )}
       </TableCell>
       <TableCell className="text-center pr-4">
         <div className="flex items-center justify-center gap-1.5">
@@ -294,7 +294,7 @@ function SortableGalleryRow({ photo, onEdit, onDelete, photosCount }: SortableGa
     zIndex: isDragging ? 50 : 'auto',
   }
 
-  const canDelete = true
+  const canDelete = photosCount > 3
 
   return (
     <TableRow
@@ -432,6 +432,35 @@ const convertToWebP = (file: File, quality = 0.8): Promise<Blob> => {
 }
 
 const uploadImageToStorage = async (file: File): Promise<string> => {
+  // 1. Validate file type / format
+  const allowedMimeTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/heic',
+    'image/heif',
+    'image/bmp',
+    'image/tiff'
+  ]
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif', 'bmp', 'tiff']
+
+  const isMimeTypeAllowed = file.type && allowedMimeTypes.includes(file.type)
+  const isExtensionAllowed = ext && allowedExtensions.includes(ext)
+
+  if (!isMimeTypeAllowed && !isExtensionAllowed) {
+    throw new Error(
+      'Format berkas tidak didukung. Harap unggah berkas gambar yang valid (JPG, PNG, WebP, GIF, HEIC, atau BMP).'
+    )
+  }
+
+  // 2. Validate file size (Max 10 MB to prevent canvas/memory crashes on device)
+  const maxSizeBytes = 10 * 1024 * 1024 // 10MB
+  if (file.size > maxSizeBytes) {
+    throw new Error('Ukuran berkas gambar terlalu besar. Batas maksimal ukuran adalah 10 MB.')
+  }
+
   // Ensure the 'gallery' bucket exists
   await ensureBucketExists('gallery')
 
@@ -522,7 +551,7 @@ export default function App() {
 
   // Platform Admin state
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false)
-  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'wos' | 'clients'>('overview')
+  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'wos' | 'clients' | 'settings'>('overview')
   const [allWos, setAllWos] = useState<WeddingOrganization[]>([])
   const [allCustomers, setAllCustomers] = useState<Customer[]>([])
   const [plans, setPlans] = useState<any[]>([])
@@ -735,6 +764,7 @@ export default function App() {
 
   // Interactive templates chart hover state
   const [hoveredTemplateIndex, setHoveredTemplateIndex] = useState<number | null>(null)
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | undefined>(undefined)
   const [rsvpRange, setRsvpRange] = useState<'7d' | '30d' | '90d'>('7d')
 
   // Fetch org data and current user on mount
@@ -819,7 +849,7 @@ export default function App() {
               if (userWoSlug) {
                 navigate(`/admin/${userWoSlug}`, { replace: true })
               } else {
-                window.location.href = `/signup?email=${encodeURIComponent(userEmail)}&provider=google`
+                window.location.href = `/signup?email=${encodeURIComponent(userEmail || '')}&provider=google`
                 return
               }
             } else if (slug_wo !== userWoSlug) {
@@ -948,19 +978,23 @@ export default function App() {
     if (statusAlert) {
       setToastInfo(statusAlert)
       setToastAnimationClass('animate-toast-in')
-      
-      // Auto close after 3 seconds
-      const timer = setTimeout(() => {
-        setToastAnimationClass('animate-toast-out')
-        setTimeout(() => {
-          setToastInfo(null)
-        }, 250)
-      }, 3000)
-      
       setStatusAlert(null)
-      return () => clearTimeout(timer)
     }
   }, [statusAlert])
+
+  // Toast lifecycle timer
+  useEffect(() => {
+    if (toastInfo) {
+      const timer = setTimeout(() => {
+        setToastAnimationClass('animate-toast-out')
+        const closeTimer = setTimeout(() => {
+          setToastInfo(null)
+        }, 250)
+        return () => clearTimeout(closeTimer)
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [toastInfo])
 
   // Fetch WO couples/dashboard stats
   useEffect(() => {
@@ -972,7 +1006,7 @@ export default function App() {
       fetchDashboardData()
       fetchWoProfile()
       fetchPlanInfo()
-      if (activeWoTab === 'billing' || settingsSubTab === 'billing') {
+      if (activeWoTab === 'billing' || settingsSubTab === 'billing' || activeWoTab === 'clients') {
         fetchBillingData()
       }
     } else {
@@ -1039,12 +1073,12 @@ export default function App() {
     }
   }
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (silent = false) => {
     if (!woId) {
       setCustomers([])
       return
     }
-    setLoading(true)
+    if (!silent) setLoading(true)
     try {
       // 1. Fetch customers filtered by the logged-in organization's ID
       const { data: custData, error: custErr } = await supabase
@@ -1104,12 +1138,12 @@ export default function App() {
     } catch (err: any) {
       console.error('Error fetching dashboard data:', err.message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
-  const fetchPlatformAdminData = async () => {
-    setLoading(true)
+  const fetchPlatformAdminData = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const { data: wosData, error: wosErr } = await supabase
         .from('wedding_organization')
@@ -1202,7 +1236,7 @@ export default function App() {
     } catch (err: any) {
       console.error('Error fetching platform admin data:', err.message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -1627,8 +1661,8 @@ export default function App() {
     }
   }
 
-  const fetchCoupleData = async (customerId: string) => {
-    setLoading(true)
+  const fetchCoupleData = async (customerId: string, silent = false) => {
+    if (!silent) setLoading(true)
     try {
       // 1. Fetch couple metadata
       let query = supabase
@@ -1687,7 +1721,7 @@ export default function App() {
       console.error('Error fetching couple detail data:', err.message)
       setStatusAlert({ type: 'error', message: `Gagal memuat data klien: ${err.message}` })
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -1755,9 +1789,9 @@ export default function App() {
 
       setOpenCreateModal(false)
       if (isPlatformAdmin) {
-        fetchPlatformAdminData()
+        fetchPlatformAdminData(true)
       } else {
-        fetchDashboardData()
+        fetchDashboardData(true)
       }
       setStatusAlert({ type: 'success', message: 'Inisialisasi klien pengantin baru sukses!' })
       setTimeout(() => setStatusAlert(null), 3000)
@@ -1804,7 +1838,7 @@ export default function App() {
       if (error) throw error
       setStatusAlert({ type: 'success', message: 'Detail informasi undangan berhasil disimpan!' })
       setTimeout(() => setStatusAlert(null), 3500)
-      if (selectedCustomerId) fetchCoupleData(selectedCustomerId)
+      if (selectedCustomerId) fetchCoupleData(selectedCustomerId, true)
     } catch (err: any) {
       setStatusAlert({ type: 'error', message: `Gagal memperbarui: ${err.message}` })
     }
@@ -1856,7 +1890,7 @@ export default function App() {
       formRef.reset()
       setStatusAlert({ type: 'success', message: 'Momen kisah berhasil ditambahkan!' })
       setTimeout(() => setStatusAlert(null), 3500)
-      if (selectedCustomerId) fetchCoupleData(selectedCustomerId)
+      if (selectedCustomerId) fetchCoupleData(selectedCustomerId, true)
     } catch (err: any) {
       setStatusAlert({ type: 'error', message: `Gagal menambahkan kisah: ${err.message}` })
     } finally {
@@ -1902,7 +1936,7 @@ export default function App() {
       setEditingStory(null)
       setStatusAlert({ type: 'success', message: 'Momen kisah berhasil diperbarui!' })
       setTimeout(() => setStatusAlert(null), 3500)
-      if (selectedCustomerId) fetchCoupleData(selectedCustomerId)
+      if (selectedCustomerId) fetchCoupleData(selectedCustomerId, true)
     } catch (err: any) {
       setStatusAlert({ type: 'error', message: `Gagal memperbarui kisah: ${err.message}` })
     } finally {
@@ -1913,10 +1947,6 @@ export default function App() {
   // Delete story (min 2)
 
   const handleDeleteStory = async (id: string) => {
-    if (stories.length <= 2) {
-      setStatusAlert({ type: 'error', message: 'Minimal 2 momen kisah harus tersedia.' })
-      return
-    }
     showConfirm({
       title: 'Apakah Anda yakin?',
       description: 'Tindakan ini tidak dapat dibatalkan. Momen kisah ini akan dihapus secara permanen.',
@@ -1928,7 +1958,7 @@ export default function App() {
           if (error) throw error
           setStatusAlert({ type: 'success', message: 'Kisah berhasil dihapus!' })
           setTimeout(() => setStatusAlert(null), 3000)
-          if (selectedCustomerId) fetchCoupleData(selectedCustomerId)
+          if (selectedCustomerId) fetchCoupleData(selectedCustomerId, true)
         } catch (err: any) {
           setStatusAlert({ type: 'error', message: `Gagal menghapus kisah: ${err.message}` })
         }
@@ -1979,7 +2009,7 @@ export default function App() {
       console.error('Error updating stories sort order:', err)
       setStatusAlert({ type: 'error', message: `Gagal memperbarui urutan kisah: ${err.message}` })
       // Revert from backend
-      if (selectedCustomerId) fetchCoupleData(selectedCustomerId)
+      if (selectedCustomerId) fetchCoupleData(selectedCustomerId, true)
     }
   }
 
@@ -2027,7 +2057,7 @@ export default function App() {
       formRef.reset()
       setStatusAlert({ type: 'success', message: 'Foto galeri berhasil diunggah!' })
       setTimeout(() => setStatusAlert(null), 3500)
-      if (selectedCustomerId) fetchCoupleData(selectedCustomerId)
+      if (selectedCustomerId) fetchCoupleData(selectedCustomerId, true)
     } catch (err: any) {
       setStatusAlert({ type: 'error', message: `Gagal mengunggah foto: ${err.message}` })
     } finally {
@@ -2071,7 +2101,7 @@ export default function App() {
       setEditingGallery(null)
       setStatusAlert({ type: 'success', message: 'Foto galeri berhasil diperbarui!' })
       setTimeout(() => setStatusAlert(null), 3500)
-      if (selectedCustomerId) fetchCoupleData(selectedCustomerId)
+      if (selectedCustomerId) fetchCoupleData(selectedCustomerId, true)
     } catch (err: any) {
       setStatusAlert({ type: 'error', message: `Gagal memperbarui foto: ${err.message}` })
     } finally {
@@ -2092,7 +2122,7 @@ export default function App() {
           if (error) throw error
           setStatusAlert({ type: 'success', message: 'Foto berhasil dihapus!' })
           setTimeout(() => setStatusAlert(null), 3000)
-          if (selectedCustomerId) fetchCoupleData(selectedCustomerId)
+          if (selectedCustomerId) fetchCoupleData(selectedCustomerId, true)
         } catch (err: any) {
           setStatusAlert({ type: 'error', message: `Gagal menghapus foto: ${err.message}` })
         }
@@ -2134,7 +2164,7 @@ export default function App() {
       console.error('Error updating galleries sort order:', err)
       setStatusAlert({ type: 'error', message: `Gagal memperbarui urutan galeri: ${err.message}` })
       // Revert from backend
-      if (selectedCustomerId) fetchCoupleData(selectedCustomerId)
+      if (selectedCustomerId) fetchCoupleData(selectedCustomerId, true)
     }
   }
 
@@ -2151,7 +2181,7 @@ export default function App() {
           if (error) throw error
           setStatusAlert({ type: 'success', message: 'Konfirmasi RSVP berhasil dihapus!' })
           setTimeout(() => setStatusAlert(null), 3000)
-          if (selectedCustomerId) fetchCoupleData(selectedCustomerId)
+          if (selectedCustomerId) fetchCoupleData(selectedCustomerId, true)
         } catch (err: any) {
           setStatusAlert({ type: 'error', message: `Gagal menghapus tamu: ${err.message}` })
         }
@@ -2182,7 +2212,7 @@ export default function App() {
       form.reset()
       setStatusAlert({ type: 'success', message: 'Tamu berhasil ditambahkan!' })
       setTimeout(() => setStatusAlert(null), 3500)
-      if (selectedCustomerId) fetchCoupleData(selectedCustomerId)
+      if (selectedCustomerId) fetchCoupleData(selectedCustomerId, true)
     } catch (err: any) {
       setStatusAlert({ type: 'error', message: `Gagal menambahkan tamu: ${err.message}` })
     }
@@ -2228,9 +2258,10 @@ export default function App() {
       count: number
     }> = []
 
+    const now = new Date()
     for (let i = 5; i >= 0; i--) {
-      const d = new Date()
-      d.setMonth(d.getMonth() - i)
+      // Set to 1st of the month to avoid day-wrapping issues (e.g. Feb 31 -> Mar 3)
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
       last6Months.push({
         monthName: months[d.getMonth()],
         year: d.getFullYear(),
@@ -2241,13 +2272,64 @@ export default function App() {
 
     customers.forEach((cust) => {
       if (!cust.created_at) return
-      const date = new Date(cust.created_at)
+      // Safe ISO date string format replacement for cross-browser engines like Safari
+      const date = new Date(cust.created_at.replace(' ', 'T'))
       const custMonth = date.getMonth()
       const custYear = date.getFullYear()
 
       const match = last6Months.find((m) => m.monthIndex === custMonth && m.year === custYear)
       if (match) {
         match.count++
+      }
+    })
+
+    return last6Months
+  }
+
+  const getMonthlyPointUsageStats = () => {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ]
+    const last6Months: Array<{
+      monthName: string
+      year: number
+      monthIndex: number
+      count: number
+    }> = []
+
+    const now = new Date()
+    for (let i = 5; i >= 0; i--) {
+      // Set to 1st of the month to avoid day-wrapping issues (e.g. Feb 31 -> Mar 3)
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      last6Months.push({
+        monthName: months[d.getMonth()],
+        year: d.getFullYear(),
+        monthIndex: d.getMonth(),
+        count: 0,
+      })
+    }
+
+    pointUsage.forEach((usage) => {
+      if (!usage.created_at || !usage.points_used) return
+      // Safe ISO date string format replacement for cross-browser engines like Safari
+      const date = new Date(usage.created_at.replace(' ', 'T'))
+      const usageMonth = date.getMonth()
+      const usageYear = date.getFullYear()
+
+      const match = last6Months.find((m) => m.monthIndex === usageMonth && m.year === usageYear)
+      if (match) {
+        match.count += usage.points_used
       }
     })
 
@@ -2353,21 +2435,30 @@ export default function App() {
 
     if (!searchMatches) return false
 
-    // 2. Date filter (based on creation date)
-    if (!cust.created_at) return true
-    const createdDate = new Date(cust.created_at)
+    // 2. Date filter (based on wedding date, falling back to creation date)
+    const targetDateStr = cust.wedding_date || cust.created_at
+    if (!targetDateStr) return true
+    const targetDate = new Date(targetDateStr)
     const now = new Date()
 
     if (dateFilter === 'year') {
-      return createdDate.getFullYear() === now.getFullYear()
+      return targetDate.getFullYear() === now.getFullYear()
     } else if (dateFilter === 'month') {
       return (
-        createdDate.getMonth() === now.getMonth() && createdDate.getFullYear() === now.getFullYear()
+        targetDate.getMonth() === now.getMonth() && targetDate.getFullYear() === now.getFullYear()
       )
     } else if (dateFilter === 'week') {
-      const oneWeekAgo = new Date()
-      oneWeekAgo.setDate(now.getDate() - 7)
-      return createdDate >= oneWeekAgo
+      const startOfWeek = new Date(now)
+      const day = startOfWeek.getDay()
+      const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1)
+      startOfWeek.setDate(diff)
+      startOfWeek.setHours(0, 0, 0, 0)
+
+      const endOfWeek = new Date(startOfWeek)
+      endOfWeek.setDate(startOfWeek.getDate() + 6)
+      endOfWeek.setHours(23, 59, 59, 999)
+
+      return targetDate >= startOfWeek && targetDate <= endOfWeek
     }
 
     return true // 'all'
@@ -2597,7 +2688,7 @@ export default function App() {
                           key={item.id}
                           type="button"
                           onClick={() => {
-                            setActiveAdminTab(item.id)
+                            setActiveAdminTab(item.id as any)
                             setIsSidebarOpen(false)
                           }}
                           title={item.label}
@@ -2686,8 +2777,8 @@ export default function App() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className={`w-full flex items-center bg-[#FAF9F6] rounded-xl border border-[#E2E2E0] hover:border-[#111111]/30 transition-all duration-300 cursor-pointer text-left focus:outline-none ${
-                  isSidebarCollapsed ? 'justify-center p-2' : 'gap-3 p-3'
+                className={`flex items-center bg-[#FAF9F6] border border-[#E2E2E0] hover:border-[#111111]/30 transition-all duration-300 cursor-pointer text-left focus:outline-none ${
+                  isSidebarCollapsed ? 'justify-center p-1 rounded-full w-10 h-10 mx-auto' : 'w-full gap-3 p-3 rounded-xl'
                 }`}
               >
                 <div className="w-8 h-8 rounded-full bg-[#111111] flex items-center justify-center text-white font-bold text-[10px] shrink-0 transition-transform duration-300 hover:scale-105 overflow-hidden">
@@ -3479,202 +3570,310 @@ export default function App() {
                 )}
 
                 {activeWoTab === 'clients' && (
-              <>
-                {/* Bento Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                  <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 flex flex-col justify-between h-40 shadow-sm">
-                    <div className="flex justify-between items-start">
-                      <span className="text-[11px] font-semibold uppercase text-[#6E6E6C] tracking-widest">
-                        Total Klien
-                      </span>
-                      <Users size={18} className="text-[#6E6E6C]" />
-                    </div>
-                    <div>
-                      <div className="text-[42px] font-semibold leading-none text-[#111111] tracking-tight">
-                        {totalStats.total}
-                      </div>
-                      <div className="text-[13px] text-[#6E6E6C] mt-1 font-medium">
-                        Pasangan terdaftar
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 flex flex-col justify-between h-40 shadow-sm">
-                    <div className="flex justify-between items-start">
-                      <span className="text-[11px] font-semibold uppercase text-[#6E6E6C] tracking-widest">
-                        Undangan Aktif
-                      </span>
-                      <CheckCircle size={18} className="text-[#6E6E6C]" />
-                    </div>
-                    <div>
-                      <div className="text-[42px] font-semibold leading-none text-[#2E7D32] tracking-tight">
-                        {totalStats.published}
-                      </div>
-                      <div className="text-[13px] text-[#6E6E6C] mt-1 font-medium">
-                        Sudah live & aktif
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#111111] border border-transparent rounded-2xl p-6 flex flex-col justify-between h-40 shadow-sm text-white">
-                    <div className="flex justify-between items-start">
-                      <span className="text-[11px] font-semibold uppercase text-white/60 tracking-widest">
-                        Draft
-                      </span>
-                      <Edit3 size={18} className="text-white" />
-                    </div>
-                    <div>
-                      <div className="text-[42px] font-semibold leading-none tracking-tight">
-                        {String(totalStats.draft).padStart(2, '0')}
-                      </div>
-                      <div className="text-[13px] text-white/60 mt-1 font-medium">
-                        Menunggu publikasi
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Charts & Recent Clients Section */}
-                {!loading && (
-                  <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mb-8">
-                    {/* Left: Registration Trend Bar Chart (70% width) */}
-                    <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 shadow-sm lg:col-span-7 flex flex-col justify-between">
-                      <div>
-                        <h3 className="font-serif text-[#111111] text-lg font-medium mb-1">
-                          Tren Pendaftaran Klien Baru
-                        </h3>
-                        <p className="text-xs text-[#6E6E6C] mb-6">6 Bulan Terakhir</p>
-
-                        <div className="h-56 flex items-end justify-between gap-2 px-2 pt-4 relative border-b border-[#E2E2E0]">
-                          {/* Y-Axis lines */}
-                          <div className="absolute inset-x-0 top-1/4 border-t border-[#E2E2E0]/40 pointer-events-none" />
-                          <div className="absolute inset-x-0 top-2/4 border-t border-[#E2E2E0]/40 pointer-events-none" />
-                          <div className="absolute inset-x-0 top-3/4 border-t border-[#E2E2E0]/40 pointer-events-none" />
-
-                          {getMonthlyRegistrationStats().map((item, idx) => {
-                            const maxVal = Math.max(
-                              ...getMonthlyRegistrationStats().map((m) => m.count),
-                              1
-                            )
-                            const barPercent = (item.count / maxVal) * 100
-                            // Highlight the last bar to match the Stitch style
-                            const isLatest = idx === getMonthlyRegistrationStats().length - 1
-                            return (
-                              <div
-                                key={idx}
-                                className="flex-1 flex flex-col items-center group relative z-10"
-                              >
-                                {/* Tooltip */}
-                                <div className="absolute bottom-full mb-2 bg-[#111111] text-[#FAF9F6] text-[10px] font-semibold px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap z-20">
-                                  {item.count} Klien Baru
-                                </div>
-
-                                {/* Bar */}
-                                <div
-                                  style={{ height: `${Math.max(barPercent, 6)}%` }}
-                                  className={`w-full max-w-[40px] rounded-t transition-all duration-300 cursor-pointer ${
-                                    isLatest ? 'bg-[#111111]' : 'bg-[#F1F1EF] hover:bg-[#111111]'
-                                  }`}
-                                />
-
-                                {/* Label */}
-                                <span className="text-[10px] font-semibold text-[#6E6E6C] mt-2 tracking-wide uppercase">
-                                  {item.monthName}
-                                </span>
-                              </div>
-                            )
-                          })}
+                  <>
+                    {/* Bento Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                      {/* Total Klien */}
+                      <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 flex flex-col justify-between h-40 shadow-sm transition-all hover:border-[#111111]/30">
+                        <div className="flex justify-between items-start">
+                          <span className="text-[11px] font-semibold uppercase text-[#6E6E6C] tracking-widest">
+                            Total Klien
+                          </span>
+                          <Users size={18} className="text-[#6E6E6C]" />
+                        </div>
+                        <div>
+                          <div className="text-[42px] font-semibold leading-none text-[#111111] tracking-tight">
+                            {totalStats.total}
+                          </div>
+                          <div className="text-[13px] text-[#6E6E6C] mt-1 font-medium">
+                            Pasangan terdaftar
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Right: Recent Clients Preview Section (30% width) */}
-                    <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 shadow-sm lg:col-span-3 flex flex-col justify-between">
-                      <div>
-                        <div className="flex justify-between items-center mb-4">
-                          <div>
-                            <h3 className="font-serif text-[#111111] text-base font-medium">
-                              Klien Baru
-                            </h3>
-                            <p className="text-[11px] text-[#6E6E6C] mt-0.5">
-                              Tinjauan 3 pasangan terbaru
-                            </p>
+                      {/* Undangan Aktif */}
+                      <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 flex flex-col justify-between h-40 shadow-sm transition-all hover:border-[#2E7D32]/30">
+                        <div className="flex justify-between items-start">
+                          <span className="text-[11px] font-semibold uppercase text-[#6E6E6C] tracking-widest">
+                            Undangan Aktif
+                          </span>
+                          <CheckCircle size={18} className="text-[#2E7D32]" />
+                        </div>
+                        <div>
+                          <div className="text-[42px] font-semibold leading-none text-[#2E7D32] tracking-tight">
+                            {totalStats.published}
                           </div>
+                          <div className="text-[13px] text-[#6E6E6C] mt-1 font-medium">
+                            Sudah live & aktif
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Saldo Poin */}
+                      <div className="bg-[#111111] border border-transparent rounded-2xl p-6 flex flex-col justify-between h-40 shadow-sm text-white transition-all hover:shadow-md">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[11px] font-semibold uppercase text-white/60 tracking-widest">
+                            Saldo Poin
+                          </span>
                           <button
                             type="button"
-                            onClick={() => setActiveWoTab('customers')}
-                            className="text-[11px] font-bold text-[#111111] hover:underline cursor-pointer shrink-0"
+                            onClick={() => {
+                              setSelectedCustomerId(null)
+                              setActiveWoTab('settings')
+                              setSettingsSubTab('billing')
+                            }}
+                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer border border-white/10 active:scale-95 shadow-sm hover:scale-105"
+                            title="Top Up Poin"
                           >
-                            Kelola &rarr;
+                            <Plus size={14} />
                           </button>
                         </div>
-
-                        <div className="space-y-3">
-                          {customers.slice(0, 3).map((cust) => (
-                            <div
-                              key={cust.id}
-                              onClick={() =>
-                                navigateTo(`/admin/${slug_wo}/customers/${cust.id}`)
-                              }
-                              className="p-3 border border-[#E2E2E0] rounded-xl hover:border-[#111111] transition-all cursor-pointer bg-[#FAF9F6]/30 flex items-center justify-between gap-2.5 group"
-                            >
-                              <div className="min-w-0 flex-1">
-                                <div className="font-semibold text-[#111111] text-[13px] group-hover:text-[#111111] transition-colors truncate">
-                                  {cust.male_name} & {cust.female_name}
-                                </div>
-                                <div className="text-[10px] text-[#6E6E6C] mt-0.5 font-mono">
-                                  ID: {cust.id.substring(0, 8)}
-                                </div>
-                              </div>
-                              {cust.isActive ? (
-                                <span className="px-2 py-0.5 bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9] rounded-full text-[9px] font-bold uppercase tracking-wider shrink-0 scale-90">
-                                  Aktif
-                                </span>
-                              ) : (
-                                <span className="px-2 py-0.5 bg-[#FFF3E0] text-[#E65100] border border-[#FFE0B2] rounded-full text-[9px] font-bold uppercase tracking-wider shrink-0 scale-90">
-                                  Draft
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                          {customers.length === 0 && (
-                            <div className="text-center py-8 text-xs text-[#6E6E6C] italic">
-                              Belum ada klien terdaftar.
-                            </div>
-                          )}
+                        <div>
+                          <div className="text-[42px] font-semibold leading-none tracking-tight">
+                            {pointsBalance}
+                          </div>
+                          <div className="text-[13px] text-white/60 mt-1 font-medium">
+                            Poin tersisa
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
 
-                {/* Editorial Premium Marketing Section (Stitch Style) */}
-                <section className="rounded-2xl overflow-hidden relative min-h-[260px] flex items-center p-10 bg-black text-white shadow-lg">
-                  <div className="relative z-10 max-w-xl">
-                    <span className="inline-block px-2.5 py-0.5 bg-white/10 text-white rounded text-[10px] font-bold uppercase tracking-widest mb-4">
-                      Premium Features
-                    </span>
-                    <h2 className="font-serif text-[32px] leading-[38px] mb-3 text-[#FAF9F6] tracking-tight">
-                      Tingkatkan ke Layanan Premium Undangan.
-                    </h2>
-                    <p className="text-white/60 text-[13px] leading-relaxed mb-6 font-medium max-w-lg">
-                      Buka akses penuh ke kustom sub-domain, RSVP Real-Time WhatsApp, fitur kado &
-                      amplop digital, lagu latar premium, buku tamu QR Code, serta bebas iklan
-                      selamanya.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setActiveWoTab('billing')}
-                      className="bg-white text-black px-6 py-2.5 rounded-full text-[13px] font-bold hover:bg-[#E2E2E0] transition-all cursor-pointer active:scale-95 shadow-sm"
-                    >
-                      Buka Upgrade Paket
-                    </button>
-                  </div>
-                  {/* Subtle abstract gradient background */}
-                  <div className="absolute inset-0 z-0 opacity-30 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#f2ca50]/20 via-black to-black" />
-                </section>
-              </>
-            )}
+                    {/* Charts & Recent Activities Section */}
+                    {!loading && (
+                      <div className="space-y-8">
+                        {/* Two charts side-by-side */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          {/* Left: Registration Trend */}
+                          <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                            <div>
+                              <h3 className="text-[#111111] text-xs font-bold tracking-wider uppercase text-[#6E6E6C] mb-4">
+                                Tren Pendaftaran Klien
+                              </h3>
+                              <div className="h-56 flex items-end justify-between gap-2 px-2 pt-4 relative border-b border-[#E2E2E0]">
+                                {/* Y-Axis lines */}
+                                <div className="absolute inset-x-0 top-1/4 border-t border-[#E2E2E0]/40 pointer-events-none" />
+                                <div className="absolute inset-x-0 top-2/4 border-t border-[#E2E2E0]/40 pointer-events-none" />
+                                <div className="absolute inset-x-0 top-3/4 border-t border-[#E2E2E0]/40 pointer-events-none" />
+
+                                {getMonthlyRegistrationStats().map((item, idx) => {
+                                  const maxVal = Math.max(
+                                    ...getMonthlyRegistrationStats().map((m) => m.count),
+                                    1
+                                  )
+                                  const barPercent = (item.count / maxVal) * 100
+                                  const isLatest = idx === getMonthlyRegistrationStats().length - 1
+                                  return (
+                                    <div
+                                      key={idx}
+                                      className="flex-1 flex flex-col items-center group relative z-10"
+                                    >
+                                      {/* Tooltip */}
+                                      <div className="absolute bottom-full mb-2 bg-[#111111] text-[#FAF9F6] text-[10px] font-semibold px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap z-20">
+                                        {item.count} Klien
+                                      </div>
+
+                                      {/* Bar */}
+                                      <div
+                                        style={{ height: `${Math.max(barPercent, 6)}%` }}
+                                        className={`w-full max-w-[40px] rounded-t transition-all duration-300 cursor-pointer ${
+                                          isLatest ? 'bg-[#111111]' : 'bg-[#F1F1EF] hover:bg-[#111111]'
+                                        }`}
+                                      />
+
+                                      {/* Label */}
+                                      <span className="text-[10px] font-semibold text-[#6E6E6C] mt-2 tracking-wide uppercase">
+                                        {item.monthName}
+                                      </span>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: Point Usage Trend */}
+                          <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                            <div>
+                              <h3 className="text-[#111111] text-xs font-bold tracking-wider uppercase text-[#6E6E6C] mb-4">
+                                Tren Penggunaan Poin
+                              </h3>
+                              <div className="h-56 flex items-end justify-between gap-2 px-2 pt-4 relative border-b border-[#E2E2E0]">
+                                {/* Y-Axis lines */}
+                                <div className="absolute inset-x-0 top-1/4 border-t border-[#E2E2E0]/40 pointer-events-none" />
+                                <div className="absolute inset-x-0 top-2/4 border-t border-[#E2E2E0]/40 pointer-events-none" />
+                                <div className="absolute inset-x-0 top-3/4 border-t border-[#E2E2E0]/40 pointer-events-none" />
+
+                                {getMonthlyPointUsageStats().map((item, idx) => {
+                                  const maxVal = Math.max(
+                                    ...getMonthlyPointUsageStats().map((m) => m.count),
+                                    1
+                                  )
+                                  const barPercent = (item.count / maxVal) * 100
+                                  const isLatest = idx === getMonthlyPointUsageStats().length - 1
+                                  return (
+                                    <div
+                                      key={idx}
+                                      className="flex-1 flex flex-col items-center group relative z-10"
+                                    >
+                                      {/* Tooltip */}
+                                      <div className="absolute bottom-full mb-2 bg-[#111111] text-[#FAF9F6] text-[10px] font-semibold px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap z-20">
+                                        {item.count} Poin
+                                      </div>
+
+                                      {/* Bar */}
+                                      <div
+                                        style={{ height: `${Math.max(barPercent, 6)}%` }}
+                                        className={`w-full max-w-[40px] rounded-t transition-all duration-300 cursor-pointer ${
+                                          isLatest ? 'bg-amber-600' : 'bg-[#F1F1EF] hover:bg-amber-600'
+                                        }`}
+                                      />
+
+                                      {/* Label */}
+                                      <span className="text-[10px] font-semibold text-[#6E6E6C] mt-2 tracking-wide uppercase">
+                                        {item.monthName}
+                                      </span>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Recent Clients and Point Logs side-by-side */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          {/* Left: Recent Clients */}
+                          <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 shadow-sm flex flex-col h-[320px]">
+                            <div className="flex justify-between items-center mb-4 shrink-0">
+                              <div>
+                                <h3 className="text-[#111111] text-base font-bold">
+                                  Klien Terbaru
+                                </h3>
+                                <p className="text-xs text-[#6E6E6C] mt-0.5">
+                                  Tinjauan pasangan yang baru didaftarkan
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setActiveWoTab('customers')}
+                                className="text-xs font-bold text-[#111111] hover:underline cursor-pointer shrink-0"
+                              >
+                                Kelola &rarr;
+                              </button>
+                            </div>
+
+                            <div className="flex-grow overflow-y-auto pr-1">
+                              <div className={`relative pl-4 space-y-5 py-2 ${customers.length > 0 ? 'border-l border-[#E2E2E0]' : ''} ml-3`}>
+                                {customers.slice(0, 10).map((cust) => (
+                                  <div
+                                    key={cust.id}
+                                    onClick={() =>
+                                      navigateTo(`/admin/${slug_wo}/customers/${cust.id}`)
+                                    }
+                                    className="relative flex items-center justify-between group cursor-pointer"
+                                  >
+                                    {/* Timeline dot */}
+                                    <div className={`absolute -left-[21px] w-2.5 h-2.5 rounded-full border-2 border-white transition-all duration-300 ${
+                                      cust.isActive ? 'bg-[#2E7D32]' : 'bg-[#E65100]'
+                                    }`} />
+                                    
+                                    <div className="min-w-0 flex-1 pl-1">
+                                      <h4 className="text-[13px] font-semibold text-[#111111] truncate group-hover:text-[#111111]/85 transition-colors">
+                                        {cust.male_name} & {cust.female_name}
+                                      </h4>
+                                      <p className="text-[10px] text-[#6E6E6C] mt-0.5">
+                                        Terdaftar pada {new Date(cust.created_at.replace(' ', 'T')).toLocaleDateString('id-ID', {
+                                          day: 'numeric',
+                                          month: 'short',
+                                          year: 'numeric'
+                                        })}
+                                      </p>
+                                    </div>
+                                    {cust.isActive ? (
+                                      <span className="px-2 py-0.5 bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9] rounded-full text-[9px] font-bold uppercase tracking-wider shrink-0 scale-90">
+                                        Aktif
+                                      </span>
+                                    ) : (
+                                      <span className="px-2 py-0.5 bg-[#FFF3E0] text-[#E65100] border border-[#FFE0B2] rounded-full text-[9px] font-bold uppercase tracking-wider shrink-0 scale-90">
+                                        Draft
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                                {customers.length === 0 && (
+                                  <div className="h-full flex flex-col items-center justify-center text-xs text-[#6E6E6C] italic py-16 text-center">
+                                    Belum ada klien terdaftar.
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: Point Activity */}
+                          <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 shadow-sm flex flex-col h-[320px]">
+                            <div className="flex justify-between items-center mb-4 shrink-0">
+                              <div>
+                                <h3 className="text-[#111111] text-base font-bold">
+                                  Aktivitas Poin
+                                </h3>
+                                <p className="text-xs text-[#6E6E6C] mt-0.5">
+                                  Riwayat pemakaian poin terakhir
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedCustomerId(null)
+                                  setActiveWoTab('settings')
+                                  setSettingsSubTab('billing')
+                                }}
+                                className="text-xs font-bold text-[#111111] hover:underline cursor-pointer shrink-0"
+                              >
+                                Selengkapnya &rarr;
+                              </button>
+                            </div>
+
+                            <div className="flex-grow overflow-y-auto pr-1">
+                              <div className={`relative pl-4 space-y-5 py-2 ${pointUsage.length > 0 ? 'border-l border-[#E2E2E0]' : ''} ml-3`}>
+                                {pointUsage.slice(0, 10).map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className="relative flex items-center justify-between"
+                                  >
+                                    {/* Timeline dot */}
+                                    <div className="absolute -left-[21px] w-2.5 h-2.5 rounded-full border-2 border-white bg-red-500" />
+                                    
+                                    <div className="min-w-0 flex-1 pl-1">
+                                      <h4 className="text-[13px] font-semibold text-[#111111] truncate">
+                                        {item.description}
+                                      </h4>
+                                      <p className="text-[10px] text-[#6E6E6C] mt-0.5">
+                                        {new Date(item.created_at.replace(' ', 'T')).toLocaleDateString('id-ID', {
+                                          day: 'numeric',
+                                          month: 'short',
+                                          year: 'numeric'
+                                        })}
+                                      </p>
+                                    </div>
+                                    <span className="text-xs font-bold text-red-600 font-mono shrink-0">
+                                      -{item.points_used} Pts
+                                    </span>
+                                  </div>
+                                ))}
+                                {pointUsage.length === 0 && (
+                                  <div className="h-full flex flex-col items-center justify-center text-xs text-[#6E6E6C] italic py-16 text-center">
+                                    Belum ada aktivitas penggunaan poin.
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
 
             {/* ========================================== */}
             {/* NEW TABS VIEW: CUSTOMERS (FULL DB TABLE)   */}
@@ -3682,7 +3881,7 @@ export default function App() {
             {activeWoTab === 'customers' && (
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-stretch">
                 {/* LEFT COLUMN: Main Database Table (xl:col-span-8) */}
-                <div className="xl:col-span-8 bg-white border border-[#E2E2E0] rounded-2xl shadow-sm flex flex-col xl:h-[calc(100vh-14rem)] overflow-hidden">
+                <div className="xl:col-span-8 bg-white border border-[#E2E2E0] rounded-2xl shadow-sm flex flex-col overflow-hidden">
                   {/* Data Table Search & Filters bar */}
                   <div className="p-5 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 border-b border-[#E2E2E0]">
                     <div className="relative flex-grow max-w-md">
@@ -3997,7 +4196,7 @@ export default function App() {
                 </div>
 
                 {/* RIGHT COLUMN: Stacked Insights (xl:col-span-4) */}
-                <div className="xl:col-span-4 flex flex-col gap-6 xl:h-[calc(100vh-14rem)]">
+                <div className="xl:col-span-4 flex flex-col gap-6">
                   {/* Insight 1: Theme Ranking */}
                   <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 shadow-sm flex flex-col flex-1">
                     <h3 className="font-serif text-[#111111] text-lg font-medium mb-1">
@@ -4048,79 +4247,98 @@ export default function App() {
                         topTemplatesData.reduce((acc, curr) => acc + curr.value, 0) || 1
 
                       return (
-                        <div className="flex-grow flex flex-col justify-between gap-4">
-                          <div className="w-full flex justify-center items-center h-[160px] relative">
-                            <svg
-                              width="160"
-                              height="160"
-                              viewBox="0 0 160 160"
-                              className="select-none"
-                            >
-                              {/* Background track circle */}
-                              <circle
-                                cx="80"
-                                cy="80"
-                                r="50"
-                                fill="transparent"
-                                stroke="#F1F1EF"
-                                strokeWidth="10"
-                              />
-                              {topTemplatesData.map((item, index) => {
-                                const dash = (item.value / totalTemplates) * 314.159
-                                const gap = 314.159 - dash
-                                const prevSum = topTemplatesData
-                                  .slice(0, index)
-                                  .reduce((sum, d) => sum + d.value, 0)
-                                const rotationAngle = (prevSum / totalTemplates) * 360 - 90
-                                const isHovered = hoveredTemplateIndex === index
-                                return (
-                                  <circle
-                                    key={item.style}
-                                    cx="80"
-                                    cy="80"
-                                    r="50"
-                                    fill="transparent"
-                                    stroke={BRAND_COLORS[index % BRAND_COLORS.length]}
-                                    strokeWidth={isHovered ? 18 : 14}
-                                    strokeDasharray={`${dash} ${gap}`}
-                                    strokeDashoffset={0}
-                                    transform={`rotate(${rotationAngle} 80 80)`}
-                                    className="transition-all duration-200 cursor-pointer origin-center"
-                                    onMouseEnter={() => setHoveredTemplateIndex(index)}
-                                    onMouseLeave={() => setHoveredTemplateIndex(null)}
-                                  />
-                                )
-                              })}
-                              {/* Centered Text */}
-                              <text
-                                x="80"
-                                y="75"
-                                textAnchor="middle"
-                                className="text-[10px] font-semibold fill-[#6E6E6C] uppercase tracking-wider select-none pointer-events-none"
-                              >
+                        <div className="flex-grow flex flex-col justify-between gap-4 mt-2">
+                          <div className="w-full h-[160px] relative flex justify-center items-center">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={topTemplatesData}
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={48}
+                                  outerRadius={65}
+                                  paddingAngle={4}
+                                  dataKey="value"
+                                  onMouseEnter={(_, index) => setHoveredTemplateIndex(index)}
+                                  onMouseMove={(entry: any) => {
+                                    if (entry && entry.tooltipPosition && entry.cx) {
+                                      const isLeft = entry.tooltipPosition.x < entry.cx;
+                                      const xOffset = isLeft ? -130 : 15;
+                                      setTooltipPos({
+                                        x: entry.tooltipPosition.x + xOffset,
+                                        y: entry.tooltipPosition.y - 20,
+                                      });
+                                    }
+                                  }}
+                                  onMouseLeave={() => {
+                                    setHoveredTemplateIndex(null);
+                                    setTooltipPos(undefined);
+                                  }}
+                                >
+                                  {topTemplatesData.map((entry, index) => (
+                                    <Cell 
+                                      key={`cell-${index}`} 
+                                      fill={BRAND_COLORS[index % BRAND_COLORS.length]} 
+                                      style={{ outline: 'none' }}
+                                      className="transition-opacity duration-200"
+                                      opacity={hoveredTemplateIndex === null || hoveredTemplateIndex === index ? 1 : 0.6}
+                                    />
+                                  ))}
+                                </Pie>
+                                <ChartTooltip
+                                  cursor={false}
+                                  position={tooltipPos}
+                                  content={({ active, payload }) => {
+                                    if (active && payload && payload.length) {
+                                      const data = payload[0].payload;
+                                      const percentage = Math.round((data.value / totalTemplates) * 100);
+                                      return (
+                                        <div className="bg-[#111111]/95 backdrop-blur-md border border-white/10 rounded-xl p-2.5 shadow-xl text-white select-none">
+                                          <div className="text-[10px] font-bold text-white/50 uppercase tracking-wider mb-1">
+                                            {data.name}
+                                          </div>
+                                          <div className="flex items-center gap-2 text-xs">
+                                            <span className="font-bold text-white">{data.value} Klien</span>
+                                            <span className="text-[#FAF9F6]/60">({percentage}%)</span>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  }}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
+
+                            {/* Centered Total Indicator */}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
+                              <span className="text-[9px] font-bold text-[#6E6E6C] uppercase tracking-widest">
                                 {hoveredTemplateIndex !== null
                                   ? topTemplatesData[hoveredTemplateIndex].name
                                   : 'Total Klien'}
-                              </text>
-                              <text
-                                x="80"
-                                y="98"
-                                textAnchor="middle"
-                                className="text-xl font-bold fill-[#111111] font-serif select-none pointer-events-none"
-                              >
+                              </span>
+                              <span className="text-2xl font-bold text-[#111111] font-serif leading-none mt-1">
                                 {hoveredTemplateIndex !== null
                                   ? topTemplatesData[hoveredTemplateIndex].value
                                   : totalTemplates}
-                              </text>
-                            </svg>
+                              </span>
+                            </div>
                           </div>
 
                           {/* Custom grid legend matching brand colors */}
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 pt-2 border-t border-[#E2E2E0]/40 text-[10px] font-semibold text-[#6E6E6C]">
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 mt-2 pt-3 border-t border-[#E2E2E0]/40 text-[10px] font-semibold text-[#6E6E6C]">
                             {topTemplatesData.map((item, index) => (
-                              <div key={item.style} className="flex items-center gap-1.5 min-w-0">
+                              <div 
+                                key={item.style} 
+                                className="flex items-center gap-2 min-w-0 transition-opacity duration-200"
+                                style={{
+                                  opacity: hoveredTemplateIndex === null || hoveredTemplateIndex === index ? 1 : 0.5
+                                }}
+                                onMouseEnter={() => setHoveredTemplateIndex(index)}
+                                onMouseLeave={() => setHoveredTemplateIndex(null)}
+                              >
                                 <span
-                                  className="w-2.5 h-2.5 rounded shrink-0"
+                                  className="w-2.5 h-2.5 rounded shrink-0 ring-1 ring-black/5"
                                   style={{
                                     backgroundColor: BRAND_COLORS[index % BRAND_COLORS.length],
                                   }}
@@ -4252,20 +4470,51 @@ export default function App() {
                                   className="text-[10px] font-semibold fill-[#6E6E6C]"
                                 />
                                 <ChartTooltip
-                                  cursor={false}
-                                  content={
-                                    <ChartTooltipContent
-                                      labelFormatter={(value) => {
-                                        return new Date(value).toLocaleDateString('id-ID', {
-                                          weekday: 'long',
-                                          day: 'numeric',
-                                          month: 'long',
-                                          year: 'numeric',
-                                        })
-                                      }}
-                                      indicator="dot"
-                                    />
-                                  }
+                                  cursor={{ stroke: 'rgba(17, 17, 17, 0.08)', strokeWidth: 1 }}
+                                  content={({ active, payload, label }) => {
+                                    if (active && payload && payload.length) {
+                                      const formattedDate = new Date(label).toLocaleDateString('id-ID', {
+                                        weekday: 'long',
+                                        day: 'numeric',
+                                        month: 'long',
+                                        year: 'numeric',
+                                      });
+                                      const tidakVal = payload.find(p => p.dataKey === 'tidak')?.value || 0;
+                                      const hadirVal = payload.find(p => p.dataKey === 'hadir')?.value || 0;
+                                      const totalVal = Number(tidakVal) + Number(hadirVal);
+
+                                      return (
+                                        <div className="bg-[#111111]/95 backdrop-blur-md border border-white/10 rounded-2xl p-3 shadow-2xl min-w-[160px] space-y-2 select-none">
+                                          <div className="text-[10px] font-bold text-white/50 uppercase tracking-wider pb-1 border-b border-white/10">
+                                            {formattedDate}
+                                          </div>
+                                          <div className="space-y-1.5">
+                                            <div className="flex items-center justify-between text-[11px] gap-4">
+                                              <div className="flex items-center gap-2 text-white/90 font-medium">
+                                                <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] ring-2 ring-[#10b981]/20 shrink-0" />
+                                                Hadir
+                                              </div>
+                                              <span className="font-bold text-[#10b981] text-xs">{hadirVal}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-[11px] gap-4">
+                                              <div className="flex items-center gap-2 text-white/90 font-medium">
+                                                <span className="w-2.5 h-2.5 rounded-full bg-[#f43f5e] ring-2 ring-[#f43f5e]/20 shrink-0" />
+                                                Tidak Hadir
+                                              </div>
+                                              <span className="font-bold text-[#f43f5e] text-xs">{tidakVal}</span>
+                                            </div>
+                                          </div>
+                                          {totalVal > 0 && (
+                                            <div className="pt-1.5 border-t border-white/5 flex items-center justify-between text-[9px] font-bold text-white/35 uppercase tracking-wider">
+                                              <span>Total Respon</span>
+                                              <span>{totalVal} Tamu</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  }}
                                 />
                                 <Area
                                   dataKey="tidak"
@@ -4320,7 +4569,7 @@ export default function App() {
             {/* BILLING & SUBSCRIPTION TAB VIEW            */}
             {/* ========================================== */}
             {activeWoTab === 'settings' && (
-              <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-200">
+              <div className="space-y-8 animate-in fade-in duration-200">
                 <div className="bg-[#FAF9F6] border border-[#E2E2E0]/60 rounded-2xl p-1 flex gap-1 w-full max-w-md">
                   <button
                     type="button"
@@ -4358,7 +4607,7 @@ export default function App() {
                 </div>
 
                 {settingsSubTab === 'profile' && (
-                  <div className="space-y-8 animate-in fade-in duration-200">
+                  <div className="max-w-3xl space-y-8 animate-in fade-in duration-200">
                     {/* Personal Identity Section */}
                     <section>
                       <h3 className="text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-widest mb-4">
@@ -4496,7 +4745,7 @@ export default function App() {
                 {settingsSubTab === 'business' && (
                   <form
                     onSubmit={handleUpdateWoProfile}
-                    className="space-y-8 animate-in fade-in duration-200"
+                    className="max-w-3xl space-y-8 animate-in fade-in duration-200"
                   >
                     {/* Business Identity */}
                     <section>
@@ -4613,145 +4862,180 @@ export default function App() {
 
                 {/* TAB CONTENT: BILLING & TAGIHAN */}
                 {settingsSubTab === 'billing' && (
-                  <div className="space-y-8 animate-in fade-in duration-200">
-                    {/* Active Subscription Bento */}
-                    <section>
-                      <h3 className="text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-widest mb-4">
-                        Langganan Aktif
-                      </h3>
-                      {activePlan ? (
-                        <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-sm">
-                          <div className="flex items-center gap-5">
-                            <div className="w-14 h-14 rounded-xl bg-[#E8F5E9] flex items-center justify-center shrink-0 border border-[#C6F6D5]">
-                              <CheckCircle size={24} className="text-[#2E7D32]" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-3">
-                                <h4 className="text-xl font-bold text-[#111111]">
-                                  {activePlan.plan?.name || 'Paket Kustom'}
-                                </h4>
-                                <span className="inline-flex px-2.5 py-0.5 text-[10px] font-bold bg-[#E8F5E9] border border-[#C6F6D5] text-[#2E7D32] rounded-full uppercase tracking-wider">
-                                  Aktif
-                                </span>
-                              </div>
-                              <p className="text-xs text-[#6E6E6C] mt-1">
-                                Berlaku hingga{' '}
-                                <strong>
-                                  {new Date(activePlan.end_date).toLocaleDateString('id-ID', {
-                                    day: 'numeric',
-                                    month: 'long',
-                                    year: 'numeric',
-                                  })}
-                                </strong>
-                              </p>
-                            </div>
+                  <div className="space-y-10 animate-in fade-in duration-300">
+                    {/* Top Section: Balance & Packages */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                      {/* Points Balance Card */}
+                      <div className="bg-[#111111] text-white border border-[#222222] rounded-2xl p-6 flex flex-col justify-between shadow-sm relative overflow-hidden">
+                        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-[#FAF9F6]/5 rounded-full blur-2xl pointer-events-none" />
+                        <div>
+                          <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest block mb-2">
+                            Kredit Poin Aktif
+                          </span>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-4xl font-extrabold tracking-tight font-sans">
+                              {pointsBalance}
+                            </span>
+                            <span className="text-sm font-semibold text-white/60">Poin</span>
                           </div>
-                          <div className="text-right shrink-0">
-                            <span className="text-xs text-[#6E6E6C]">Biaya Bulanan</span>
-                            <div className="text-xl font-bold text-[#111111] mt-0.5">
-                              Rp {(activePlan.plan?.price * 10).toLocaleString('id-ID')}
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="bg-white border border-[#E2E2E0] rounded-2xl p-8 text-center shadow-sm">
-                          <div className="w-14 h-14 rounded-xl bg-[#FFF3E0] flex items-center justify-center mx-auto mb-4 border border-[#FFE0B2]">
-                            <CreditCard size={24} className="text-[#E65100]" />
-                          </div>
-                          <h4 className="font-semibold text-lg text-[#111111]">
-                            Tidak Ada Paket Aktif
-                          </h4>
-                          <p className="text-xs text-[#6E6E6C] mt-1 max-w-md mx-auto">
-                            Organisasi Anda menggunakan akses gratis percobaan. Pilih paket di bawah untuk
-                            meningkatkan layanan.
+                          <p className="text-xs text-white/60 mt-3 leading-relaxed">
+                            Gunakan poin Anda untuk mengaktivasi klien baru (150 poin) atau memasang custom domain (100 poin).
                           </p>
                         </div>
-                      )}
-                    </section>
-
-                    {/* Plan Cards */}
-                    <section>
-                      <h3 className="text-[11px] font-semibold text-[#6E6E6C] uppercase tracking-widest mb-4">
-                        Pilih Paket
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Basic */}
-                        <div className="bg-white border border-[#E2E2E0] rounded-2xl p-6 flex flex-col justify-between hover:border-[#111111]/30 transition-colors shadow-sm">
-                          <div>
-                            <h4 className="text-base font-bold text-[#111111]">Basic Plan</h4>
-                            <p className="text-xs text-[#6E6E6C] mt-1">
-                              Untuk bisnis perorangan yang baru memulai
-                            </p>
-                            <div className="my-5">
-                              <span className="text-2xl font-bold text-[#111111]">Rp 500rb</span>
-                              <span className="text-xs text-[#6E6E6C]"> /bln</span>
-                            </div>
-                            <ul className="space-y-2.5 text-xs text-[#6E6E6C]">
-                              {[
-                                'Tema Royal Javanese Heritage',
-                                'RSVP Digital (Max 500)',
-                                'Timeline Kisah Kasih',
-                                'Galeri Pre-Wedding (10 Foto)',
-                              ].map((f, i) => (
-                                <li key={i} className="flex items-center gap-2">
-                                  <CheckCircle size={14} className="text-[#2E7D32] shrink-0" />
-                                  {f}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleUpgradePlan('a3b1a111-1111-1111-1111-111111111111')
-                            }
-                            className="w-full mt-6 py-2.5 border border-[#111111] hover:bg-[#FAF9F6] text-[#111111] text-xs font-semibold rounded-xl transition-colors cursor-pointer active:scale-95"
-                          >
-                            Pilih Paket
-                          </button>
-                        </div>
-
-                        {/* Premium */}
-                        <div className="bg-[#111111] text-white rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden shadow-sm">
-                          <div className="absolute top-0 right-0 bg-[#f2ca50] text-[#111111] px-4 py-1 text-[10px] font-bold uppercase tracking-wider rounded-bl-xl">
-                            Populer
-                          </div>
-                          <div>
-                            <h4 className="text-base font-bold">Premium Plan</h4>
-                            <p className="text-xs text-white/60 mt-1">
-                              Fitur penuh tanpa batas untuk pertumbuhan bisnis
-                            </p>
-                            <div className="my-5">
-                              <span className="text-2xl font-bold">Rp 1jt</span>
-                              <span className="text-xs text-white/60"> /bln</span>
-                            </div>
-                            <ul className="space-y-2.5 text-xs text-white/70">
-                              {[
-                                'Semua Tema Desain (Termasuk Aeterna)',
-                                'Unlimited RSVP & Buku Tamu',
-                                'Galeri & Video Tanpa Batas',
-                                'Integrasi Musik Kustom',
-                                'Support Prioritas 24/7',
-                              ].map((f, i) => (
-                                <li key={i} className="flex items-center gap-2">
-                                  <CheckCircle size={14} className="text-[#f2ca50] shrink-0" />
-                                  {f}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleUpgradePlan('a3b1a222-2222-2222-2222-222222222222')
-                            }
-                            className="w-full mt-6 py-2.5 bg-[#f2ca50] hover:bg-[#e5bd43] text-[#111111] text-xs font-bold rounded-xl transition-colors cursor-pointer active:scale-95"
-                          >
-                            Pilih Paket
-                          </button>
+                        <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-white/40">
+                          <span>Status Akun: Premium WO</span>
+                          <span className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse" />
                         </div>
                       </div>
-                    </section>
+
+                      {/* Store / Packages Info */}
+                      <div className="lg:col-span-2 bg-white border border-[#E2E2E0] rounded-2xl p-6 flex flex-col justify-between shadow-sm">
+                        <div>
+                          <span className="text-[10px] font-bold text-[#6E6E6C] uppercase tracking-widest block mb-2">
+                            Beli Kredit Poin
+                          </span>
+                          <h4 className="text-sm font-bold text-[#111111] mb-4">
+                            Top up saldo poin Anda untuk aktivasi instan
+                          </h4>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {[
+                              { points: 100, price: 50000, label: 'Starter Pack' },
+                              { points: 500, price: 225000, label: 'Growth Pack', discount: 'Save 10%' },
+                              { points: 1000, price: 400000, label: 'Enterprise Pack', discount: 'Save 20%' }
+                            ].map((pkg, idx) => (
+                              <div key={idx} className="border border-[#E2E2E0] hover:border-[#111111]/30 rounded-xl p-4 flex flex-col justify-between transition-all relative">
+                                {pkg.discount && (
+                                  <span className="absolute -top-2 right-3 bg-[#FAF9F6] border border-[#E2E2E0] text-[#111111] text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                                    {pkg.discount}
+                                  </span>
+                                )}
+                                <div>
+                                  <span className="text-[9px] font-semibold text-[#6E6E6C] uppercase">{pkg.label}</span>
+                                  <div className="text-lg font-bold text-[#111111] mt-1 mb-2">
+                                    {pkg.points} Poin
+                                  </div>
+                                </div>
+                                <div className="mt-2">
+                                  <div className="text-xs font-mono text-[#6E6E6C] mb-3">
+                                    Rp {pkg.price.toLocaleString('id-ID')}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleTopUpPoint(pkg.points, pkg.price, 'QRIS Gopay')}
+                                    className="w-full py-1.5 bg-[#111111] hover:bg-[#333333] text-white text-[10px] font-semibold rounded-lg transition-colors cursor-pointer active:scale-95 text-center flex items-center justify-center gap-1"
+                                  >
+                                    <Plus size={11} />
+                                    <span>Top Up</span>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Section: Tables History */}
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+                      {/* Top Up History */}
+                      <section className="bg-white border border-[#E2E2E0] rounded-2xl p-6 shadow-sm overflow-hidden flex flex-col">
+                        <div className="mb-4">
+                          <h4 className="text-sm font-bold text-[#111111]">Riwayat Top Up Poin</h4>
+                          <p className="text-[11px] text-[#6E6E6C] mt-0.5">Daftar riwayat transaksi pembelian poin saldo.</p>
+                        </div>
+                        <div className="overflow-x-auto min-h-[220px]">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="bg-[#FAF9F6] border-b border-[#E2E2E0]">
+                                <th className="text-[10px] font-semibold text-[#6E6E6C] uppercase pl-4 py-2">Tanggal</th>
+                                <th className="text-[10px] font-semibold text-[#6E6E6C] uppercase py-2">Metode</th>
+                                <th className="text-[10px] font-semibold text-[#6E6E6C] uppercase text-center py-2">Jumlah</th>
+                                <th className="text-[10px] font-semibold text-[#6E6E6C] uppercase text-right py-2">Total</th>
+                                <th className="text-[10px] font-semibold text-[#6E6E6C] uppercase text-right pr-4 py-2">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#E2E2E0]">
+                              {topupHistory.length > 0 ? (
+                                topupHistory.map((item) => (
+                                  <tr key={item.id} className="hover:bg-[#FAF9F6]/50 transition-colors">
+                                    <td className="pl-4 py-3 text-xs text-[#6E6E6C]">
+                                      {new Date(item.created_at).toLocaleDateString('id-ID', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric'
+                                      })}
+                                    </td>
+                                    <td className="py-3 text-xs text-[#111111] font-medium">{item.payment_method}</td>
+                                    <td className="py-3 text-xs text-center font-bold text-[#111111] font-mono">+{item.points_added} Pts</td>
+                                    <td className="py-3 text-xs text-right font-mono text-[#6E6E6C]">Rp {item.amount_paid.toLocaleString('id-ID')}</td>
+                                    <td className="pr-4 py-3 text-right">
+                                      <span className={`inline-flex px-2 py-0.5 text-[9px] font-bold rounded-full uppercase ${
+                                        item.status === 'completed' 
+                                          ? 'bg-green-50 text-[#2E7D32] border border-green-200' 
+                                          : item.status === 'failed' 
+                                          ? 'bg-red-50 text-red-600 border border-red-200' 
+                                          : 'bg-yellow-50 text-yellow-600 border border-yellow-200'
+                                      }`}>
+                                        {item.status}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan={5} className="py-10 text-center text-xs text-[#6E6E6C] italic">
+                                    Belum ada riwayat top up.
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </section>
+
+                      {/* Point Consumption History */}
+                      <section className="bg-white border border-[#E2E2E0] rounded-2xl p-6 shadow-sm overflow-hidden flex flex-col">
+                        <div className="mb-4">
+                          <h4 className="text-sm font-bold text-[#111111]">Riwayat Penggunaan Poin</h4>
+                          <p className="text-[11px] text-[#6E6E6C] mt-0.5">Daftar riwayat pemakaian poin untuk aktivasi fitur.</p>
+                        </div>
+                        <div className="overflow-x-auto min-h-[220px]">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="bg-[#FAF9F6] border-b border-[#E2E2E0]">
+                                <th className="text-[10px] font-semibold text-[#6E6E6C] uppercase pl-4 py-2">Tanggal</th>
+                                <th className="text-[10px] font-semibold text-[#6E6E6C] uppercase py-2">Deskripsi Penggunaan</th>
+                                <th className="text-[10px] font-semibold text-[#6E6E6C] uppercase text-right pr-4 py-2">Poin Terpakai</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#E2E2E0]">
+                              {pointUsage.length > 0 ? (
+                                pointUsage.map((item) => (
+                                  <tr key={item.id} className="hover:bg-[#FAF9F6]/50 transition-colors">
+                                    <td className="pl-4 py-3 text-xs text-[#6E6E6C]">
+                                      {new Date(item.created_at).toLocaleDateString('id-ID', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric'
+                                      })}
+                                    </td>
+                                    <td className="py-3 text-xs text-[#111111] font-medium">{item.description}</td>
+                                    <td className="pr-4 py-3 text-right text-xs font-bold text-red-600 font-mono">-{item.points_used} Pts</td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan={3} className="py-10 text-center text-xs text-[#6E6E6C] italic">
+                                    Belum ada riwayat penggunaan poin.
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </section>
+                    </div>
                   </div>
                 )}
               </div>
@@ -5070,7 +5354,7 @@ export default function App() {
           // ==========================================
           // CLIENT SCOPED WORKSPACE VIEW (Tabs UI)
           // ==========================================
-          <div className="px-4 sm:px-6 md:px-8 py-5 md:py-8 max-w-[1400px] mx-auto w-full">
+          <div className="px-10 lg:px-16 py-5 md:py-8 w-full max-w-full">
             {isPlatformAdmin && (
               <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm animate-in fade-in slide-in-from-top duration-300">
                 <div className="flex items-center gap-3">
@@ -5384,16 +5668,6 @@ export default function App() {
                                     Configure up to 2 receiving accounts for digital gifts from your guests.
                                   </p>
                                 </div>
-                                {paymentMethods.length < 2 && (
-                                  <button
-                                    type="button"
-                                    onClick={handleAddPaymentMethod}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#111111] hover:bg-[#333333] text-white text-xs font-semibold rounded-xl transition-all active:scale-95 cursor-pointer shadow-sm shrink-0"
-                                  >
-                                    <Plus size={12} />
-                                    <span>Add Method</span>
-                                  </button>
-                                )}
                               </div>
 
                               {/* Hidden form fields for compatibility with handleUpdateMetadata */}
@@ -5581,6 +5855,9 @@ export default function App() {
                                   >
                                     <option value="java_style">
                                       Royal Javanese Heritage (Default)
+                                    </option>
+                                    <option value="visual_journey">
+                                      Visual Journey (Sunset Editorial)
                                     </option>
                                     <option value="image_sequence">
                                       Aeterna Editorial (Modern Scroll Animation)
@@ -5794,10 +6071,10 @@ export default function App() {
                             <TableHeader className="bg-[#FAF9F6] border-b border-[#E2E2E0] sticky top-0 z-10">
                               <TableRow className="border-b border-[#E2E2E0]">
                                 <TableHead className="w-16 text-center py-3 pl-4">Urutan</TableHead>
+                                <TableHead className="w-28 py-3">Preview</TableHead>
                                 <TableHead className="w-36 py-3">Tanggal/Waktu</TableHead>
                                 <TableHead className="w-48 py-3">Judul Kisah</TableHead>
                                 <TableHead className="py-3">Deskripsi Narasi</TableHead>
-                                <TableHead className="w-20 text-center py-3">Preview</TableHead>
                                 <TableHead className="w-16 text-center py-3 pr-4">Aksi</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -6165,7 +6442,16 @@ export default function App() {
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        const url = `${window.location.origin}/${slug_wo}/${invitation ? invitation.slug : selectedCustomer?.id}?to=${encodeURIComponent(guest.name)}`
+                                        const secretKey = '7fff98e8209ed9e4'
+                                        let hash = 0
+                                        const hashStr = guest.name + secretKey
+                                        for (let i = 0; i < hashStr.length; i++) {
+                                          const char = hashStr.charCodeAt(i)
+                                          hash = (hash << 5) - hash + char
+                                          hash |= 0
+                                        }
+                                        const sig = Math.abs(hash).toString(16).substring(0, 8)
+                                        const url = `${window.location.origin}/${slug_wo}/${invitation ? invitation.slug : selectedCustomer?.id}?to=${encodeURIComponent(guest.name)}&s=${sig}`
                                         navigator.clipboard.writeText(url).then(() => {
                                           setShowCopyToast(true)
                                           setTimeout(() => setShowCopyToast(false), 2000)

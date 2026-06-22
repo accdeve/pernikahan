@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 771.9540000000001 965.8999999999999" width="771.9540000000001" height="965.8999999999999" style="--bg:#18181b;--fg:#fafafa;--line:#3f3f46;--accent:#3b82f6;--muted:#71717a;--surface:#27272a;--border:#3f3f46;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="5" refX="7" refY="2.5" orient="auto">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="8" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse">
+    <polygon points="8 0, 0 2.5, 8 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+</defs>
+<polyline class="edge" data-from="A" data-to="B" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="324.69649999999996,76.9 324.69649999999996,124.9" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="B" data-to="C" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="324.69649999999996,161.8 324.69649999999996,185.8 239.33349999999996,185.8 239.33349999999996,282.70000000000005" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="B" data-to="D" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="324.69649999999996,161.8 324.69649999999996,185.8 410.05949999999996,185.8 410.05949999999996,209.8" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="D" data-to="E" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="410.05949999999996,246.70000000000002 410.05949999999996,282.70000000000005" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="E" data-to="F" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="410.05949999999996,319.6 410.05949999999996,343.6 124.70099999999994,343.6 124.70099999999994,367.6" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="E" data-to="G" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="410.05949999999996,319.6 410.05949999999996,343.6 316.91599999999994,343.6 316.91599999999994,804.0999999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="E" data-to="H" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="410.05949999999996,319.6 410.05949999999996,343.6 503.203,343.6 503.203,367.6" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="E" data-to="I" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="410.05949999999996,319.6 410.05949999999996,343.6 670.965,343.6 670.965,804.0999999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="H" data-to="H1" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="503.203,404.5 503.203,464.5" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="H1" data-to="H2" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="503.203,501.4 503.203,549.4" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="H2" data-to="H3" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="503.203,586.3 503.203,634.3" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="H3" data-to="H4" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="503.203,671.1999999999999 503.203,719.1999999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="H4" data-to="H5" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="503.203,756.0999999999999 503.203,804.0999999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="H5" data-to="H6" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="503.203,840.9999999999999 503.203,888.9999999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<g class="node" data-id="A" data-label="Dashboard WO" data-shape="rectangle">
+  <rect x="259.26149999999996" y="40" width="130.87" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="324.69649999999996" y="58.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Dashboard WO</text>
+</g>
+<g class="node" data-id="B" data-label="Statistik &amp; List Klien" data-shape="rectangle">
+  <rect x="247.77599999999995" y="124.9" width="153.841" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="324.69649999999996" y="143.35000000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Statistik &amp; List Klien</text>
+</g>
+<g class="node" data-id="C" data-label="Tambah Customer" data-shape="rectangle">
+  <rect x="165.37699999999995" y="282.70000000000005" width="147.913" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="239.33349999999996" y="301.15000000000003" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Tambah Customer</text>
+</g>
+<g class="node" data-id="D" data-label="Kelola Customer" data-shape="rectangle">
+  <rect x="341.28999999999996" y="209.8" width="137.539" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="410.05949999999996" y="228.25" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Kelola Customer</text>
+</g>
+<g class="node" data-id="E" data-label="Detail Customer" data-shape="rectangle">
+  <rect x="343.5129999999999" y="282.70000000000005" width="133.09300000000002" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="410.05949999999996" y="301.15000000000003" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Detail Customer</text>
+</g>
+<g class="node" data-id="F" data-label="Info Mempelai &amp; Acara" data-shape="rectangle">
+  <rect x="39.99999999999994" y="367.6" width="169.402" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="124.70099999999994" y="386.05" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Info Mempelai &amp; Acara</text>
+</g>
+<g class="node" data-id="G" data-label="Kisah Cinta / Stories" data-shape="rectangle">
+  <rect x="237.40199999999993" y="804.0999999999999" width="159.02800000000002" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="316.91599999999994" y="822.55" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Kisah Cinta / Stories</text>
+</g>
+<g class="node" data-id="H" data-label="Galeri Foto / Gallery" data-shape="rectangle">
+  <rect x="424.42999999999995" y="367.6" width="157.54600000000002" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="503.203" y="386.05" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Galeri Foto / Gallery</text>
+</g>
+<g class="node" data-id="I" data-label="Tamu &amp; RSVP" data-shape="rectangle">
+  <rect x="609.976" y="804.0999999999999" width="121.97799999999998" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="670.965" y="822.55" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Tamu &amp; RSVP</text>
+</g>
+<g class="node" data-id="H1" data-label="Seret Gambar" data-shape="rectangle">
+  <rect x="441.84349999999995" y="464.5" width="122.71900000000001" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="503.203" y="482.95" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Seret Gambar</text>
+</g>
+<g class="node" data-id="H2" data-label="Client WebP Compress" data-shape="rectangle">
+  <rect x="415.9085" y="549.4" width="174.58899999999997" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="503.203" y="567.85" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Client WebP Compress</text>
+</g>
+<g class="node" data-id="H3" data-label="Upload ke Storage" data-shape="rectangle">
+  <rect x="428.135" y="634.3" width="150.13599999999997" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="503.203" y="652.75" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Upload ke Storage</text>
+</g>
+<g class="node" data-id="H4" data-label="Simpan URL ke galleries" data-shape="rectangle">
+  <rect x="410.7215" y="719.1999999999999" width="184.96299999999997" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="503.203" y="737.65" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Simpan URL ke galleries</text>
+</g>
+<g class="node" data-id="H5" data-label="Reorder via @dnd-kit" data-shape="rectangle">
+  <rect x="421.8365" y="804.0999999999999" width="162.733" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="503.203" y="822.55" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Reorder via @dnd-kit</text>
+</g>
+<g class="node" data-id="H6" data-label="Update order_index di DB" data-shape="rectangle">
+  <rect x="407.0165" y="888.9999999999999" width="192.37299999999996" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="503.203" y="907.4499999999999" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Update order_index di DB</text>
+</g>
+</svg>

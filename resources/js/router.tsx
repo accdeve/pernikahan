@@ -7,14 +7,14 @@ const router = createBrowserRouter([
     element: <MainLayout />,
     children: [
       {
-        path: '/:slug_wo/:customer_id',
+        path: '/:slug_wo/:slug',
         async lazy() {
           const { InvitationPage } = await import('./pages/InvitationPage')
           return { element: <InvitationPage /> }
         },
       },
       {
-        path: '/:slug_wo/:customer_id/rsvp',
+        path: '/:slug_wo/:slug/rsvp',
         async lazy() {
           const { RsvpPage } = await import('./pages/RsvpPage')
           return { element: <RsvpPage /> }

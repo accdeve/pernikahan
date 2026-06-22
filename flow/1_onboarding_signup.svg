@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1262.4979999999998 740" width="1262.4979999999998" height="740" style="--bg:#18181b;--fg:#fafafa;--line:#3f3f46;--accent:#3b82f6;--muted:#71717a;--surface:#27272a;--border:#3f3f46;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="seq-arrow" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto-start-reverse">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" />
+  </marker>
+  <marker id="seq-arrow-open" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto-start-reverse">
+    <polyline points="0 0, 8 2.5, 0 5" fill="none" stroke="var(--_arrow)" stroke-width="1" />
+  </marker>
+</defs>
+<line class="lifeline" data-actor="User" x1="107.3665" y1="70" x2="107.3665" y2="710" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="UI" x1="299.87649999999996" y1="70" x2="299.87649999999996" y2="710" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="EF" x1="509.42949999999996" y1="70" x2="509.42949999999996" y2="710" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="Auth" x1="733.4319999999999" y1="70" x2="733.4319999999999" y2="710" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="DB" x1="946.3194999999998" y1="70" x2="946.3194999999998" y2="710" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="Mail" x1="1151.0559999999998" y1="70" x2="1151.0559999999998" y2="710" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<g class="message" data-from="User" data-to="UI" data-label="Isi Info WO &amp; Akun Staff" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="107.3665" y1="90" x2="299.87649999999996" y2="90" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="203.62149999999997" y="80" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Isi Info WO &amp; Akun Staff</text>
+</g>
+<g class="message" data-from="UI" data-to="EF" data-label="POST /functions/v1/wo-signup" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="299.87649999999996" y1="130" x2="509.42949999999996" y2="130" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="404.65299999999996" y="120" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">POST /functions/v1/wo-signup</text>
+</g>
+<g class="message" data-from="EF" data-to="Auth" data-label="Buat Akun User Baru" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="509.42949999999996" y1="170" x2="733.4319999999999" y2="170" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="621.43075" y="160" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Buat Akun User Baru</text>
+</g>
+<g class="message" data-from="Auth" data-to="EF" data-label="Return User ID" data-line-style="dashed" data-arrow-head="filled" data-self="false">
+  <line x1="733.4319999999999" y1="210" x2="509.42949999999996" y2="210" stroke="var(--_line)" stroke-width="1" stroke-dasharray="6 4" marker-end="url(#seq-arrow)" />
+  <text x="621.43075" y="200" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Return User ID</text>
+</g>
+<g class="message" data-from="EF" data-to="DB" data-label="Insert WO &amp; Staff (Admin)" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="509.42949999999996" y1="250" x2="946.3194999999998" y2="250" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="727.8744999999999" y="240" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Insert WO &amp; Staff (Admin)</text>
+</g>
+<g class="message" data-from="EF" data-to="Auth" data-label="Kirim email OTP" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="509.42949999999996" y1="290" x2="733.4319999999999" y2="290" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="621.43075" y="280" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Kirim email OTP</text>
+</g>
+<g class="message" data-from="Auth" data-to="Mail" data-label="Kirim Email Verifikasi" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="733.4319999999999" y1="330" x2="1151.0559999999998" y2="330" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="942.2439999999999" y="320" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Kirim Email Verifikasi</text>
+</g>
+<g class="message" data-from="EF" data-to="UI" data-label="Return HTTP 200 OK" data-line-style="dashed" data-arrow-head="filled" data-self="false">
+  <line x1="509.42949999999996" y1="370" x2="299.87649999999996" y2="370" stroke="var(--_line)" stroke-width="1" stroke-dasharray="6 4" marker-end="url(#seq-arrow)" />
+  <text x="404.65299999999996" y="360" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Return HTTP 200 OK</text>
+</g>
+<g class="message" data-from="UI" data-to="UI" data-label="Simpan data di sessionStorage" data-line-style="solid" data-arrow-head="filled" data-self="true">
+  <polyline points="299.87649999999996,410 329.87649999999996,410 329.87649999999996,430 299.87649999999996,430" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="337.87649999999996" y="420" font-size="11" text-anchor="start" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Simpan data di sessionStorage</text>
+</g>
+<g class="message" data-from="UI" data-to="User" data-label="Dialihkan ke /otp" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="299.87649999999996" y1="480" x2="107.3665" y2="480" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="203.62149999999997" y="470" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Dialihkan ke /otp</text>
+</g>
+<g class="message" data-from="User" data-to="UI" data-label="Input kode OTP" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="107.3665" y1="520" x2="299.87649999999996" y2="520" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="203.62149999999997" y="510" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Input kode OTP</text>
+</g>
+<g class="message" data-from="UI" data-to="Auth" data-label="Verifikasi OTP via SDK" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="299.87649999999996" y1="560" x2="733.4319999999999" y2="560" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="516.6542499999999" y="550" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Verifikasi OTP via SDK</text>
+</g>
+<g class="message" data-from="Auth" data-to="UI" data-label="Return Sesi Aktif" data-line-style="dashed" data-arrow-head="filled" data-self="false">
+  <line x1="733.4319999999999" y1="600" x2="299.87649999999996" y2="600" stroke="var(--_line)" stroke-width="1" stroke-dasharray="6 4" marker-end="url(#seq-arrow)" />
+  <text x="516.6542499999999" y="590" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Return Sesi Aktif</text>
+</g>
+<g class="message" data-from="UI" data-to="UI" data-label="Redirect ke Dashboard" data-line-style="solid" data-arrow-head="filled" data-self="true">
+  <polyline points="299.87649999999996,640 329.87649999999996,640 329.87649999999996,660 299.87649999999996,660" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="337.87649999999996" y="650" font-size="11" text-anchor="start" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Redirect ke Dashboard</text>
+</g>
+<g class="actor" data-id="User" data-label="Pengguna / WO Baru" data-type="actor">
+  <g transform="translate(89.3665,32) scale(1.5)">
+    <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" fill="none" stroke="var(--_line)" stroke-width="0.6666666666666666" />
+    <path d="M15 10C15 11.6569 13.6569 13 12 13C10.3431 13 9 11.6569 9 10C9 8.34315 10.3431 7 12 7C13.6569 7 15 8.34315 15 10Z" fill="none" stroke="var(--_line)" stroke-width="0.6666666666666666" />
+    <path d="M5.62842 18.3563C7.08963 17.0398 9.39997 16 12 16C14.6 16 16.9104 17.0398 18.3716 18.3563" fill="none" stroke="var(--_line)" stroke-width="0.6666666666666666" />
+  </g>
+  <text x="107.3665" y="84" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">Pengguna / WO Baru</text>
+</g>
+<g class="actor" data-id="UI" data-label="SignupForm (React)" data-type="participant">
+  <rect x="224.73299999999998" y="30" width="150.28699999999998" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="299.87649999999996" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">SignupForm (React)</text>
+</g>
+<g class="actor" data-id="EF" data-label="Edge Function (wo-signup)" data-type="participant">
+  <rect x="415.02" y="30" width="188.81899999999996" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="509.42949999999996" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">Edge Function (wo-signup)</text>
+</g>
+<g class="actor" data-id="Auth" data-label="Supabase Auth (GoTrue)" data-type="participant">
+  <rect x="643.8389999999999" y="30" width="179.18599999999998" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="733.4319999999999" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">Supabase Auth (GoTrue)</text>
+</g>
+<g class="actor" data-id="DB" data-label="PostgreSQL Database" data-type="participant">
+  <rect x="863.0249999999999" y="30" width="166.58899999999997" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="946.3194999999998" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">PostgreSQL Database</text>
+</g>
+<g class="actor" data-id="Mail" data-label="Mailpit / SMTP Server" data-type="participant">
+  <rect x="1069.6139999999998" y="30" width="162.884" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1151.0559999999998" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">Mailpit / SMTP Server</text>
+</g>
+</svg>

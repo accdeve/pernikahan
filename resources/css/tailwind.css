@@ -123,3 +123,67 @@ a.inline-flex {
 .animate-toast-out {
   animation: slide-down 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Heritage Wedding Animations */
+@keyframes fall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes rotate-disc {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes float-gold {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@utility animate-fall {
+  animation: fall linear infinite;
+}
+
+@utility animate-rotate-disc {
+  animation: rotate-disc 5s linear infinite;
+}
+
+@utility animate-float-gold {
+  animation: float-gold 3s ease-in-out infinite;
+}
+
+@utility animate-fade-in-scale {
+  animation: fade-in-scale 0.3s ease-out;
+}

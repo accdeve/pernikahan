@@ -1,1 +1,0 @@
-import{j as e}from"./index-EmWrVjxO.js";import{A as t}from"./App-CWYoOCe6.js";import"./supabase-client-By9RvFOV.js";import"./button-DGzOILaK.js";function o(){return e.jsxDEV(t,{},void 0,!1,{fileName:"/Users/nine/Documents/GitHub/wednity/resources/js/pages/admin/CustomerDetailPage.tsx",lineNumber:5,columnNumber:10},this)}export{o as CustomerDetailPage};

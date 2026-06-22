@@ -12,15 +12,8 @@ interface Guest {
   created_at: string
 }
 
-interface InvitationData {
-  id: string
-  customer_id: string
-  groom_name: string
-  bride_name: string
-}
-
 export function RsvpPage() {
-  const { slug_wo, customer_id } = useParams()
+  const { slug_wo, slug } = useParams()
   const [invitationId, setInvitationId] = useState<string | null>(null)
   const [guests, setGuests] = useState<Guest[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,17 +31,26 @@ export function RsvpPage() {
 
   useEffect(() => {
     async function loadData() {
-      if (!customer_id) {
+      if (!slug) {
         setError('Invalid invitation')
         setLoading(false)
         return
       }
 
-      const { data: invitationData, error: invError } = await supabase
+      // Check if parameter is a valid UUID
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(slug)
+      
+      let query = supabase
         .from('invitations')
-        .select('id, customer_id, groom_name, bride_name')
-        .eq('customer_id', customer_id)
-        .single()
+        .select('id, customer_id, slug, groom_name, bride_name')
+
+      if (isUuid) {
+        query = query.or(`slug.eq."${slug}",customer_id.eq."${slug}"`)
+      } else {
+        query = query.eq('slug', slug)
+      }
+
+      const { data: invitationData, error: invError } = await query.single()
 
       if (invError || !invitationData) {
         setError('Undangan tidak ditemukan')
@@ -69,7 +71,7 @@ export function RsvpPage() {
     }
 
     loadData()
-  }, [customer_id])
+  }, [slug])
 
   if (loading) {
     return (

@@ -50,8 +50,9 @@ export function SignupForm({
     const woLocation = formData.get('woLocation') as string
     const staffName = formData.get('staffName') as string
 
+    let response: Response | undefined
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wo-signup`, {
+      response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wo-signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
